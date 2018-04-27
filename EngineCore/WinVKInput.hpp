@@ -1,0 +1,15 @@
+#pragma once
+
+#include "KeyController.hpp"
+
+namespace EngineCore
+{
+	class VKInput
+	{
+        i32 _lastMouseX{}, _lastMouseY{};
+		bool _mousePositionDefined = false;
+
+	public:
+		void Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	};
+}
