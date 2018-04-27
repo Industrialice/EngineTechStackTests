@@ -211,16 +211,16 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 bool CreateApplicationSubsystems()
 {
 	AppWindow appWindow;
-	appWindow.fullscreen = false;
-	appWindow.height = 1000;
-	appWindow.width = 1000;
-	appWindow.x = 1000;
-	appWindow.y = 1000;
+	appWindow.fullscreen = true;
+	appWindow.height = 0;
+	appWindow.width = 0;
+	appWindow.x = 0;
+	appWindow.y = 0;
 	appWindow.title = "EngineCore";
 	appWindow.hideBorders = false;
 
-    if (appWindow.height < 0) appWindow.height = GetSystemMetrics(SM_CYSCREEN);
-    if (appWindow.width < 0) appWindow.width = GetSystemMetrics(SM_CXSCREEN);
+    if (appWindow.height <= 0) appWindow.height = GetSystemMetrics(SM_CYSCREEN);
+    if (appWindow.width <= 0) appWindow.width = GetSystemMetrics(SM_CXSCREEN);
 
 	RECT windowRect{ appWindow.x, appWindow.y, appWindow.x + appWindow.width, appWindow.y + appWindow.height };
 

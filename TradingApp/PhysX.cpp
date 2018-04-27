@@ -81,10 +81,10 @@ namespace
             if (PhysXScene)
             {
                 PhysXScene->removeActor(*actor);
+                actor->detachShape(*shape);
+                //shape->release();
+                actor->release();
             }
-            actor->detachShape(*shape);
-            //shape->release();
-            actor->release();
         }
     };
     vector<PhysXCubeData> PhysXCubeDatas{};
@@ -128,7 +128,7 @@ bool PhysX::Create()
         return false;
     }
 
-    CpuDispatcher = PxDefaultCpuDispatcherCreate(3);
+    CpuDispatcher = PxDefaultCpuDispatcherCreate(2);
     if (!CpuDispatcher)
     {
         SENDLOG(Error, "PhysX::Create -> PxDefaultCpuDispatcherCreate failed\n");
@@ -221,6 +221,11 @@ void PhysX::Update()
 
 void PhysX::FinishUpdate()
 {
+    if (!IsInitialized)
+    {
+        return;
+    }
+
     PhysXScene->fetchResults(true);
 
     for (uiw index = 0, size = Objects->size(); index < size; ++index)
@@ -238,6 +243,11 @@ void PhysX::FinishUpdate()
 
 void PhysX::SetObjects(vector<PhysicsCube> &objects)
 {
+    if (!IsInitialized)
+    {
+        return;
+    }
+
     PhysXCubeDatas.clear();
 
     Objects = (decltype(Objects))&objects;

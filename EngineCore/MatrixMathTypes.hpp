@@ -59,7 +59,7 @@ namespace EngineCore
         ScalarType x, y;
 
         constexpr _VectorBase() = default;
-        _VectorBase(ScalarType x, ScalarType y) : x(x), y(y) {}
+        _VectorBase(ScalarType x, ScalarType y);
 
         VectorType operator + (const _VectorBase &other) const;
         VectorType operator + (ScalarType scalar) const;
@@ -89,16 +89,20 @@ namespace EngineCore
         VectorType &operator /= (const _VectorBase &other);
         VectorType &operator /= (ScalarType scalar);
 
-        const ScalarType *Data() const { return &x; }
-        ScalarType *Data() { return &x; }
+        const ScalarType *Data() const;
+        ScalarType *Data();
         
         bool Equals(const _VectorBase &other) const;
+
+        ScalarType Accumulate() const;
+        ScalarType Max() const;
+        ScalarType Min() const;
     };
 
     template <typename ScalarType> struct Vector2Base : _VectorBase<ScalarType, 2>
     {
         Vector2Base() = default;
-        Vector2Base(ScalarType x, ScalarType y) : _VectorBase(x, y) {}
+        Vector2Base(ScalarType x, ScalarType y);
         ScalarType &operator [] (uiw index);
         const ScalarType &operator [] (uiw index) const;
     };
@@ -108,8 +112,8 @@ namespace EngineCore
         ScalarType z;
 
         Vector3Base() = default;
-        Vector3Base(ScalarType x, ScalarType y, ScalarType z) : _VectorBase(x, y), z(z) {}
-        Vector3Base(const VectorTypeByDimension<ScalarType, 2> &vec, ScalarType z) : _VectorBase(vec.x, vec.y), z(z) {}
+        Vector3Base(ScalarType x, ScalarType y, ScalarType z);
+        Vector3Base(const VectorTypeByDimension<ScalarType, 2> &vec, ScalarType z);
         ScalarType &operator [] (uiw index);
         const ScalarType &operator [] (uiw index) const;
         VectorTypeByDimension<ScalarType, 2> ToVector2() const;
@@ -120,10 +124,10 @@ namespace EngineCore
         ScalarType z, w;
 
         Vector4Base() = default;
-        Vector4Base(ScalarType x, ScalarType y, ScalarType z, ScalarType w) : _VectorBase(x, y), z(z), w(w) {}
-        Vector4Base(const VectorTypeByDimension<ScalarType, 2> &vec, ScalarType z, ScalarType w) : _VectorBase(vec.x, vec.y), z(z), w(w) {}
-        Vector4Base(const VectorTypeByDimension<ScalarType, 3> &vec, ScalarType w) : _VectorBase(vec.x, vec.y), z(vec.z), w(w) {}
-        Vector4Base(const VectorTypeByDimension<ScalarType, 2> &v0, const VectorTypeByDimension<ScalarType, 2> &v1) : _VectorBase(v0.x, v0.y), z(v1.x), w(v1.y) {}
+        Vector4Base(ScalarType x, ScalarType y, ScalarType z, ScalarType w);
+        Vector4Base(const VectorTypeByDimension<ScalarType, 2> &vec, ScalarType z, ScalarType w);
+        Vector4Base(const VectorTypeByDimension<ScalarType, 3> &vec, ScalarType w);
+        Vector4Base(const VectorTypeByDimension<ScalarType, 2> &v0, const VectorTypeByDimension<ScalarType, 2> &v1);
         ScalarType &operator [] (uiw index);
         const ScalarType &operator [] (uiw index) const;
         VectorTypeByDimension<ScalarType, 2> ToVector2() const;
@@ -145,6 +149,9 @@ namespace EngineCore
         using _VectorBase::operator/;
         using _VectorBase::operator/=;
         using _VectorBase::Data;
+        using _VectorBase::Accumulate;
+        using _VectorBase::Max;
+        using _VectorBase::Min;
 
         f32 Length() const;
         f32 LengthSquare() const;
@@ -154,9 +161,6 @@ namespace EngineCore
 
         f32 Dot(const _Vector &other) const;
 
-        f32 Accumulate() const;
-        f32 Max() const;
-        f32 Min() const;
         f32 Average() const;
 
         void Normalize();
@@ -219,8 +223,8 @@ namespace EngineCore
         array<f32, Columns> &operator [] (uiw index);
         const array<f32, Columns> &operator [] (uiw index) const;
 
-        const f32 *Data() const { return elements.data()->data(); }
-        f32 *Data() { return elements.data()->data(); }
+        const f32 *Data() const;
+        f32 *Data();
 
         void Transpose();
         MatrixTypeByDimensions<Columns, Rows> GetTransposed() const;
@@ -246,10 +250,9 @@ namespace EngineCore
         Matrix4x3(f32 e00, f32 e01, f32 e02,
             f32 e10, f32 e11, f32 e12,
             f32 e20, f32 e21, f32 e22,
-            f32 e30, f32 e31, f32 e32) : _Matrix(e00, e01, e02, e10, e11, e12, e20, e21, e22, e30, e31, e32) {}
+            f32 e30, f32 e31, f32 e32);
 
-        Matrix4x3(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2, const Vector3 &row3) :
-            _Matrix(row0.x, row0.y, row0.z, row1.x, row1.y, row1.z, row2.x, row2.y, row2.z, row3.x, row3.y, row3.z) {}
+        Matrix4x3(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2, const Vector3 &row3);
 
         Matrix4x4 operator * (const Matrix4x4 &other) const;
 
@@ -263,10 +266,9 @@ namespace EngineCore
 
         Matrix3x4(f32 e00, f32 e01, f32 e02, f32 e03,
             f32 e10, f32 e11, f32 e12, f32 e13,
-            f32 e20, f32 e21, f32 e22, f32 e23) : _Matrix(e00, e01, e02, e03, e10, e11, e12, e13, e20, e21, e22, e23) {}
+            f32 e20, f32 e21, f32 e22, f32 e23);
 
-        Matrix3x4(const Vector4 &row0, const Vector4 &row1, const Vector4 &row2) :
-            _Matrix(row0.x, row0.y, row0.z, row0.w, row1.x, row1.y, row1.z, row1.w, row2.x, row2.y, row2.z, row2.w) {}
+        Matrix3x4(const Vector4 &row0, const Vector4 &row1, const Vector4 &row2);
 
         static Matrix3x4 CreateRotationAroundAxis(const Vector3 &axis, f32 angle);
         static Matrix3x4 CreateRS(const Vector3 &rotation, const optional<Vector3> &scale = nullopt);
@@ -279,10 +281,9 @@ namespace EngineCore
         Matrix4x4(f32 e00, f32 e01, f32 e02, f32 e03,
             f32 e10, f32 e11, f32 e12, f32 e13,
             f32 e20, f32 e21, f32 e22, f32 e23,
-            f32 e30, f32 e31, f32 e32, f32 e33) : _Matrix(e00, e01, e02, e03, e10, e11, e12, e13, e20, e21, e22, e23, e30, e31, e32, e33) {}
+            f32 e30, f32 e31, f32 e32, f32 e33);
 
-        Matrix4x4(const Vector4 &row0, const Vector4 &row1, const Vector4 &row2, const Vector4 &row3) :
-            _Matrix(row0.x, row0.y, row0.z, row0.w, row1.x, row1.y, row1.z, row1.w, row2.x, row2.y, row2.z, row2.w, row3.x, row3.y, row3.z, row3.w) {}
+        Matrix4x4(const Vector4 &row0, const Vector4 &row1, const Vector4 &row2, const Vector4 &row3);
 
         static Matrix4x4 CreateRotationAroundAxis(const Vector3 &axis, f32 angle);
         static Matrix4x4 CreateRTS(const optional<Vector3> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale = nullopt);
@@ -296,10 +297,9 @@ namespace EngineCore
 
         Matrix3x2(f32 e00, f32 e01,
             f32 e10, f32 e11,
-            f32 e20, f32 e21) : _Matrix(e00, e01, e10, e11, e20, e21) {}
+            f32 e20, f32 e21);
 
-        Matrix3x2(const Vector2 &row0, const Vector2 &row1, const Vector2 &row2) :
-            _Matrix(row0.x, row0.y, row1.x, row1.y, row2.x, row2.y) {}
+        Matrix3x2(const Vector2 &row0, const Vector2 &row1, const Vector2 &row2);
 
         Matrix3x3 GetInversed() const;
         Matrix3x2 GetInversedClipped() const;
@@ -313,10 +313,9 @@ namespace EngineCore
         Matrix2x3() = default;
 
         Matrix2x3(f32 e00, f32 e01, f32 e02,
-            f32 e10, f32 e11, f32 e12) : _Matrix(e00, e01, e02, e10, e11, e12) {}
+            f32 e10, f32 e11, f32 e12);
 
-        Matrix2x3(const Vector3 &row0, const Vector3 &row1) :
-            _Matrix(row0.x, row0.y, row0.z, row1.x, row1.y, row1.z) {}
+        Matrix2x3(const Vector3 &row0, const Vector3 &row1);
     };
 
     struct Matrix2x2 : _Matrix<2, 2>
@@ -324,10 +323,9 @@ namespace EngineCore
         Matrix2x2() = default;
 
         Matrix2x2(f32 e00, f32 e01,
-            f32 e10, f32 e11) : _Matrix(e00, e01, e10, e11) {}
+            f32 e10, f32 e11);
 
-        Matrix2x2(const Vector2 &row0, const Vector2 &row1) :
-            _Matrix(row0.x, row0.y, row1.x, row1.y) {}
+        Matrix2x2(const Vector2 &row0, const Vector2 &row1);
     };
 
     struct Matrix3x3 : _Matrix<3, 3>
@@ -336,10 +334,9 @@ namespace EngineCore
 
         Matrix3x3(f32 e00, f32 e01, f32 e02,
             f32 e10, f32 e11, f32 e12,
-            f32 e20, f32 e21, f32 e22) : _Matrix(e00, e01, e02, e10, e11, e12, e20, e21, e22) {}
+            f32 e20, f32 e21, f32 e22);
 
-        Matrix3x3(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2) :
-            _Matrix(row0.x, row0.y, row0.z, row1.x, row1.y, row1.z, row2.x, row2.y, row2.z) {}
+        Matrix3x3(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2);
 
         static Matrix3x3 CreateRotationAroundAxis(const Vector3 &axis, f32 angle);
         static Matrix3x3 CreateRS(const Vector3 &rotation, const optional<Vector3> &scale = nullopt);
@@ -350,18 +347,13 @@ namespace EngineCore
     // TODO: matrix conversions (3x3 to 4x4, 4x4 to 3x3 etc.)
     // TODO: finish Quaternion
 
-    /*struct Quaternion : private _VectorBase<f32, 4, true>
+    struct Quaternion
     {
-        using _VectorBase::operator[];
-        using _VectorBase::X;
-        using _VectorBase::Y;
+        f32 x, y, z, w;
 
-        f32 z const { return elements[2]; }
-        void Z(f32 value) { elements[2] = value; }
-
-        f32 w const { return elements[3]; }
-        void W(f32 value) { elements[3] = value; }
-    };*/
+        Quaternion(f32 x, f32 y, f32 z, f32 w);
+        Quaternion(const Matrix3x3 &matrix);
+    };
 
     template <typename T, bool isTopLessThanBottom = true> struct Rectangle
     {

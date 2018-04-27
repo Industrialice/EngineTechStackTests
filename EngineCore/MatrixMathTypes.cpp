@@ -6,6 +6,10 @@ using namespace EngineCore;
 
 namespace EngineCore
 {
+    template struct Vector2Base<f32>;
+    template struct Vector3Base<f32>;
+    template struct Vector4Base<f32>;
+
     template struct _Vector<Vector2Base<f32>>;
     template struct _Vector<Vector3Base<f32>>;
     template struct _Vector<Vector4Base<f32>>;
@@ -62,8 +66,24 @@ Vector3 Vector3::GetCrossed(const Vector3 &other) const
 }
 
 ///////////////
+// Matrix2x2 //
+///////////////
+
+Matrix2x2::Matrix2x2(f32 e00, f32 e01, f32 e10, f32 e11) : _Matrix(e00, e01, e10, e11)
+{}
+
+Matrix2x2::Matrix2x2(const Vector2 &row0, const Vector2 &row1) : _Matrix(row0.x, row0.y, row1.x, row1.y)
+{}
+
+///////////////
 // Matrix3x2 //
 ///////////////
+
+Matrix3x2::Matrix3x2(f32 e00, f32 e01, f32 e10, f32 e11, f32 e20, f32 e21) : _Matrix(e00, e01, e10, e11, e20, e21)
+{}
+
+Matrix3x2::Matrix3x2(const Vector2 &row0, const Vector2 &row1, const Vector2 &row2) : _Matrix(row0.x, row0.y, row1.x, row1.y, row2.x, row2.y)
+{}
 
 Matrix3x3 Matrix3x2::GetInversed() const
 {
@@ -135,8 +155,24 @@ Matrix3x2 Matrix3x2::CreateRTS(const optional<f32> &rotation, const optional<Vec
 }
 
 ///////////////
+// Matrix2x3 //
+///////////////
+
+Matrix2x3::Matrix2x3(f32 e00, f32 e01, f32 e02, f32 e10, f32 e11, f32 e12) : _Matrix(e00, e01, e02, e10, e11, e12)
+{}
+
+Matrix2x3::Matrix2x3(const Vector3 &row0, const Vector3 &row1) : _Matrix(row0.x, row0.y, row0.z, row1.x, row1.y, row1.z)
+{}
+
+///////////////
 // Matrix4x3 //
 ///////////////
+
+Matrix4x3::Matrix4x3(f32 e00, f32 e01, f32 e02, f32 e10, f32 e11, f32 e12, f32 e20, f32 e21, f32 e22, f32 e30, f32 e31, f32 e32) : _Matrix(e00, e01, e02, e10, e11, e12, e20, e21, e22, e30, e31, e32)
+{}
+
+Matrix4x3::Matrix4x3(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2, const Vector3 &row3) : _Matrix(row0.x, row0.y, row0.z, row1.x, row1.y, row1.z, row2.x, row2.y, row2.z, row3.x, row3.y, row3.z)
+{}
 
 Matrix4x4 Matrix4x3::operator*(const Matrix4x4 &other) const
 {
@@ -172,6 +208,12 @@ Matrix4x3 Matrix4x3::CreateRTS(const optional<Vector3> &rotation, const optional
 // Matrix3x4 //
 ///////////////
 
+Matrix3x4::Matrix3x4(f32 e00, f32 e01, f32 e02, f32 e03, f32 e10, f32 e11, f32 e12, f32 e13, f32 e20, f32 e21, f32 e22, f32 e23) : _Matrix(e00, e01, e02, e03, e10, e11, e12, e13, e20, e21, e22, e23)
+{}
+
+Matrix3x4::Matrix3x4(const Vector4 &row0, const Vector4 &row1, const Vector4 &row2) : _Matrix(row0.x, row0.y, row0.z, row0.w, row1.x, row1.y, row1.z, row1.w, row2.x, row2.y, row2.z, row2.w)
+{}
+
 Matrix3x4 Matrix3x4::CreateRotationAroundAxis(const Vector3 &axis, f32 angle)
 {
     return EngineCore::CreateRotationAroundAxis<Matrix3x4>(axis, angle);
@@ -185,6 +227,12 @@ Matrix3x4 Matrix3x4::CreateRS(const Vector3 &rotation, const optional<Vector3> &
 ///////////////
 // Matrix4x4 //
 ///////////////
+
+Matrix4x4::Matrix4x4(f32 e00, f32 e01, f32 e02, f32 e03, f32 e10, f32 e11, f32 e12, f32 e13, f32 e20, f32 e21, f32 e22, f32 e23, f32 e30, f32 e31, f32 e32, f32 e33) : _Matrix(e00, e01, e02, e03, e10, e11, e12, e13, e20, e21, e22, e23, e30, e31, e32, e33)
+{}
+
+Matrix4x4::Matrix4x4(const Vector4 &row0, const Vector4 &row1, const Vector4 &row2, const Vector4 &row3) : _Matrix(row0.x, row0.y, row0.z, row0.w, row1.x, row1.y, row1.z, row1.w, row2.x, row2.y, row2.z, row2.w, row3.x, row3.y, row3.z, row3.w)
+{}
 
 Matrix4x4 Matrix4x4::CreateRotationAroundAxis(const Vector3 &axis, f32 angle)
 {
@@ -220,6 +268,12 @@ Matrix4x4 Matrix4x4::CreatePerspectiveProjection(f32 horizontalFOV, f32 aspectRa
 // Matrix3x3 //
 ///////////////
 
+Matrix3x3::Matrix3x3(f32 e00, f32 e01, f32 e02, f32 e10, f32 e11, f32 e12, f32 e20, f32 e21, f32 e22) : _Matrix(e00, e01, e02, e10, e11, e12, e20, e21, e22)
+{}
+
+Matrix3x3::Matrix3x3(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2) : _Matrix(row0.x, row0.y, row0.z, row1.x, row1.y, row1.z, row2.x, row2.y, row2.z)
+{}
+
 Matrix3x3 Matrix3x3::CreateRotationAroundAxis(const Vector3 &axis, f32 angle)
 {
     return EngineCore::CreateRotationAroundAxis<Matrix3x3>(axis, angle);
@@ -228,4 +282,16 @@ Matrix3x3 Matrix3x3::CreateRotationAroundAxis(const Vector3 &axis, f32 angle)
 Matrix3x3 Matrix3x3::CreateRS(const Vector3 &rotation, const optional<Vector3> &scale)
 {
     return EngineCore::CreateRTS<Matrix3x3, false>(rotation, nullopt, scale);
+}
+
+////////////////
+// Quaternion //
+////////////////
+
+Quaternion::Quaternion(f32 x, f32 y, f32 z, f32 w) : x(x), y(y), z(z), w(w)
+{}
+
+Quaternion::Quaternion(const Matrix3x3 &matrix)
+{
+    NOIMPL;
 }

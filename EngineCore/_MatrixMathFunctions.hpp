@@ -8,6 +8,9 @@ namespace EngineCore
     // _VectorBase //
     /////////////////
 
+    template<typename _ScalarType, uiw Dim> inline _VectorBase<_ScalarType, Dim>::_VectorBase(ScalarType x, ScalarType y) : x(x), y(y)
+    {}
+
     template <typename ScalarType, uiw Dim> inline auto _VectorBase<ScalarType, Dim>::operator + (const _VectorBase &other) const -> VectorType
     {
         VectorType result;
@@ -128,6 +131,16 @@ namespace EngineCore
         return *(VectorType *)this;
     }
 
+    template<typename ScalarType, uiw Dim> inline const ScalarType *_VectorBase<ScalarType, Dim>::Data() const
+    {
+        return &x;
+    }
+
+    template<typename ScalarType, uiw Dim> inline ScalarType *_VectorBase<ScalarType, Dim>::Data()
+    {
+        return &x;
+    }
+
     template <typename ScalarType, uiw Dim> inline bool _VectorBase<ScalarType, Dim>::Equals(const _VectorBase &other) const
     {
         for (uiw index = 0; index < Dim; ++index)
@@ -140,9 +153,48 @@ namespace EngineCore
         return true;
     }
 
+    template <typename ScalarType, uiw Dim> inline ScalarType _VectorBase<ScalarType, Dim>::Accumulate() const
+    {
+        ScalarType sum = x;
+        for (uiw index = 1; index < dim; ++index)
+        {
+            sum += Data()[index];
+        }
+        return sum;
+    }
+
+    template <typename ScalarType, uiw Dim> inline ScalarType _VectorBase<ScalarType, Dim>::Max() const
+    {
+        ScalarType max = x;
+        for (uiw index = 1; index < dim; ++index)
+        {
+            if (Data()[index] > max)
+            {
+                max = Data()[index];
+            }
+        }
+        return max;
+    }
+
+    template <typename ScalarType, uiw Dim> inline ScalarType _VectorBase<ScalarType, Dim>::Min() const
+    {
+        ScalarType min = x;
+        for (uiw index = 1; index < dim; ++index)
+        {
+            if (Data()[index] < min)
+            {
+                min = Data()[index];
+            }
+        }
+        return min;
+    }
+
     /////////////////
     // Vector2Base //
     /////////////////
+
+    template<typename ScalarType> inline Vector2Base<ScalarType>::Vector2Base(ScalarType x, ScalarType y) : _VectorBase(x, y)
+    {}
 
     template<typename ScalarType> inline ScalarType &Vector2Base<ScalarType>::operator[](uiw index)
     {
@@ -161,6 +213,12 @@ namespace EngineCore
     /////////////////
     // Vector3Base //
     /////////////////
+
+    template<typename ScalarType> inline Vector3Base<ScalarType>::Vector3Base(ScalarType x, ScalarType y, ScalarType z) : _VectorBase(x, y), z(z)
+    {}
+
+    template<typename ScalarType> inline Vector3Base<ScalarType>::Vector3Base(const VectorTypeByDimension<ScalarType, 2> &vec, ScalarType z) : _VectorBase(vec.x, vec.y), z(z)
+    {}
 
     template<typename ScalarType> inline ScalarType &Vector3Base<ScalarType>::operator[](uiw index)
     {
@@ -186,6 +244,18 @@ namespace EngineCore
     /////////////////
     // Vector4Base //
     /////////////////
+
+    template<typename ScalarType> inline Vector4Base<ScalarType>::Vector4Base(ScalarType x, ScalarType y, ScalarType z, ScalarType w) : _VectorBase(x, y), z(z), w(w)
+    {}
+
+    template<typename ScalarType> inline Vector4Base<ScalarType>::Vector4Base(const VectorTypeByDimension<ScalarType, 2> &vec, ScalarType z, ScalarType w) : _VectorBase(vec.x, vec.y), z(z), w(w)
+    {}
+
+    template<typename ScalarType> inline Vector4Base<ScalarType>::Vector4Base(const VectorTypeByDimension<ScalarType, 3> &vec, ScalarType w) : _VectorBase(vec.x, vec.y), z(vec.z), w(w)
+    {}
+
+    template<typename ScalarType> inline Vector4Base<ScalarType>::Vector4Base(const VectorTypeByDimension<ScalarType, 2> &v0, const VectorTypeByDimension<ScalarType, 2> &v1) : _VectorBase(v0.x, v0.y), z(v1.x), w(v1.y)
+    {}
 
     template<typename ScalarType> inline ScalarType &Vector4Base<ScalarType>::operator[](uiw index)
     {
@@ -259,42 +329,6 @@ namespace EngineCore
             sum += operator[](index) * other[index];
         }
         return sum;
-    }
-
-    template <typename Basis> inline f32 _Vector<Basis>::Accumulate() const
-    {
-        f32 sum = x;
-        for (uiw index = 1; index < dim; ++index)
-        {
-            sum += operator[](index);
-        }
-        return sum;
-    }
-
-    template <typename Basis> inline f32 _Vector<Basis>::Max() const
-    {
-        f32 max = x;
-        for (uiw index = 1; index < dim; ++index)
-        {
-            if (operator[](index) > max)
-            {
-                max = operator[](index);
-            }
-        }
-        return max;
-    }
-
-    template <typename Basis> inline f32 _Vector<Basis>::Min() const
-    {
-        f32 min = x;
-        for (uiw index = 1; index < dim; ++index)
-        {
-            if (operator[](index) < min)
-            {
-                min = operator[](index);
-            }
-        }
-        return min;
     }
 
     template <typename Basis> inline f32 _Vector<Basis>::Average() const
@@ -457,6 +491,16 @@ namespace EngineCore
     template<uiw Rows, uiw Columns> inline const array<f32, Columns> &_Matrix<Rows, Columns>::operator[](uiw index) const
     {
         return elements[index];
+    }
+
+    template<uiw Rows, uiw Columns> inline const f32 *_Matrix<Rows, Columns>::Data() const
+    { 
+        return elements.data()->data();
+    }
+
+    template<uiw Rows, uiw Columns> inline f32 *_Matrix<Rows, Columns>::Data()
+    {
+        return elements.data()->data();
     }
 
     template<uiw Rows, uiw Columns> inline void _Matrix<Rows, Columns>::Transpose()

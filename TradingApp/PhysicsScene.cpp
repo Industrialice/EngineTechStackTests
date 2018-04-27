@@ -16,7 +16,7 @@ static void PlaceCubeRandomly(PhysicsCube &cube);
 
 namespace
 {
-    static constexpr uiw CubesCounts = 2500;
+    static constexpr uiw CubesCounts = 3500;
     static constexpr uiw CubesSmallCount = 6;
     vector<PhysicsCube> Cubes{};
 }
