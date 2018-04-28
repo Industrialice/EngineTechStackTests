@@ -172,6 +172,56 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
 
         return shader;
     }
+    else if (name == "Colored3DVerticesInstanced")
+    {
+        string_view vsCode = TOSTR(
+            #version 440 \n
+
+            in vec4 position;
+            in vec4 color;
+            in vec4 matrixColumn0;
+            in vec4 matrixColumn1;
+            in vec4 matrixColumn2;
+
+            out vec4 procColor;
+
+            uniform mat4x4 _ViewProjectionMatrix;
+
+            void main()
+            {
+                vec3 worldPos = vec3(dot(position, matrixColumn0), dot(position, matrixColumn1), dot(position, matrixColumn2));
+                vec4 screenPos = _ViewProjectionMatrix * vec4(worldPos, 1.0);
+
+                gl_Position = screenPos;
+
+                procColor = color;
+            }
+        );
+
+        string_view psCode = TOSTR(
+            #version 440 \n
+
+            in vec4 procColor;
+
+            layout(location = 0) out vec4 OutputColor;
+
+            void main()
+            {
+                OutputColor = procColor;
+            }
+        );
+        
+        array<Shader::Uniform, 1> systemUniforms{
+            Shader::Uniform{"_ViewProjectionMatrix", 4, 4, 1, Shader::Uniform::Type::F32}};
+
+        array<string_view, 5> inputAttributes{"position", "color", "matrixColumn0", "matrixColumn1", "matrixColumn2"};
+
+        auto shader = Shader::New(name, vsCode, psCode, nullptr, 0, inputAttributes.data(), (ui32)inputAttributes.size(), systemUniforms.data(), (ui32)systemUniforms.size());
+
+        LoadedShaders.emplace(shader);
+
+        return shader;
+    }
     else if (name == "Background")
     {
         string_view vsCode = TOSTR(

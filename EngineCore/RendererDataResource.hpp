@@ -42,6 +42,11 @@ namespace EngineCore
         RendererArrayData(BufferOwnedData data, ui32 numberOfElements) : _data(move(data)), _sizeInBytes(numberOfElements * sizeof(T))
         {}
 
+        RendererArrayData(const T *data, ui32 numberOfElements) : _data(new byte[numberOfElements * sizeof(T)], [](void *p) {delete[] p; }), _sizeInBytes(numberOfElements * sizeof(T))
+        {
+            memcpy(_data.get(), data, numberOfElements * sizeof(T));
+        }
+
         ui32 NumberOfElements() const { return _sizeInBytes / (ui32)sizeof(T); }
     };
 

@@ -3,22 +3,25 @@
 #include "SceneBackground.hpp"
 #include <MatrixMathTypes.hpp>
 #include <MathFunctions.hpp>
-#include "PhysicsCube.hpp"
+#include "CubesInstanced.hpp"
 #include "PhysX.hpp"
 
 using namespace EngineCore;
 using namespace TradingApp;
 
+static void PlaceSparse();
 static void PlaceAsHugeCube();
 static void PlaceAsTallTower();
-static void PlaceRandomly();
-static void PlaceCubeRandomly(PhysicsCube &cube);
+//static void PlaceRandomly();
+//static void PlaceCubeRandomly(CubesInstanced &cube);
 
 namespace
 {
-    static constexpr uiw CubesCounts = 3500;
+    static constexpr uiw CubesCounts = 36 * 185;
     static constexpr uiw CubesSmallCount = 6;
-    vector<PhysicsCube> Cubes{};
+    static constexpr uiw CubesMediumCount = 100;
+    vector<CubesInstanced::InstanceData> Cubes{};
+    unique_ptr<CubesInstanced> InstancedCubes{};
 }
 
 bool PhysicsScene::Create()
@@ -34,6 +37,8 @@ bool PhysicsScene::Create()
     }
 
     Restart();
+
+    InstancedCubes = make_unique<CubesInstanced>(Cubes.size());
 
     return true;
 }
@@ -52,6 +57,7 @@ void PhysicsScene::Update()
 
 void PhysicsScene::Restart()
 {
+    //PlaceSparse();
     //PlaceAsHugeCube();
     PlaceAsTallTower();
 
@@ -62,12 +68,23 @@ void PhysicsScene::Draw(const Camera &camera)
 {
     SceneBackground::Draw({MathPi<f32>() * 0.5f, 0, 0}, camera);
 
-    for (auto &cube : Cubes)
-    {
-        cube.Draw(camera);
-    }
+    InstancedCubes->Draw(&camera, Cubes.data(), (ui32)Cubes.size());
 
     PhysX::FinishUpdate();
+}
+
+void PlaceSparse()
+{
+    Cubes.resize(CubesMediumCount * CubesMediumCount);
+
+    for (uiw x = 0; x < CubesMediumCount; ++x)
+    {
+        for (uiw z = 0; z < CubesMediumCount; ++z)
+        {
+            Vector3 pos{x * 2.0f, 0.5f + (rand() / (f32)RAND_MAX) * 5.0f, z * 2.0f};
+            Cubes[x * CubesMediumCount + z] = CubesInstanced::InstanceData{pos, {}, 1.0f};
+        }
+    }
 }
 
 void PlaceAsHugeCube()
@@ -90,7 +107,7 @@ void PlaceAsHugeCube()
             for (uiw z = 0; z < CubesSmallCount; ++z)
             {
                 Vector3 pos{xInitial + x, yInitial + y, zInitial + z};
-                Cubes[computeIndex(x, y, z)] = PhysicsCube(pos, {}, 1.0f);
+                Cubes[computeIndex(x, y, z)] = CubesInstanced::InstanceData{pos, {}, 1.0f};
             }
         }
     }
@@ -98,24 +115,24 @@ void PlaceAsHugeCube()
 
 void PlaceAsTallTower()
 {
-    assert(CubesCounts % 25 == 0);
+    assert(CubesCounts % 36 == 0);
 
     Cubes.resize(CubesCounts);
 
-    for (ui32 index = 0; index < CubesCounts / 25; ++index)
+    for (ui32 index = 0; index < CubesCounts / 36; ++index)
     {
-        for (ui32 x = 0; x < 5; ++x)
+        for (ui32 x = 0; x < 6; ++x)
         {
-            for (ui32 z = 0; z < 5; ++z)
+            for (ui32 z = 0; z < 6; ++z)
             {
-                ui32 indexOffset = x * 5 + z;
-                Cubes[index * 25 + indexOffset] = PhysicsCube({(f32)x, 0.5f + index, (f32)z}, {}, 1.0f);
+                ui32 indexOffset = x * 6 + z;
+                Cubes[index * 36 + indexOffset] = CubesInstanced::InstanceData{{(f32)x, 0.5f + index, (f32)z}, {}, 1.0f};
             }
         }
     }
 }
 
-void PlaceRandomly()
+/*void PlaceRandomly()
 {
     Cubes.resize(CubesCounts);
 
@@ -136,4 +153,4 @@ void PlaceCubeRandomly(PhysicsCube &cube)
     f32 rz = (rand() / (f32)RAND_MAX) * MathPi<f32>() * 2;
 
     cube = PhysicsCube({x, y, z}, Quaternion::FromEuler({rx, ry, rz}), 1.0f);
-}
+}*/

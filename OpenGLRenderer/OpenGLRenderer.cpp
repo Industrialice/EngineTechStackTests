@@ -371,12 +371,6 @@ public:
             return;
         }
 
-        if (instanceCount > 1)
-        {
-            NOIMPL;
-            return;
-        }
-
         assert(_intermediateVAO == 0);
 
         if (false == DrawGeneric(rt, cameraPos, viewMatrix, projMatrix, modelMatrix, *pipelineState, *material, topology, numVertices))
@@ -394,7 +388,14 @@ public:
             glBindVertexArray(_emptyVAO);
         }
 
-        glDrawArrays(PrimitiveTopologyToOGL(topology), 0, numVertices);
+        if (instanceCount > 1)
+        {
+            glDrawArraysInstanced(PrimitiveTopologyToOGL(topology), 0, numVertices, instanceCount);
+        }
+        else
+        {
+            glDrawArrays(PrimitiveTopologyToOGL(topology), 0, numVertices);
+        }
 
         glUseProgram(0);
 
@@ -428,12 +429,6 @@ public:
             return;
         }
 
-        if (instanceCount > 1)
-        {
-            NOIMPL;
-            return;
-        }
-
         assert(_intermediateVAO == 0);
 
         if (_boundIndexArray == nullptr)
@@ -464,7 +459,14 @@ public:
         }
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexArrayBackendData->oglBuffer);
 
-        glDrawElements(PrimitiveTopologyToOGL(topology), numIndexes, IndexTypeToOGL(_boundIndexArray->IndexType()), nullptr);
+        if (instanceCount > 1)
+        {
+            glDrawElementsInstanced(PrimitiveTopologyToOGL(topology), numIndexes, IndexTypeToOGL(_boundIndexArray->IndexType()), nullptr, instanceCount);
+        }
+        else
+        {
+            glDrawElements(PrimitiveTopologyToOGL(topology), numIndexes, IndexTypeToOGL(_boundIndexArray->IndexType()), nullptr);
+        }
 
         glUseProgram(0);
         glDeleteVertexArrays(1, &_intermediateVAO);
@@ -473,24 +475,24 @@ public:
         HasGLErrors();
     }
 
-    virtual void DrawWithCamera(const Camera *camera, const struct Matrix4x3 *modelMatrix, const class RendererPipelineState *pipelineState, const class Material *material, PrimitiveTopology topology, ui32 numVertices, ui32 instanceCount = 1) override
+    virtual void DrawWithCamera(const Camera *camera, const struct Matrix4x3 *modelMatrix, const class RendererPipelineState *pipelineState, const class Material *material, PrimitiveTopology topology, ui32 numVertices, ui32 instanceCount) override
     {
         if (camera == nullptr)
         {
             SENDLOG(Error, "DrawWithCamera called with null camera\n");
             return;
         }
-        return DrawIntoRenderTarget(camera->RenderTarget().get(), &camera->Position(), &camera->ViewMatrix(), &camera->ProjectionMatrix(), modelMatrix, pipelineState, material, topology, numVertices);
+        return DrawIntoRenderTarget(camera->RenderTarget().get(), &camera->Position(), &camera->ViewMatrix(), &camera->ProjectionMatrix(), modelMatrix, pipelineState, material, topology, numVertices, instanceCount);
     }
 
-    virtual void DrawIndexedWithCamera(const Camera *camera, const struct Matrix4x3 *modelMatrix, const class RendererPipelineState *pipelineState, const class Material *material, PrimitiveTopology topology, ui32 numIndexes, ui32 instanceCount = 1) override
+    virtual void DrawIndexedWithCamera(const Camera *camera, const struct Matrix4x3 *modelMatrix, const class RendererPipelineState *pipelineState, const class Material *material, PrimitiveTopology topology, ui32 numIndexes, ui32 instanceCount) override
     {
         if (camera == nullptr)
         {
             SENDLOG(Error, "DrawWithCamera called with null camera\n");
             return;
         }
-        return DrawIndexedIntoRenderTarget(camera->RenderTarget().get(), &camera->Position(), &camera->ViewMatrix(), &camera->ProjectionMatrix(), modelMatrix, pipelineState, material, topology, numIndexes);
+        return DrawIndexedIntoRenderTarget(camera->RenderTarget().get(), &camera->Position(), &camera->ViewMatrix(), &camera->ProjectionMatrix(), modelMatrix, pipelineState, material, topology, numIndexes, instanceCount);
     }
 
     inline bool DrawGeneric(const class RenderTarget *rt, const Vector3 *cameraPos, const Matrix4x3 *viewMatrix, const Matrix4x4 *projMatrix, const Matrix4x3 *modelMatrix, const RendererPipelineState &pipelineState, const Material &material, PrimitiveTopology topology, ui32 numPoints) // there's currently no caching, no checking of the dirty state

@@ -27,35 +27,6 @@ using namespace physx;
 
 #define PVD_HOST "127.0.0.1" // Set this to the IP address of the system running the PhysX Visual Debugger that you want to connect to.
 
-class PhysicsCubeAccessor : public PhysicsCube
-{
-public:
-    Vector3 Position() const
-    {
-        return _position;
-    }
-
-    void Position(const Vector3 &position)
-    {
-        _position = position;
-    }
-
-    Quaternion Rotation() const
-    {
-        return _rotation;
-    }
-
-    void Rotation(const Quaternion &rotation)
-    {
-        _rotation = rotation;
-    }
-
-    f32 Size() const
-    {
-        return _size;
-    }
-};
-
 namespace
 {
     PxDefaultAllocator DefaultAllocator{};
@@ -70,7 +41,7 @@ namespace
     PxRigidStatic *GroundPlane{};
 
     bool IsInitialized = false;
-    vector<PhysicsCubeAccessor> *Objects{};
+    vector<CubesInstanced::InstanceData> *Objects{};
 
     struct PhysXCubeData
     {
@@ -90,9 +61,6 @@ namespace
     };
     vector<PhysXCubeData> PhysXCubeDatas{};
 }
-
-static PxQuat EulerToQuaternion(const Vector3 &rotation);
-static Vector3 QuaternionToEuler(const PxQuat &rotation);
 
 bool PhysX::Create()
 {
@@ -129,7 +97,7 @@ bool PhysX::Create()
         return false;
     }
 
-    CpuDispatcher = PxDefaultCpuDispatcherCreate(2);
+    CpuDispatcher = PxDefaultCpuDispatcherCreate(3);
     if (!CpuDispatcher)
     {
         SENDLOG(Error, "PhysX::Create -> PxDefaultCpuDispatcherCreate failed\n");
@@ -155,7 +123,7 @@ bool PhysX::Create()
         pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
     }
 
-    PhysXMaterial = Physics->createMaterial(0.5f, 0.5f, 0.5f);
+    PhysXMaterial = Physics->createMaterial(0.5f, 0.5f, 0.6f);
 
     GroundPlane = PxCreatePlane(*Physics, PxPlane(0, 1, 0, 0), *PhysXMaterial);
     PhysXScene->addActor(*GroundPlane);
@@ -212,7 +180,7 @@ void PhysX::Destroy()
 
 void PhysX::Update()
 {
-    if (!IsInitialized)
+    if (!IsInitialized || !Objects)
     {
         return;
     }
@@ -222,7 +190,7 @@ void PhysX::Update()
 
 void PhysX::FinishUpdate()
 {
-    if (!IsInitialized)
+    if (!IsInitialized || !Objects)
     {
         return;
     }
@@ -237,12 +205,12 @@ void PhysX::FinishUpdate()
         auto position = data.actor->getGlobalPose().p;
         auto rotation = data.actor->getGlobalPose().q;
 
-        object.Position({position.x, position.y, position.z});
-        object.Rotation({rotation.x, rotation.y, rotation.z, rotation.w});
+        object.position = {position.x, position.y, position.z};
+        object.rotation = {rotation.x, rotation.y, rotation.z, rotation.w};
     }
 }
 
-void PhysX::SetObjects(vector<PhysicsCube> &objects)
+void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &objects)
 {
     if (!IsInitialized)
     {
@@ -251,7 +219,7 @@ void PhysX::SetObjects(vector<PhysicsCube> &objects)
 
     PhysXCubeDatas.clear();
 
-    Objects = (decltype(Objects))&objects;
+    Objects = &objects;
 
     PhysXCubeDatas.resize(Objects->size());
     for (uiw index = 0, size = Objects->size(); index < size; ++index)
@@ -259,9 +227,9 @@ void PhysX::SetObjects(vector<PhysicsCube> &objects)
         auto &data = PhysXCubeDatas[index];
         auto &object = Objects->operator[](index);
 
-        auto position = object.Position();
-        auto rotation = object.Rotation();
-        auto halfSize = object.Size() * 0.5f;
+        auto position = object.position;
+        auto rotation = object.rotation;
+        auto halfSize = object.size * 0.5f;
 
         data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
         data.shape = data.actor->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial);

@@ -3,6 +3,11 @@
 
 using namespace EngineCore;
 
+namespace EngineCore
+{
+    auto GetPlatformMapping() -> const array<vkeyt, 256> &; // from WinVirtualKeysMapping.cpp
+}
+
 void VKInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	if (msg == WM_SETCURSOR || msg == WM_MOUSEMOVE)
@@ -35,7 +40,7 @@ void VKInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM
 			return;
 		}
 
-		vkey_t key = GetPlatformMapping()[wParam];
+		vkeyt key = GetPlatformMapping()[wParam];
 
 		controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, msg == WM_KEYDOWN ? ControlAction::Key::KeyStateType::Pressed : ControlAction::Key::KeyStateType::Released);
 	}

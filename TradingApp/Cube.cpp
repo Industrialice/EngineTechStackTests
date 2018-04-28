@@ -13,7 +13,6 @@ using namespace TradingApp;
 
 Cube::Cube()
 {
-
     auto shader = Application::LoadResource<Shader>("Colored3DVertices");
     if (shader == nullptr)
     {
@@ -133,7 +132,6 @@ void Cube::Draw(const Camera *camera, const Vector3 &position, const EngineCore:
     Application::GetRenderer().BindIndexArray(_indexArray);
     Application::GetRenderer().BindVertexArray(_vertexArray, 0);
 
-    // write only color
     Application::GetRenderer().DrawIndexedWithCamera(camera, &modelMatrix, _pipelineState.get(), _material.get(), PrimitiveTopology::TriangleEnumeration, _indexArray->NumberOfElements());
 }
 
@@ -149,6 +147,5 @@ void Cube::Draw(const Camera *camera, const Vector3 &position, const EngineCore:
     Application::GetRenderer().BindIndexArray(_indexArray);
     Application::GetRenderer().BindVertexArray(_vertexArray, 0);
 
-    // write only color
     Application::GetRenderer().DrawIndexedWithCamera(camera, &modelMatrix, _pipelineState.get(), _material.get(), PrimitiveTopology::TriangleEnumeration, _indexArray->NumberOfElements());
 }

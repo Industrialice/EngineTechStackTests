@@ -122,7 +122,9 @@ using string_utf32 = std::basic_string<utf32char>;
 #endif
 
 #ifdef _MSC_VER
-#pragma warning(1:4062) /* The enumerate has no associated handler in a switch statement, and there is no default label. */
+#pragma warning(1 : 4062) /* The enumerate has no associated handler in a switch statement, and there is no default label. */
+//#pragma warning(1 : 4265) /* class has virtual functions, but destructor is not virtual */
+#pragma warning(1 : 4800) /* type' : forcing value to bool 'true' or 'false' (performance warning) */
 
 #include <intrin.h>
 
@@ -223,6 +225,15 @@ template <typename T> inline bool IsBitSet(T value, uiw bitNumber)
 {
     assert(bitNumber < sizeof(T) * 8);
     return (value & (1 << bitNumber)) != 0;
+}
+
+#define BIT(n) (1 << (n))
+
+template <typename T> void Drop(T &&) {}
+
+template <typename T, typename R> bool AreSharedPointersEqual(T &&left, R &&right)
+{
+    return left.owner_before(right) == false && right.owner_before(left) == false;
 }
 
 constexpr ui32 RenderTargetsLimit = 8;

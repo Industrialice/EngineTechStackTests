@@ -15,7 +15,7 @@ uiw ControlsQueue::size() const
     return _actions.size();
 }
 
-void ControlsQueue::EnqueueKey(DeviceType deviceType, vkey_t key, ControlAction::Key::KeyStateType keyState)
+void ControlsQueue::EnqueueKey(DeviceType deviceType, vkeyt key, ControlAction::Key::KeyStateType keyState)
 {
     _actions.push_back({key, keyState, chrono::steady_clock::now(), deviceType});
 }
@@ -179,7 +179,7 @@ void KeyController::RemoveListener(ListenerHandle &handle)
     handle._owner.reset();
 }
 
-auto KeyController::GetKeyInfo(vkey_t key, DeviceType deviceType) const -> KeyInfo
+auto KeyController::GetKeyInfo(vkeyt key, DeviceType deviceType) const -> KeyInfo
 {
     ui32 deviceIndex;
     MSNZB32(deviceType, &deviceIndex);

@@ -29,10 +29,10 @@
     <ClCompile Include="PhysicsScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PhysicsCube.cpp">
+    <ClCompile Include="PhysX.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PhysX.cpp">
+    <ClCompile Include="CubesInstanced.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -58,10 +58,10 @@
     <ClInclude Include="PhysicsScene.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PhysicsCube.hpp">
+    <ClInclude Include="PhysX.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PhysX.hpp">
+    <ClInclude Include="CubesInstanced.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

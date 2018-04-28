@@ -1,63 +1,76 @@
 #pragma once
 
+#include "ListenerHandle.hpp"
+
 namespace EngineCore
 {
-	enum class LogLevel : ui32 { Error = (1 << 0), Info = (1 << 1), Warning = (1 << 2), Critical = (1 << 3), Debug = (1 << 4), ImportantInfo = (1 << 5), Other = (1 << 6) };
+    enum class LogLevel : ui32
+    {
+        Error = BIT(0),
+        Info = BIT(1),
+        Warning = BIT(2),
+        Critical = BIT(3),
+        Debug = BIT(4),
+        ImportantInfo = BIT(5),
+        Other = BIT(6)
+    };
 
-	constexpr LogLevel LogLevel_All = LogLevel(UINT32_MAX);
-	constexpr LogLevel LogLevel_None = LogLevel(0);
-	inline LogLevel operator - (LogLevel left, LogLevel right) { return LogLevel((uiw)left & ~(uiw)right); }
-	inline LogLevel operator + (LogLevel left, LogLevel right) { return LogLevel((uiw)left | (uiw)right); }
+    constexpr LogLevel LogLevel_All = LogLevel(UINT32_MAX);
+    constexpr LogLevel LogLevel_None = LogLevel(0);
+    inline LogLevel operator - (LogLevel left, LogLevel right) { return LogLevel((uiw)left & ~(uiw)right); }
+    inline LogLevel operator + (LogLevel left, LogLevel right) { return LogLevel((uiw)left | (uiw)right); }
+    inline LogLevel &operator -= (LogLevel &left, LogLevel right) { left = left - right; return left; }
+    inline LogLevel &operator += (LogLevel &left, LogLevel right) { left = left + right; return left; }
 
-	class Logger : public std::enable_shared_from_this<Logger>
-	{
+    class Logger : public std::enable_shared_from_this<Logger>
+    {
+    #ifndef EXTASY_DISABLE_LOGGING
         struct MessageListener;
+
+        struct ListenerHandleData
+        {
+            weak_ptr<Logger> _owner{};
+            const MessageListener *_messageListener{};
+
+            void Remove();
+            bool operator == (const ListenerHandleData &other) const;
+        };
 
     protected:
         Logger(Logger &&) = delete;
         Logger &operator = (Logger &&) = delete;
         Logger();
 
-	public:
+    public:
         static shared_ptr<Logger> New();
 
-		using ListenerCallbackType = function<void(LogLevel, string_view)>;
+        using ListenerCallbackType = function<void(LogLevel, string_view)>;
 
-        struct ListenerHandle
-        {
-            weak_ptr<Logger> _owner;
-            const MessageListener *_messageListener;
+        using ListenerHandle = TListenerHandle<ListenerHandleData>;
 
-            void Remove();
-
-        public:
-            ~ListenerHandle();
-            ListenerHandle() = default;
-            ListenerHandle(ListenerHandle &&source) = default;
-            ListenerHandle &operator = (ListenerHandle &&source);
-            ListenerHandle(const shared_ptr<Logger> &logger, const MessageListener *messageListener) : _owner(logger), _messageListener(messageListener) {}
-            bool operator == (const ListenerHandle &other) const;
-            bool operator != (const ListenerHandle &other) const;
-        };
-
-		void Message(LogLevel level, const char *format, ...); // printf-family function is going to be used to convert the message into a string
+        void Message(LogLevel level, const char *format, ...); // printf-family function is going to be used to convert the message into a string
         ListenerHandle AddListener(const ListenerCallbackType &listener, LogLevel levelMask = LogLevel_All);
-		void RemoveListener(ListenerHandle &handle);
-        bool IsEnabled() const;
+        void RemoveListener(ListenerHandleData &handle);
         void IsEnabled(bool isEnabled);
+        bool IsEnabled() const;
+        // these methods aren't thread safe themselves, call them from the main thread only
+        void IsThreadSafe(bool isSafe);
+        bool IsThreadSafe() const;
 
-	private:
+    private:
         struct MessageListener
         {
             const ListenerCallbackType callback;
             LogLevel levelMask;
         };
 
-        forward_list<MessageListener> _listeners{};
-        unique_ptr<char[]> _logBuffer{};
-        mutex _lock{};
-        atomic<bool> _isEnabled{true};
+        static constexpr uiw logBufferSize = 65536;
 
-		static constexpr uiw logBufferSize = 65536;
-	};
+        std::mutex _mutex{};
+        forward_list<MessageListener> _listeners{};
+        std::atomic<bool> _isEnabled{true};
+        std::atomic<bool> _isThreadSafe{false};
+        char _logBuffer[logBufferSize];
+    #endif
+    };
 }

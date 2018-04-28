@@ -22,7 +22,7 @@ namespace EngineCore
 	{
 		struct Key
 		{
-            vkey_t key{};
+            vkeyt key{};
 			enum class KeyStateType { Pressed, Released, Repeated } keyState;
 		};
 		struct MouseMove
@@ -39,7 +39,7 @@ namespace EngineCore
 		DeviceType deviceType = DeviceType::MouseKeyboard0;
 
 		ControlAction() {}
-		ControlAction(vkey_t key, Key::KeyStateType state, const decltype(occuredAt) &occuredAt, DeviceType deviceType) : action{ Key{key, state} }, occuredAt{ occuredAt }, deviceType{ deviceType } {}
+		ControlAction(vkeyt key, Key::KeyStateType state, const decltype(occuredAt) &occuredAt, DeviceType deviceType) : action{ Key{key, state} }, occuredAt{ occuredAt }, deviceType{ deviceType } {}
 		ControlAction(i32 deltaX, i32 deltaY, const decltype(occuredAt) &occuredAt, DeviceType deviceType) : action{ MouseMove{deltaX, deltaY} }, occuredAt{ occuredAt }, deviceType{ deviceType } {}
 		ControlAction(i32 delta, const decltype(occuredAt) &occuredAt, DeviceType deviceType) : action{ MouseWheel{delta} }, occuredAt{ occuredAt }, deviceType{ deviceType } {}
 	};
@@ -55,7 +55,7 @@ namespace EngineCore
 		void clear();
 		uiw size() const;
 
-		void EnqueueKey(DeviceType deviceType, vkey_t key, ControlAction::Key::KeyStateType keyState);
+		void EnqueueKey(DeviceType deviceType, vkeyt key, ControlAction::Key::KeyStateType keyState);
 		void EnqueueMouseMove(DeviceType deviceType, i32 deltaX, i32 deltaY);
 		void EnqueueMouseWheel(DeviceType deviceType, i32 delta);
 
@@ -115,7 +115,7 @@ namespace EngineCore
 		void Dispatch(const ControlAction &action);
 		void Dispatch(std::experimental::generator<ControlAction> enumerable);
 		void Update(); // may be used for key repeating
-		KeyInfo GetKeyInfo(vkey_t key, DeviceType deviceType = DeviceType::MouseKeyboard0) const;
+		KeyInfo GetKeyInfo(vkeyt key, DeviceType deviceType = DeviceType::MouseKeyboard0) const;
         ListenerHandle AddListener(const ListenerCallbackType &callback, DeviceType deviceMask = DeviceType_All); // will try to find a listener with the same owner in the current set of listeners, if successful, will check the pointers, if they also correspond, will remove the currently added callback
 		void RemoveListener(ListenerHandle &handle);
 
@@ -134,6 +134,6 @@ namespace EngineCore
         vector<ImmutableListener> _immutableListeners{};
         bool _isMutableListenersDirty = false;
         bool _isCurrentlyEnumeratingImmutableListeners = false;
-        array<array<KeyInfo, (size_t)vkey_t::_size>, DeviceType_ConstantsCount> _keyStates{};
+        array<array<KeyInfo, (size_t)vkeyt::_size>, DeviceType_ConstantsCount> _keyStates{};
 	};
 }

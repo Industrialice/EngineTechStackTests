@@ -133,7 +133,7 @@ static MyCoroutineReturn<bool> ListenKeys(const ControlAction &action)
 	{
 		if (auto key = std::get_if<ControlAction::Key>(&action.action))
 		{
-			if (key->key == vkey_t::Escape)
+			if (key->key == vkeyt::Escape)
 			{
 				PostQuitMessage(0);
 			}
@@ -211,11 +211,11 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 bool CreateApplicationSubsystems()
 {
 	AppWindow appWindow;
-	appWindow.fullscreen = false;
-	appWindow.height = 1000;
-	appWindow.width = 1000;
-	appWindow.x = 1000;
-	appWindow.y = 1000;
+	appWindow.fullscreen = true;
+	appWindow.height = 0;
+	appWindow.width = 0;
+	appWindow.x = 0;
+	appWindow.y = 0;
 	appWindow.title = "EngineCore";
 	appWindow.hideBorders = false;
 
@@ -356,41 +356,41 @@ void MessageLoop()
             camera->ClearDepthValue(1.0f);
 
             float camMovementScale = engineTime.secondSinceLastFrame * 5;
-            if (Application::GetKeyController().GetKeyInfo(vkey_t::Shift).keyState != ControlAction::Key::KeyStateType::Released)
+            if (Application::GetKeyController().GetKeyInfo(vkeyt::LShift).keyState != ControlAction::Key::KeyStateType::Released)
             {
                 camMovementScale *= 3;
             }
-            if (Application::GetKeyController().GetKeyInfo(vkey_t::Control).keyState != ControlAction::Key::KeyStateType::Released)
+            if (Application::GetKeyController().GetKeyInfo(vkeyt::LControl).keyState != ControlAction::Key::KeyStateType::Released)
             {
                 camMovementScale *= 0.33f;
             }
 
-            if (Application::GetKeyController().GetKeyInfo(vkey_t::S).keyState != ControlAction::Key::KeyStateType::Released)
+            if (Application::GetKeyController().GetKeyInfo(vkeyt::S).keyState != ControlAction::Key::KeyStateType::Released)
             {
                 camera->MoveAlongForwardAxis(-camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkey_t::W).keyState != ControlAction::Key::KeyStateType::Released)
+            if (Application::GetKeyController().GetKeyInfo(vkeyt::W).keyState != ControlAction::Key::KeyStateType::Released)
             {
                 camera->MoveAlongForwardAxis(camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkey_t::A).keyState != ControlAction::Key::KeyStateType::Released)
+            if (Application::GetKeyController().GetKeyInfo(vkeyt::A).keyState != ControlAction::Key::KeyStateType::Released)
             {
                 camera->MoveAlongRightAxis(-camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkey_t::D).keyState != ControlAction::Key::KeyStateType::Released)
+            if (Application::GetKeyController().GetKeyInfo(vkeyt::D).keyState != ControlAction::Key::KeyStateType::Released)
             {
                 camera->MoveAlongRightAxis(camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkey_t::R).keyState != ControlAction::Key::KeyStateType::Released)
+            if (Application::GetKeyController().GetKeyInfo(vkeyt::R).keyState != ControlAction::Key::KeyStateType::Released)
             {
                 camera->MoveAlongUpAxis(camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkey_t::F).keyState != ControlAction::Key::KeyStateType::Released)
+            if (Application::GetKeyController().GetKeyInfo(vkeyt::F).keyState != ControlAction::Key::KeyStateType::Released)
             {
                 camera->MoveAlongUpAxis(-camMovementScale);
             }
 
-            if (ui32 newCounter = Application::GetKeyController().GetKeyInfo(vkey_t::Space).timesKeyStateChanged; newCounter != SceneRestartedCounter)
+            if (ui32 newCounter = Application::GetKeyController().GetKeyInfo(vkeyt::Space).timesKeyStateChanged; newCounter != SceneRestartedCounter)
             {
                 SceneRestartedCounter = newCounter;
                 SceneToDraw::Restart();

@@ -6,6 +6,11 @@
 
 using namespace EngineCore;
 
+namespace EngineCore
+{
+    auto GetPlatformMapping() -> const array<vkeyt, 256> &; // from WinVirtualKeysMapping.cpp
+}
+
 HIDInput::~HIDInput()
 {
 	Unregister();
@@ -68,7 +73,7 @@ bool HIDInput::Register(HWND hwnd)
 
 	hids[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
 	hids[0].usUsage = HID_USAGE_GENERIC_MOUSE;
-	hids[0].dwFlags = RIDEV_NOLEGACY;
+	hids[0].dwFlags = 0; // RIDEV_NOLEGACY causes always busy state
 	hids[0].hwndTarget = NULL;
 
 	hids[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
@@ -100,12 +105,12 @@ void HIDInput::Unregister()
 	hids[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
 	hids[0].usUsage = HID_USAGE_GENERIC_MOUSE;
 	hids[0].dwFlags = RIDEV_REMOVE;
-	hids[0].hwndTarget = NULL;
+	hids[0].hwndTarget = NULL; // must be NULL here
 
 	hids[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
 	hids[1].usUsage = HID_USAGE_GENERIC_KEYBOARD;
 	hids[1].dwFlags = RIDEV_REMOVE;
-	hids[1].hwndTarget = NULL;
+	hids[1].hwndTarget = NULL; // must be NULL here
 
 	if (!RegisterRawInputDevices(hids.data(), (UINT)hids.size(), sizeof(RAWINPUTDEVICE)))
 	{
@@ -131,7 +136,8 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 	{
 		const RAWMOUSE &mouse = data.data.mouse;
 
-		if (mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
+        USHORT lowerBit = mouse.usFlags & 0x1;
+		if (lowerBit == MOUSE_MOVE_ABSOLUTE) // when you're connected through remote desktop, flags may be MOUSE_MOVE_ABSOLUTE | MOUSE_VIRTUAL_DESKTOP
 		{
 			HARDBREAK;
 		}
@@ -147,7 +153,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 
 		if (mouse.usButtonFlags)
 		{
-			auto checkKey = [&controlsQueue, &mouse](USHORT windowsUpKey, USHORT windowsDownKey, vkey_t key)
+			auto checkKey = [&controlsQueue, &mouse](USHORT windowsUpKey, USHORT windowsDownKey, vkeyt key)
 			{
 				if (mouse.usButtonFlags & windowsUpKey)
 				{
@@ -159,11 +165,11 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 				}
 			};
 
-			checkKey(RI_MOUSE_BUTTON_1_UP, RI_MOUSE_BUTTON_1_DOWN, vkey_t::MButton0);
-			checkKey(RI_MOUSE_BUTTON_2_UP, RI_MOUSE_BUTTON_2_DOWN, vkey_t::MButton1);
-			checkKey(RI_MOUSE_BUTTON_3_UP, RI_MOUSE_BUTTON_3_DOWN, vkey_t::MButton2);
-			checkKey(RI_MOUSE_BUTTON_4_UP, RI_MOUSE_BUTTON_4_DOWN, vkey_t::MButton3);
-			checkKey(RI_MOUSE_BUTTON_5_UP, RI_MOUSE_BUTTON_5_DOWN, vkey_t::MButton4);
+			checkKey(RI_MOUSE_BUTTON_1_UP, RI_MOUSE_BUTTON_1_DOWN, vkeyt::MButton0);
+			checkKey(RI_MOUSE_BUTTON_2_UP, RI_MOUSE_BUTTON_2_DOWN, vkeyt::MButton1);
+			checkKey(RI_MOUSE_BUTTON_3_UP, RI_MOUSE_BUTTON_3_DOWN, vkeyt::MButton2);
+			checkKey(RI_MOUSE_BUTTON_4_UP, RI_MOUSE_BUTTON_4_DOWN, vkeyt::MButton3);
+			checkKey(RI_MOUSE_BUTTON_5_UP, RI_MOUSE_BUTTON_5_DOWN, vkeyt::MButton4);
 
 			if (mouse.usButtonFlags & RI_MOUSE_WHEEL)
 			{
@@ -182,44 +188,56 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 			return;
 		}
 
-		vkey_t key = GetPlatformMapping()[kb.VKey];
+        bool isReleasing = (kb.Flags & RI_KEY_BREAK) != 0;
+        vkeyt key = GetPlatformMapping()[kb.VKey];
 
-        if (key == vkey_t::Shift || key == vkey_t::Control || key == vkey_t::Alt || key == vkey_t::Enter)
+        // we need additional processing to distinguish between actual left keys and right keys
+        if (key == vkeyt::LShift || key == vkeyt::LControl || key == vkeyt::LAlt || key == vkeyt::LEnter || key == vkeyt::LDelete)
         {
-            if (kb.Flags & RI_KEY_BREAK)
+            if (key == vkeyt::LShift)
             {
-                controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, ControlAction::Key::KeyStateType::Released);
+                if (kb.MakeCode != 0x2A)
+                {
+                    key = vkeyt::RShift;
+                }
             }
-            else // making the key
+            else
             {
-                controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, ControlAction::Key::KeyStateType::Pressed);
-            }
+                bool hasE0Flag = (kb.Flags & RI_KEY_E0) != 0;
 
-            if (key == vkey_t::Shift)
-            {
-                key = (kb.MakeCode == 0x2A) ? vkey_t::LShift : vkey_t::RShift;
-            }
-            else if (key == vkey_t::Control)
-            {
-                //  TODO: left/right
-            }
-            else if (key == vkey_t::Alt)
-            {
-                //  TODO: left/right
-            }
-            else if (key == vkey_t::Enter)
-            {
-                //  TODO: left/right
+                if (key == vkeyt::LControl)
+                {
+                    if (hasE0Flag)
+                    {
+                        key = vkeyt::RControl;
+                    }
+                }
+                else if (key == vkeyt::LAlt)
+                {
+                    if (hasE0Flag)
+                    {
+                        key = vkeyt::RAlt;
+                    }
+                }
+                else if (key == vkeyt::LEnter)
+                {
+                    if (hasE0Flag)
+                    {
+                        key = vkeyt::REnter;
+                    }
+                }
+                else
+                {
+                    assert(key == vkeyt::LDelete);
+
+                    if (hasE0Flag == false) // swapped
+                    {
+                        key = vkeyt::RDelete;
+                    }
+                }
             }
         }
 
-		if (kb.Flags & RI_KEY_BREAK)
-		{
-			controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, ControlAction::Key::KeyStateType::Released);
-		}
-		else // making the key
-		{
-			controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, ControlAction::Key::KeyStateType::Pressed);
-		}
+        controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, isReleasing ? ControlAction::Key::KeyStateType::Released : ControlAction::Key::KeyStateType::Pressed);
 	}
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PhysicsCube.hpp"
+#include "CubesInstanced.hpp"
 
 namespace TradingApp::PhysX
 {
@@ -8,5 +8,5 @@ namespace TradingApp::PhysX
     void Destroy();
     void Update();
     void FinishUpdate();
-    void SetObjects(vector<PhysicsCube> &objects);
+    void SetObjects(vector<CubesInstanced::InstanceData> &objects);
 }
