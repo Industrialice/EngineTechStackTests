@@ -1,5 +1,10 @@
 #pragma once
 
+// TODO: inverse matrix
+// TODO: determinant
+// TODO: matrix conversions (3x3 to 4x4, 4x4 to 3x3 etc.)
+// TODO: Rectangle3D
+
 namespace EngineCore
 {
     template <typename ScalarType> struct Vector2Base;
@@ -51,12 +56,12 @@ namespace EngineCore
     {
         static constexpr uiw dim = Dim;
 
-        static_assert(dim >= 2);
+        static_assert(dim > 1);
 
         using ScalarType = _ScalarType;
         using VectorType = VectorTypeByDimension<ScalarType, dim>;
 
-        ScalarType x, y;
+        ScalarType x = 0, y = 0;
 
         constexpr _VectorBase() = default;
         _VectorBase(ScalarType x, ScalarType y);
@@ -70,27 +75,26 @@ namespace EngineCore
 
         VectorType operator - (const _VectorBase &other) const;
         VectorType operator - (ScalarType scalar) const;
-        friend VectorType operator - (ScalarType scalar, const _VectorBase &vector) { return vector - scalar; }
 
         VectorType &operator -= (const _VectorBase &other);
         VectorType &operator -= (ScalarType scalar);
 
         VectorType operator * (const _VectorBase &other) const;
         VectorType operator * (ScalarType scalar) const;
-        friend VectorType operator * (ScalarType scalar, const _VectorBase &vector) { return vector * scalar; }
+        friend VectorType operator * (ScalarType scalar, const _VectorBase &vector) { return vector * scalar; } // TODO: do we need this?
 
         VectorType &operator *= (const _VectorBase &other);
         VectorType &operator *= (ScalarType scalar);
 
         VectorType operator / (const _VectorBase &other) const;
         VectorType operator / (ScalarType scalar) const;
-        friend VectorType operator / (ScalarType scalar, const _VectorBase &vector) { return vector / scalar; }
+        friend VectorType operator / (ScalarType scalar, const _VectorBase &vector) { return vector / scalar; } // TODO: do we need this?
 
         VectorType &operator /= (const _VectorBase &other);
         VectorType &operator /= (ScalarType scalar);
 
-        const ScalarType *Data() const;
         ScalarType *Data();
+        const ScalarType *Data() const;
         
         bool Equals(const _VectorBase &other) const;
 
@@ -109,7 +113,7 @@ namespace EngineCore
 
     template <typename ScalarType> struct Vector3Base : _VectorBase<ScalarType, 3>
     {
-        ScalarType z;
+        ScalarType z = 0;
 
         Vector3Base() = default;
         Vector3Base(ScalarType x, ScalarType y, ScalarType z);
@@ -121,7 +125,7 @@ namespace EngineCore
 
     template <typename ScalarType> struct Vector4Base : _VectorBase<ScalarType, 4>
     {
-        ScalarType z, w;
+        ScalarType z = 0, w = 0;
 
         Vector4Base() = default;
         Vector4Base(ScalarType x, ScalarType y, ScalarType z, ScalarType w);
@@ -165,6 +169,7 @@ namespace EngineCore
 
         void Normalize();
         VectorType GetNormalized() const;
+        bool IsNormalized(f32 epsilon = DefaultEpsilon) const;
 
         bool EqualsWithEpsilon(const _Vector &other, f32 epsilon = DefaultEpsilon) const;
 
@@ -223,8 +228,8 @@ namespace EngineCore
         array<f32, Columns> &operator [] (uiw index);
         const array<f32, Columns> &operator [] (uiw index) const;
 
-        const f32 *Data() const;
         f32 *Data();
+        const f32 *Data() const;
 
         void Transpose();
         MatrixTypeByDimensions<Columns, Rows> GetTransposed() const;
@@ -237,6 +242,9 @@ namespace EngineCore
 
         f32 FetchValueBoundless(uiw rowIndex, uiw columnIndex) const;
         void StoreValueBoundless(uiw rowIndex, uiw columnIndex, f32 value);
+
+        bool Equals(const _Matrix &other) const;
+        bool EqualsWithEpsilon(const _Matrix &other, f32 epsilon = DefaultEpsilon) const;
 
     protected:
         _Matrix(); // will create identity matrix
@@ -258,6 +266,7 @@ namespace EngineCore
 
         static Matrix4x3 CreateRotationAroundAxis(const Vector3 &axis, f32 angle);
         static Matrix4x3 CreateRTS(const optional<Vector3> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale = nullopt);
+        static Matrix4x3 CreateRTS(const optional<Quaternion> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale = nullopt);
     };
 
     struct Matrix3x4 : _Matrix<3, 4>
@@ -271,7 +280,8 @@ namespace EngineCore
         Matrix3x4(const Vector4 &row0, const Vector4 &row1, const Vector4 &row2);
 
         static Matrix3x4 CreateRotationAroundAxis(const Vector3 &axis, f32 angle);
-        static Matrix3x4 CreateRS(const Vector3 &rotation, const optional<Vector3> &scale = nullopt);
+        static Matrix3x4 CreateRS(const optional<Vector3> &rotation, const optional<Vector3> &scale = nullopt);
+        static Matrix3x4 CreateRS(const optional<Quaternion> &rotation, const optional<Vector3> &scale = nullopt);
     };
 
     struct Matrix4x4 : _Matrix<4, 4>
@@ -287,6 +297,7 @@ namespace EngineCore
 
         static Matrix4x4 CreateRotationAroundAxis(const Vector3 &axis, f32 angle);
         static Matrix4x4 CreateRTS(const optional<Vector3> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale = nullopt);
+        static Matrix4x4 CreateRTS(const optional<Quaternion> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale = nullopt);
         static Matrix4x4 CreatePerspectiveProjection(f32 horizontalFOV, f32 aspectRatio, f32 nearPlane, f32 farPlane);
         // TODO: orthogonal projection
     };
@@ -339,20 +350,63 @@ namespace EngineCore
         Matrix3x3(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2);
 
         static Matrix3x3 CreateRotationAroundAxis(const Vector3 &axis, f32 angle);
-        static Matrix3x3 CreateRS(const Vector3 &rotation, const optional<Vector3> &scale = nullopt);
+        static Matrix3x3 CreateRS(const optional<Vector3> &rotation, const optional<Vector3> &scale = nullopt);
+        static Matrix3x3 CreateRS(const optional<Quaternion> &rotation, const optional<Vector3> &scale = nullopt);
     };
 
-    // TODO: inverse matrix
-    // TODO: determinant
-    // TODO: matrix conversions (3x3 to 4x4, 4x4 to 3x3 etc.)
-    // TODO: finish Quaternion
-
+    // Addition and subtraction are a component-wise operation; composing quaternions should be done via multiplication.
+    // Order matters when composing quaternions : C = A * B will yield a quaternion C that logically
+    // first applies B then A to any subsequent transformation(right first, then left).
     struct Quaternion
     {
-        f32 x, y, z, w;
+        f32 x = 0, y = 0, z = 0, w = 1;
 
+        static Quaternion FromEuler(const Vector3 &source);
+
+        Quaternion() = default;
         Quaternion(f32 x, f32 y, f32 z, f32 w);
-        Quaternion(const Matrix3x3 &matrix);
+        explicit Quaternion(const Matrix3x3 &matrix);
+        Quaternion(const Vector3 &axis, f32 angle); // axis must be normalized, angle is in radians
+
+        Quaternion operator + (const Quaternion &other) const;
+        Quaternion &operator += (const Quaternion &other);
+
+        Quaternion operator - (const Quaternion &other) const;
+        Quaternion &operator -= (const Quaternion &other);
+
+        Quaternion operator * (const Quaternion &other) const;
+        Quaternion &operator *= (const Quaternion &other);
+
+        Quaternion operator * (f32 scale) const;
+        Quaternion &operator *= (f32 scale);
+
+        Quaternion operator / (f32 scale) const;
+        Quaternion &operator /= (f32 scale);
+
+        f32 &operator [] (uiw index);
+        const f32 &operator [] (uiw index) const;
+
+        f32 *Data();
+        const f32 *Data() const;
+
+        Vector3 RotateVector(const Vector3 &source) const;
+
+        void Normalize();
+        Quaternion GetNormalized() const;
+        bool IsNormalized(f32 epsilon = DefaultEpsilon) const;
+
+        void Inverse();
+        Quaternion GetInversed() const;
+
+        f32 GetAngle() const;
+        Vector3 GetRotationAxis() const;
+
+        Vector3 ToEuler() const;
+        std::tuple<Vector3, f32> ToAxisAndAngle() const;
+        Matrix3x3 ToMatrix() const;
+
+        bool Equals(const Quaternion &other) const;
+        bool EqualsWithEpsilon(const Quaternion &other, f32 epsilon = DefaultEpsilon) const;
     };
 
     template <typename T, bool isTopLessThanBottom = true> struct Rectangle
@@ -382,8 +436,6 @@ namespace EngineCore
     using RectangleF32 = Rectangle<f32>;
     using RectangleI32 = Rectangle<i32>;
     using RectangleUI32 = Rectangle<ui32>;
-
-    // TODO: Rectangle3D
 
     /////////////
     // _Vector //

@@ -136,3 +136,19 @@ void Cube::Draw(const Camera *camera, const Vector3 &position, const EngineCore:
     // write only color
     Application::GetRenderer().DrawIndexedWithCamera(camera, &modelMatrix, _pipelineState.get(), _material.get(), PrimitiveTopology::TriangleEnumeration, _indexArray->NumberOfElements());
 }
+
+void Cube::Draw(const Camera *camera, const Vector3 &position, const EngineCore::Quaternion &rotation, f32 size)
+{
+    if (_material == nullptr || _pipelineState == nullptr || _vertexArray == nullptr || _indexArray == nullptr)
+    {
+        return;
+    }
+
+    auto modelMatrix = Matrix4x3::CreateRTS(rotation, position, Vector3{size, size, size});
+
+    Application::GetRenderer().BindIndexArray(_indexArray);
+    Application::GetRenderer().BindVertexArray(_vertexArray, 0);
+
+    // write only color
+    Application::GetRenderer().DrawIndexedWithCamera(camera, &modelMatrix, _pipelineState.get(), _material.get(), PrimitiveTopology::TriangleEnumeration, _indexArray->NumberOfElements());
+}

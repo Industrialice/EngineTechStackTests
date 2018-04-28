@@ -10,7 +10,7 @@ namespace
     unique_ptr<Cube> TestCube;
 }
 
-PhysicsCube::PhysicsCube(const Vector3 &position, const EngineCore::Vector3 &rotation, f32 size) : _position(position), _rotation(rotation), _size(size)
+PhysicsCube::PhysicsCube(const Vector3 &position, const EngineCore::Quaternion &rotation, f32 size) : _position(position), _rotation(rotation), _size(size)
 {
     if (!TestCube)
     {
@@ -18,7 +18,7 @@ PhysicsCube::PhysicsCube(const Vector3 &position, const EngineCore::Vector3 &rot
     }
 }
 
-void PhysicsCube::Update(const EngineCore::Vector3 &position, const EngineCore::Vector3 &rotation)
+void PhysicsCube::Update(const EngineCore::Vector3 &position, const EngineCore::Quaternion &rotation)
 {
     _position = position;
     _rotation = rotation;

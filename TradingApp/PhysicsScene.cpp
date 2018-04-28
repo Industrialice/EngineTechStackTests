@@ -135,5 +135,5 @@ void PlaceCubeRandomly(PhysicsCube &cube)
     f32 ry = (rand() / (f32)RAND_MAX) * MathPi<f32>() * 2;
     f32 rz = (rand() / (f32)RAND_MAX) * MathPi<f32>() * 2;
 
-    cube = PhysicsCube({x, y, z}, {rx, ry, rz}, 1.0f);
+    cube = PhysicsCube({x, y, z}, Quaternion::FromEuler({rx, ry, rz}), 1.0f);
 }

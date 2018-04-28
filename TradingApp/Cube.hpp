@@ -8,6 +8,7 @@ namespace EngineCore
     class RendererIndexArray;
     class Camera;
     struct Vector3;
+    struct Quaternion;
 }
 
 namespace TradingApp
@@ -22,5 +23,6 @@ namespace TradingApp
     public:
         Cube();
         void Draw(const EngineCore::Camera *camera, const EngineCore::Vector3 &position, const EngineCore::Vector3 &rotation, f32 size);
+        void Draw(const EngineCore::Camera *camera, const EngineCore::Vector3 &position, const EngineCore::Quaternion &rotation, f32 size);
     };
 }

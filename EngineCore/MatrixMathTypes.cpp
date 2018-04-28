@@ -1,6 +1,7 @@
 #include "BasicHeader.hpp"
 #include "MatrixMathTypes.hpp"
 #include "_MatrixMathFunctions.hpp"
+#include "MathFunctions.hpp"
 
 using namespace EngineCore;
 
@@ -204,6 +205,11 @@ Matrix4x3 Matrix4x3::CreateRTS(const optional<Vector3> &rotation, const optional
     return EngineCore::CreateRTS<Matrix4x3, true>(rotation, translation, scale);
 }
 
+Matrix4x3 Matrix4x3::CreateRTS(const optional<Quaternion> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale)
+{
+    return EngineCore::CreateRTS<Matrix4x3, true>(rotation, translation, scale);
+}
+
 ///////////////
 // Matrix3x4 //
 ///////////////
@@ -219,7 +225,12 @@ Matrix3x4 Matrix3x4::CreateRotationAroundAxis(const Vector3 &axis, f32 angle)
     return EngineCore::CreateRotationAroundAxis<Matrix3x4>(axis, angle);
 }
 
-Matrix3x4 Matrix3x4::CreateRS(const Vector3 &rotation, const optional<Vector3> &scale)
+Matrix3x4 Matrix3x4::CreateRS(const optional<Vector3> &rotation, const optional<Vector3> &scale)
+{
+    return EngineCore::CreateRTS<Matrix3x4, false>(rotation, nullopt, scale);
+}
+
+Matrix3x4 Matrix3x4::CreateRS(const optional<Quaternion> &rotation, const optional<Vector3> &scale)
 {
     return EngineCore::CreateRTS<Matrix3x4, false>(rotation, nullopt, scale);
 }
@@ -240,6 +251,11 @@ Matrix4x4 Matrix4x4::CreateRotationAroundAxis(const Vector3 &axis, f32 angle)
 }
 
 Matrix4x4 Matrix4x4::CreateRTS(const optional<Vector3> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale)
+{
+    return EngineCore::CreateRTS<Matrix4x4, true>(rotation, translation, scale);
+}
+
+Matrix4x4 Matrix4x4::CreateRTS(const optional<Quaternion> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale)
 {
     return EngineCore::CreateRTS<Matrix4x4, true>(rotation, translation, scale);
 }
@@ -279,7 +295,12 @@ Matrix3x3 Matrix3x3::CreateRotationAroundAxis(const Vector3 &axis, f32 angle)
     return EngineCore::CreateRotationAroundAxis<Matrix3x3>(axis, angle);
 }
 
-Matrix3x3 Matrix3x3::CreateRS(const Vector3 &rotation, const optional<Vector3> &scale)
+Matrix3x3 Matrix3x3::CreateRS(const optional<Vector3> &rotation, const optional<Vector3> &scale)
+{
+    return EngineCore::CreateRTS<Matrix3x3, false>(rotation, nullopt, scale);
+}
+
+Matrix3x3 Matrix3x3::CreateRS(const optional<Quaternion> &rotation, const optional<Vector3> &scale)
 {
     return EngineCore::CreateRTS<Matrix3x3, false>(rotation, nullopt, scale);
 }
@@ -288,10 +309,338 @@ Matrix3x3 Matrix3x3::CreateRS(const Vector3 &rotation, const optional<Vector3> &
 // Quaternion //
 ////////////////
 
+Quaternion Quaternion::FromEuler(const Vector3 &source)
+{
+    f32 cx = cos(source.x);
+    f32 cy = cos(source.y);
+    f32 cz = cos(source.z);
+
+    f32 sx = sin(source.x);
+    f32 sy = sin(source.y);
+    f32 sz = sin(source.z);
+
+    f32 w = cx * cy * cz + sx * sy * sz;
+    f32 x = sx * cy * cz - cx * sy * sz;
+    f32 y = cx * sy * cz + sx * cy * sz;
+    f32 z = cx * cy * sz - sx * sy * cz;
+
+    return {x, y, z, w};
+}
+
 Quaternion::Quaternion(f32 x, f32 y, f32 z, f32 w) : x(x), y(y), z(z), w(w)
 {}
 
+// TODO: make sure that the rotation matrix is unit length (doesn't contain scale)
 Quaternion::Quaternion(const Matrix3x3 &matrix)
 {
-    NOIMPL;
+    const f32 trace = matrix[0][0] + matrix[1][1] + matrix[2][2];
+
+    if (trace > 0.0f)
+    {
+        f32 s = sqrt(trace + 1.0f);
+        w = s * 0.5f;
+        s = 0.5f / s;
+
+        x = (matrix[1][2] - matrix[2][1]) * s;
+        y = (matrix[2][0] - matrix[0][2]) * s;
+        z = (matrix[0][1] - matrix[1][0]) * s;
+    }
+    else
+    {
+        static constexpr uiw nxt[3] = {1, 2, 0};
+        uiw i = 0;
+
+        if (matrix[1][1] > matrix[0][0])
+        {
+            i = 1;
+        }
+        if (matrix[2][2] > matrix[i][i])
+        {
+            i = 2;
+        }
+
+        uiw j = nxt[i];
+        uiw k = nxt[j];
+        
+        f32 s = sqrt((matrix[i][i] - (matrix[j][j] + matrix[k][k])) + 1.0f);
+
+        operator[](i) = s * 0.5f;
+        s = 0.5f / s;
+
+        operator[](3) = (matrix[j][k] - matrix[k][j]) * s;
+        operator[](j) = (matrix[i][j] + matrix[j][i]) * s;
+        operator[](k) = (matrix[i][k] + matrix[k][i]) * s;
+    }
+}
+
+Quaternion::Quaternion(const Vector3 &axis, f32 angle)
+{
+    assert(axis.IsNormalized());
+
+    const f32 halfAngle = 0.5f * angle;
+    const f32 s = sin(halfAngle);
+
+    x = s * axis.x;
+    y = s * axis.y;
+    z = s * axis.z;
+    w = cos(halfAngle);
+}
+
+Quaternion Quaternion::operator + (const Quaternion &other) const
+{
+    return {x + other.x, y + other.y, z + other.z, w + other.w};
+}
+
+Quaternion &Quaternion::operator += (const Quaternion &other)
+{
+    x += other.x;
+    y += other.y;
+    z += other.z;
+    w += other.w;
+    return *this;
+}
+
+Quaternion Quaternion::operator - (const Quaternion &other) const
+{
+    return {x - other.x, y - other.y, z - other.z, w - other.w};
+}
+
+Quaternion &Quaternion::operator -= (const Quaternion &other)
+{
+    x -= other.x;
+    y -= other.y;
+    z -= other.z;
+    w -= other.w;
+    return *this;
+}
+
+Quaternion Quaternion::operator * (const Quaternion &other) const
+{
+    f32 nx = w * other.x + x * other.w + y * other.z - z * other.y;
+    f32 ny = w * other.y + y * other.w + z * other.x - x * other.z;
+    f32 nz = w * other.z + z * other.w + x * other.y - y * other.x;
+    f32 nw = w * other.w - x * other.x - y * other.y - z * other.z;
+    return {nx, ny, nz, nw};
+}
+
+Quaternion &Quaternion::operator *= (const Quaternion &other)
+{
+    f32 nx = w * other.x + x * other.w + y * other.z - z * other.y;
+    f32 ny = w * other.y + y * other.w + z * other.x - x * other.z;
+    f32 nz = w * other.z + z * other.w + x * other.y - y * other.x;
+    f32 nw = w * other.w - x * other.x - y * other.y - z * other.z;
+    x = nx;
+    y = ny;
+    z = nz;
+    w = nw;
+    return *this;
+}
+
+Quaternion Quaternion::operator * (f32 scale) const
+{
+    return {x * scale, y * scale, z * scale, w * scale};
+}
+
+Quaternion &Quaternion::operator *= (f32 scale)
+{
+    x *= scale;
+    y *= scale;
+    z *= scale;
+    w *= scale;
+    return *this;
+}
+
+Quaternion Quaternion::operator / (f32 scale) const
+{
+    f32 r = 1.0f / scale;
+    return {x * r, y * r, z * r, w * r};
+}
+
+Quaternion &Quaternion::operator /= (f32 scale)
+{
+    f32 r = 1.0f / scale;
+    x *= r;
+    y *= r;
+    z *= r;
+    w *= r;
+    return *this;
+}
+
+f32 &Quaternion::operator[](uiw index)
+{
+    if (index == 0) return x;
+    if (index == 1) return y;
+    if (index == 2) return z;
+    assert(index == 3);
+    return w;
+}
+
+const f32 &Quaternion::operator[](uiw index) const
+{
+    if (index == 0) return x;
+    if (index == 1) return y;
+    if (index == 2) return z;
+    assert(index == 3);
+    return w;
+}
+
+f32 *Quaternion::Data()
+{
+    return &x;
+}
+
+const f32 *Quaternion::Data() const
+{
+    return &x;
+}
+
+Vector3 Quaternion::RotateVector(const Vector3 &source) const
+{
+    Vector3 normal{x, y, z};
+    Vector3 t = 2.0f * normal.GetCrossed(source);
+    return source + (w * t) + normal.GetCrossed(t);
+}
+
+void Quaternion::Normalize()
+{
+    f32 lengthSquare = x * x + y * y + z * z + w * w;
+    f32 r = RSqrtPrecise(lengthSquare);
+    x *= r;
+    y *= r;
+    z *= r;
+    w *= r;
+}
+
+Quaternion Quaternion::GetNormalized() const
+{
+    f32 lengthSquare = x * x + y * y + z * z + w * w;
+    f32 r = RSqrtPrecise(lengthSquare);
+    return {x * r, y * r, z * r, w * r};
+}
+
+bool Quaternion::IsNormalized(f32 epsilon) const
+{
+    f32 length = sqrt(x * x + y * y + z * z + w * w);
+    return (length >= 1.0f - epsilon) && (length <= 1.0f + epsilon);
+}
+
+void Quaternion::Inverse()
+{
+    x = -x;
+    y = -y;
+    z = -z;
+}
+
+Quaternion Quaternion::GetInversed() const
+{
+    return {-x, -y, -z, w};
+}
+
+f32 Quaternion::GetAngle() const
+{
+    return 2.0f * acos(w);
+}
+
+Vector3 Quaternion::GetRotationAxis() const
+{
+    f32 r = RSqrtPrecise(std::max(1.0f - (w * w), DefaultEpsilon));
+    return {x * r, y * r, z * r};
+}
+
+// based on https://math.stackexchange.com/questions/1477926/quaternion-to-euler-with-some-properties
+Vector3 Quaternion::ToEuler() const
+{
+    const f32 sqx = x * x;
+    const f32 sqy = y * y;
+    const f32 sqz = z * z;
+
+    f32 eulerX, eulerY, eulerZ;
+
+    f32 singularity = x * z - y * w;
+    if (singularity > 0.4999995f)
+    {
+        eulerX = atan2(x, w);
+        eulerY = MathPiHalf<f32>();
+        eulerZ = atan2(z, w);
+    }
+    else if (singularity < -0.4999995f)
+    {
+        eulerX = atan2(x, w);
+        eulerY = -MathPiHalf<f32>();
+        eulerZ = atan2(z, w);
+    }
+    else
+    {
+        eulerX = atan2(y * z + x * w, 0.5f - sqy - sqx);
+        eulerY = -asin(singularity * 2.0f);
+        eulerZ = atan2(y * x + z * w, 0.5f - sqy - sqz);
+    }
+
+    return {eulerX, eulerY, eulerZ};
+}
+
+std::tuple<Vector3, f32> Quaternion::ToAxisAndAngle() const
+{
+    return {GetRotationAxis(), GetAngle()};
+}
+
+Matrix3x3 Quaternion::ToMatrix() const
+{
+    Matrix3x3 result;
+
+    f32 sqx = x * x;
+    f32 sqy = y * y;
+    f32 sqz = z * z;
+
+    f32 doubleWX = 2.0f * w * x;
+    f32 doubleWY = 2.0f * w * y;
+    f32 doubleWZ = 2.0f * w * z;
+
+    f32 doubleXY = 2.0f * x * y;
+    f32 doubleXZ = 2.0f * x * z;
+    f32 doubleYZ = 2.0f * y * z;
+
+    f32 doubleSQX = 2.0f * sqx;
+    f32 doubleSQY = 2.0f * sqy;
+    f32 doubleSQZ = 2.0f * sqz;
+
+    result[0][0] = 1.0f - doubleSQY - doubleSQZ;
+    result[0][1] = doubleXY + doubleWZ;
+    result[0][2] = doubleXZ - doubleWY;
+
+    result[1][0] = doubleXY - doubleWZ;
+    result[1][1] = 1.0f - doubleSQX - doubleSQZ;
+    result[1][2] = doubleYZ + doubleWX;
+
+    result[2][0] = doubleXZ + doubleWY;
+    result[2][1] = doubleYZ - doubleWX;
+    result[2][2] = 1.0f - doubleSQX - doubleSQY;
+
+    return result;
+}
+
+bool Quaternion::Equals(const Quaternion &other) const
+{
+    return x == other.x && y == other.y && z == other.z && w == other.w;
+}
+
+bool Quaternion::EqualsWithEpsilon(const Quaternion &other, f32 epsilon) const
+{
+    if (abs(x - other.x) > epsilon)
+    {
+        return false;
+    }
+    if (abs(y - other.y) > epsilon)
+    {
+        return false;
+    }
+    if (abs(z - other.z) > epsilon)
+    {
+        return false;
+    }
+    if (abs(w - other.w) > epsilon)
+    {
+        return false;
+    }
+    return true;
 }

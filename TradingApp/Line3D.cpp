@@ -159,7 +159,7 @@ void Line3D::Draw(const Camera *camera, const Vector3 &point0, const Vector3 &po
     Vector3 scale{direction.Length() * 2, thickness * 2, thickness * 2};
     Vector3 directionNormal = direction.GetNormalized();
 
-    auto modelMatrix = Matrix4x3::CreateRTS(nullopt, center, scale);
+    auto modelMatrix = Matrix4x3::CreateRTS(optional<Vector3>{}, center, scale);
 
     Application::GetRenderer().BindIndexArray(_indexArray);
     Application::GetRenderer().BindVertexArray(_vertexArray, 0);

@@ -80,19 +80,19 @@ void Camera::Roll(f32 angle)
 
 Vector3 Camera::RightAxis() const
 {
-    auto rotMatrix = Matrix3x3::CreateRS({_pitch, _yaw, _roll});
+    auto rotMatrix = Matrix3x3::CreateRS(Vector3{_pitch, _yaw, _roll});
     return Vector3(1, 0, 0) * rotMatrix;
 }
 
 Vector3 Camera::UpAxis() const
 {
-    auto rotMatrix = Matrix3x3::CreateRS({_pitch, _yaw, _roll});
+    auto rotMatrix = Matrix3x3::CreateRS(Vector3{_pitch, _yaw, _roll});
     return Vector3(0, 1, 0) * rotMatrix;
 }
 
 Vector3 Camera::ForwardAxis() const
 {
-    auto rotMatrix = Matrix3x3::CreateRS({_pitch, _yaw, _roll});
+    auto rotMatrix = Matrix3x3::CreateRS(Vector3{_pitch, _yaw, _roll});
     return Vector3(0, 0, 1) * rotMatrix;
 }
 

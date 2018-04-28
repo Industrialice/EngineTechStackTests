@@ -10,22 +10,34 @@ namespace EngineCore
         return pi;
     }
 
-    inline f32 DegToRad(f32 deg)
+    template <typename T> constexpr inline T MathPiHalf()
+    {
+        constexpr T pi = T(M_PI_2);
+        return pi;
+    }
+
+    template <typename T> constexpr inline T MathPiQuarter()
+    {
+        constexpr T pi = T(M_PI_4);
+        return pi;
+    }
+
+    constexpr inline f32 DegToRad(f32 deg)
     {
         return deg * (MathPi<f32>() / 180.0f);
     }
 
-    inline f64 DegToRad(f64 deg)
+    constexpr inline f64 DegToRad(f64 deg)
     {
         return deg * (MathPi<f64>() / 180.0);
     }
 
-    inline f32 RadToDeg(f32 rad)
+    constexpr inline f32 RadToDeg(f32 rad)
     {
         return rad * (180.0f / MathPi<f32>());
     }
 
-    inline f64 RadToDeg(f64 rad)
+    constexpr inline f64 RadToDeg(f64 rad)
     {
         return rad * (180.0 / MathPi<f64>());
     }
@@ -51,6 +63,24 @@ namespace EngineCore
         if (rad < 0)
         {
             rad += pi2;
+        }
+
+        return rad;
+    }
+
+    template <typename T> constexpr inline T RadNormalizeFast(T rad)
+    {
+        constexpr T pi2 = MathPi<T>() * 2;
+
+        if (rad < 0)
+        {
+            assert(rad + pi2 >= 0);
+            return rad + pi2;
+        }
+        if (rad > pi2)
+        {
+            assert(rad - pi2 < pi2);
+            return rad - pi2;
         }
 
         return rad;

@@ -3,6 +3,7 @@
 #include <PxPhysicsAPI.h>
 #include <Application.hpp>
 #include <Logger.hpp>
+#include <MathFunctions.hpp>
 
 #ifdef DEBUG
     #pragma comment(lib, "PxFoundationDEBUG_x64.lib")
@@ -39,12 +40,12 @@ public:
         _position = position;
     }
 
-    Vector3 Rotation() const
+    Quaternion Rotation() const
     {
         return _rotation;
     }
 
-    void Rotation(const Vector3 &rotation)
+    void Rotation(const Quaternion &rotation)
     {
         _rotation = rotation;
     }
@@ -237,7 +238,7 @@ void PhysX::FinishUpdate()
         auto rotation = data.actor->getGlobalPose().q;
 
         object.Position({position.x, position.y, position.z});
-        object.Rotation(QuaternionToEuler(rotation));
+        object.Rotation({rotation.x, rotation.y, rotation.z, rotation.w});
     }
 }
 
@@ -262,49 +263,10 @@ void PhysX::SetObjects(vector<PhysicsCube> &objects)
         auto rotation = object.Rotation();
         auto halfSize = object.Size() * 0.5f;
 
-        data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, EulerToQuaternion(rotation)));
+        data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
         data.shape = data.actor->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial);
         PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
 
         PhysXScene->addActor(*data.actor);
     }
-}
-
-PxQuat EulerToQuaternion(const Vector3 &rotation)
-{
-    physx::PxReal cos_x = cosf(rotation.x);
-    physx::PxReal cos_y = cosf(rotation.y);
-    physx::PxReal cos_z = cosf(rotation.z);
-
-    physx::PxReal sin_x = sinf(rotation.x);
-    physx::PxReal sin_y = sinf(rotation.y);
-    physx::PxReal sin_z = sinf(rotation.z);
-
-    physx::PxQuat quat = physx::PxQuat();
-
-    quat.w = cos_x * cos_y*cos_z + sin_x * sin_y*sin_z;
-    quat.x = sin_x * cos_y*cos_z - cos_x * sin_y*sin_z;
-    quat.y = cos_x * sin_y*cos_z + sin_x * cos_y*sin_z;
-    quat.z = cos_x * cos_y*sin_z - sin_x * sin_y*cos_z;
-
-    return quat;
-}
-
-Vector3 QuaternionToEuler(const PxQuat &rotation)
-{
-    f32 x = rotation.x;
-    f32 y = rotation.y;
-    f32 z = rotation.z;
-    f32 w = rotation.w;
-
-    const f32 sqw = w * w;
-    const f32 sqx = x * x;
-    const f32 sqy = y * y;
-    const f32 sqz = z * z;
-
-    f32 eulerX = atan2(2.0f * (y*z + x * w), -sqx - sqy + sqz + sqw);
-    f32 eulerY = asin(clamp(-2.0f * (x*z - y * w), -1.0f, 1.0f));
-    f32 eulerZ = atan2(2.0f * (x*y + z * w), sqx - sqy - sqz + sqw);
-
-    return {eulerX, eulerY, eulerZ};
 }

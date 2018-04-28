@@ -150,6 +150,58 @@ using string_utf32 = std::basic_string<utf32char>;
 #endif
 #endif
 
+ /* The constant 0x5f37642f balances the relative error at +-0.034213.
+ The constant 0x5f30c7f0 makes the relative error range from 0 to
+ -0.061322.
+ The constant 0x5f400000 makes the relative error range from 0 to
+ +0.088662. */
+inline f32 RSqrtVeryFast(f32 x0)
+{
+    union { i32 ix; f32 x; };
+
+    x = x0;
+    ix = 0x5f37642f - (ix >> 1); // Initial guess.
+    return x;
+}
+
+ /* Notes: For more accuracy, repeat the Newton step (just duplicate the
+ line). The routine always gets the result too low. According to Chris
+ Lomont, the relative error is at most -0.00175228.
+ Therefore, to cut its relative error in half, making it approximately
+ plus or minus 0.000876, change the 1.5f in the Newton step to 1.500876f
+ (1.5008908 works best for me, rel err is +-0.0008911).
+ Chris says that changing the hex constant to 0x5f375a86 reduces the
+ maximum relative error slightly, to 0.00175124. (I get 0.00175128. But
+ the best I can do is use 5f375a82, which gives rel err = 0 to
+ -0.00175123). However, using that value seems to usually give a slightly
+ larger relative error, according to Chris.
+ The routine can be adapted to IEEE double precision. */
+inline f32 RSqrtFast(f32 x0)
+{
+    union { i32 ix; f32 x; };
+
+    x = x0;
+    f32 xhalf = 0.5f * x;
+    ix = 0x5f375a82 - (ix >> 1);    // Initial guess.
+    x = x * (1.5008908f - xhalf * x * x);   // Newton step.
+    return x;
+}
+
+/* This is rsqrt with an additional step of the Newton iteration, for
+increased accuracy. The constant 0x5f37599e makes the relative error
+range from 0 to -0.00000463.
+You can't balance the error by adjusting the constant. */
+inline f32 RSqrtPrecise(f32 x)
+{
+    float xhalf = 0.5f*x;
+    i32 i = *(i32 *)&x;
+    i = 0x5f37599e - (i >> 1);   // Initial guess.
+    x = *(f32 *)&i;            // View i as float.
+    x = x * (1.5f - xhalf * x * x);    // Newton step.
+    x = x * (1.5f - xhalf * x * x);    // Newton step again.
+    return x;
+}
+
 template <typename T> inline void MemCpy(T *__restrict target, const T *source, uiw size)
 {
 	memcpy(target, source, size * sizeof(T));

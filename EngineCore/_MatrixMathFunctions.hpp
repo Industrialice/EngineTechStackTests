@@ -131,12 +131,12 @@ namespace EngineCore
         return *(VectorType *)this;
     }
 
-    template<typename ScalarType, uiw Dim> inline const ScalarType *_VectorBase<ScalarType, Dim>::Data() const
+    template<typename ScalarType, uiw Dim> inline ScalarType *_VectorBase<ScalarType, Dim>::Data()
     {
         return &x;
     }
 
-    template<typename ScalarType, uiw Dim> inline ScalarType *_VectorBase<ScalarType, Dim>::Data()
+    template<typename ScalarType, uiw Dim> inline const ScalarType *_VectorBase<ScalarType, Dim>::Data() const
     {
         return &x;
     }
@@ -338,7 +338,7 @@ namespace EngineCore
 
     template <typename Basis> inline void _Vector<Basis>::Normalize()
     {
-        f32 revLength = 1.0f / Length();
+        f32 revLength = RSqrtPrecise(LengthSquare());
         for (uiw index = 0; index < dim; ++index)
         {
             operator[](index) *= revLength;
@@ -348,12 +348,18 @@ namespace EngineCore
     template <typename Basis> inline auto _Vector<Basis>::GetNormalized() const -> VectorType
     {
         VectorType result;
-        f32 revLength = 1.0f / Length();
+        f32 revLength = RSqrtPrecise(LengthSquare());
         for (uiw index = 0; index < dim; ++index)
         {
             result[index] = operator[](index) * revLength;
         }
         return result;
+    }
+
+    template<typename Basis> inline bool _Vector<Basis>::IsNormalized(f32 epsilon) const
+    {
+        f32 length = Length();
+        return (length >= 1.0f - epsilon) && (length <= 1.0f + epsilon);
     }
 
     template <typename Basis> inline bool _Vector<Basis>::EqualsWithEpsilon(const _Vector &other, f32 epsilon) const
@@ -493,13 +499,13 @@ namespace EngineCore
         return elements[index];
     }
 
-    template<uiw Rows, uiw Columns> inline const f32 *_Matrix<Rows, Columns>::Data() const
-    { 
+    template<uiw Rows, uiw Columns> inline f32 *_Matrix<Rows, Columns>::Data()
+    {
         return elements.data()->data();
     }
 
-    template<uiw Rows, uiw Columns> inline f32 *_Matrix<Rows, Columns>::Data()
-    {
+    template<uiw Rows, uiw Columns> inline const f32 *_Matrix<Rows, Columns>::Data() const
+    { 
         return elements.data()->data();
     }
 
@@ -587,6 +593,36 @@ namespace EngineCore
         elements[rowIndex][columnIndex] = value;
     }
 
+    template<uiw Rows, uiw Columns> inline bool _Matrix<Rows, Columns>::Equals(const _Matrix &other) const
+    {
+        for (uiw rowIndex = 0; rowIndex < Rows; ++rowIndex)
+        {
+            for (uiw columnIndex = 0; columnIndex < Columns; ++columnIndex)
+            {
+                if (elements[rowIndex][columnIndex] != other[rowIndex][columnIndex])
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    template<uiw Rows, uiw Columns> inline bool _Matrix<Rows, Columns>::EqualsWithEpsilon(const _Matrix &other, f32 epsilon) const
+    {
+        for (uiw rowIndex = 0; rowIndex < Rows; ++rowIndex)
+        {
+            for (uiw columnIndex = 0; columnIndex < Columns; ++columnIndex)
+            {
+                if (abs(elements[rowIndex][columnIndex] - other[rowIndex][columnIndex]) > epsilon)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     template<uiw Rows, uiw Columns> inline _Matrix<Rows, Columns>::_Matrix()
     {
         for (uiw rowIndex = 0; rowIndex < Rows; ++rowIndex)
@@ -605,9 +641,9 @@ namespace EngineCore
         }
     }
 
-    template <typename MatrixType, bool isUseTranslation> inline MatrixType CreateRTS(const optional<Vector3> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale = nullopt)
+    template <typename MatrixType, bool isAllowTranslation> inline MatrixType CreateRTS(const optional<Vector3> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale = nullopt)
     {
-        static_assert(MatrixType::rows >= (isUseTranslation ? 4 : 3));
+        static_assert(MatrixType::rows >= (isAllowTranslation ? 4 : 3));
         static_assert(MatrixType::columns >= 3);
 
         MatrixType result;
@@ -646,7 +682,47 @@ namespace EngineCore
             }
         }
 
-        if (isUseTranslation && translation)
+        if (isAllowTranslation && translation)
+        {
+            result[3][0] = translation->x;
+            result[3][1] = translation->y;
+            result[3][2] = translation->z;
+        }
+
+        return result;
+    }
+
+    template <typename MatrixType, bool isAllowTranslation> inline MatrixType CreateRTS(const optional<Quaternion> &rotation, const optional<Vector3> &translation, const optional<Vector3> &scale = nullopt)
+    {
+        static_assert(MatrixType::rows >= (isAllowTranslation ? 4 : 3));
+        static_assert(MatrixType::columns >= 3);
+
+        MatrixType result;
+
+        if (rotation)
+        {
+            Matrix3x3 rotationMatrix = rotation->ToMatrix();
+            for (uiw rowIndex = 0; rowIndex < 3; ++rowIndex)
+            {
+                for (uiw columnIndex = 0; columnIndex < 3; ++columnIndex)
+                {
+                    result[rowIndex][columnIndex] = rotationMatrix[rowIndex][columnIndex];
+                }
+            }
+        }
+
+        if (scale)
+        {
+            for (uiw rowIndex = 0; rowIndex < 3; ++rowIndex)
+            {
+                for (uiw columnIndex = 0; columnIndex < 3; ++columnIndex)
+                {
+                    result[rowIndex][columnIndex] *= scale->operator[](rowIndex);
+                }
+            }
+        }
+
+        if (isAllowTranslation && translation)
         {
             result[3][0] = translation->x;
             result[3][1] = translation->y;
