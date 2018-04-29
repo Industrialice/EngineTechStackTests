@@ -24,12 +24,14 @@ namespace TradingApp
     public:
         struct InstanceData
         {
-            EngineCore::Vector3 position;
             EngineCore::Quaternion rotation;
+            EngineCore::Vector3 position;
             f32 size;
         };
 
         CubesInstanced(ui32 maxInstances);
-        void Draw(const EngineCore::Camera *camera, const InstanceData *instances, ui32 instancesCount);
+        InstanceData *Lock(ui32 instancesCount);
+        void Unlock();
+        void Draw(const EngineCore::Camera *camera, ui32 instancesCount);
     };
 }

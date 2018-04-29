@@ -41,10 +41,10 @@ namespace
     PxRigidStatic *GroundPlane{};
 
     bool IsInitialized = false;
-    vector<CubesInstanced::InstanceData> *Objects{};
 
     struct PhysXCubeData
     {
+        f32 size;
         PxRigidDynamic *actor{};
         PxShape *shape{};
 
@@ -60,6 +60,8 @@ namespace
         }
     };
     vector<PhysXCubeData> PhysXCubeDatas{};
+
+    unique_ptr<CubesInstanced> InstancedCubes{};
 }
 
 bool PhysX::Create()
@@ -97,7 +99,7 @@ bool PhysX::Create()
         return false;
     }
 
-    CpuDispatcher = PxDefaultCpuDispatcherCreate(3);
+    CpuDispatcher = PxDefaultCpuDispatcherCreate(4);
     if (!CpuDispatcher)
     {
         SENDLOG(Error, "PhysX::Create -> PxDefaultCpuDispatcherCreate failed\n");
@@ -180,7 +182,7 @@ void PhysX::Destroy()
 
 void PhysX::Update()
 {
-    if (!IsInitialized || !Objects)
+    if (!IsInitialized)
     {
         return;
     }
@@ -188,26 +190,31 @@ void PhysX::Update()
     PhysXScene->simulate(Application::GetEngineTime().secondSinceLastFrame);
 }
 
-void PhysX::FinishUpdate()
+void PhysX::Draw(const EngineCore::Camera &camera)
 {
-    if (!IsInitialized || !Objects)
+    if (!IsInitialized)
     {
         return;
     }
 
     PhysXScene->fetchResults(true);
 
-    for (uiw index = 0, size = Objects->size(); index < size; ++index)
+    CubesInstanced::InstanceData *lock = InstancedCubes->Lock(PhysXCubeDatas.size());
+
+    for (const auto &data : PhysXCubeDatas)
     {
-        auto &data = PhysXCubeDatas[index];
-        auto &object = Objects->operator[](index);
+        const auto &phyPos = data.actor->getGlobalPose();
 
-        auto position = data.actor->getGlobalPose().p;
-        auto rotation = data.actor->getGlobalPose().q;
+        lock->position = {phyPos.p.x, phyPos.p.y, phyPos.p.z};
+        lock->rotation = {phyPos.q.x, phyPos.q.y, phyPos.q.z, phyPos.q.w};
+        lock->size = data.size;
 
-        object.position = {position.x, position.y, position.z};
-        object.rotation = {rotation.x, rotation.y, rotation.z, rotation.w};
+        ++lock;
     }
+
+    InstancedCubes->Unlock();
+
+    InstancedCubes->Draw(&camera, (ui32)PhysXCubeDatas.size());
 }
 
 void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &objects)
@@ -219,18 +226,22 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &objects)
 
     PhysXCubeDatas.clear();
 
-    Objects = &objects;
+    if (!InstancedCubes)
+    {
+        InstancedCubes = make_unique<CubesInstanced>(objects.size());
+    }
 
-    PhysXCubeDatas.resize(Objects->size());
-    for (uiw index = 0, size = Objects->size(); index < size; ++index)
+    PhysXCubeDatas.resize(objects.size());
+    for (uiw index = 0, size = objects.size(); index < size; ++index)
     {
         auto &data = PhysXCubeDatas[index];
-        auto &object = Objects->operator[](index);
+        auto &object = objects[index];
 
         auto position = object.position;
         auto rotation = object.rotation;
         auto halfSize = object.size * 0.5f;
 
+        data.size = object.size;
         data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
         data.shape = data.actor->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial);
         PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);

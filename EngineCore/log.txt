@@ -1,5 +1,4 @@
 [inf] Log started
-[inf] Display mode has been changed to fullscreen
 [inf] Detected 11 HID devices
 [inf] HID device 0 name is \\?\HID#VID_046D&PID_C231#2&e9c483e&0&0000#{378de44c-56ef-11d1-bc8c-00a0c91405dd}, type is Mouse
 [inf] HID device 1 name is \\?\HID#VID_046D&PID_C232#2&6bacd57&0&0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd}, type is Keyboard
@@ -15,8 +14,8 @@
 [inf] HIDInput::Register's completed
 [inf] Using HID input
 [inf] OpenGLRenderer's created
-[inf] Texture generation with isUseThinStrips true took 0.067589s
-[inf] Texture generation with isUseThinStrips false took 0.036350s
+[inf] Texture generation with isUseThinStrips true took 0.067068s
+[inf] Texture generation with isUseThinStrips false took 0.035730s
 [inf] SceneBackground's created
 [inf] Application subsystems're created
 [inf] Compiled a new shader

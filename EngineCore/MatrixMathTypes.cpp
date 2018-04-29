@@ -496,9 +496,11 @@ const f32 *Quaternion::Data() const
 
 Vector3 Quaternion::RotateVector(const Vector3 &source) const
 {
-    Vector3 normal{x, y, z};
-    Vector3 t = 2.0f * normal.GetCrossed(source);
-    return source + (w * t) + normal.GetCrossed(t);
+    Vector3 u{x, y, z};
+    Vector3 v = source;
+    Vector3 uv = u.GetCrossed(v);
+    Vector3 uuv = u.GetCrossed(uv);
+    return v + ((uv * w) + uuv) * 2.0f;
 }
 
 void Quaternion::Normalize()

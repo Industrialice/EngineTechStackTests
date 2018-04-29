@@ -211,11 +211,11 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 bool CreateApplicationSubsystems()
 {
 	AppWindow appWindow;
-	appWindow.fullscreen = true;
-	appWindow.height = 0;
-	appWindow.width = 0;
-	appWindow.x = 0;
-	appWindow.y = 0;
+	appWindow.fullscreen = false;
+	appWindow.height = 1000;
+	appWindow.width = 1000;
+	appWindow.x = 1000;
+	appWindow.y = 1000;
 	appWindow.title = "EngineCore";
 	appWindow.hideBorders = false;
 

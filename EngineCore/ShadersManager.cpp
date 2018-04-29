@@ -179,9 +179,8 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
 
             in vec4 position;
             in vec4 color;
-            in vec4 matrixColumn0;
-            in vec4 matrixColumn1;
-            in vec4 matrixColumn2;
+            in vec4 rotation;
+            in vec4 wpos_scale;
 
             out vec4 procColor;
 
@@ -189,7 +188,30 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
 
             void main()
             {
-                vec3 worldPos = vec3(dot(position, matrixColumn0), dot(position, matrixColumn1), dot(position, matrixColumn2));
+                /*vec3 u = vec3(rotation.x, rotation.y, rotation.z);
+                vec3 v = position.xyz;
+                float w = rotation.w;
+                vec3 rotatedPos = 2.0f * dot(u, v) * u + (w * w - dot(u, u)) * v + 2.0f * w * cross(u, v);*/
+
+                /*
+                Vec3_t const	qvec(x, y, z);
+                Vec3_t const	uv  = Cross( qvec, right );
+                Vec3_t const	uuv = Cross( qvec, uv );
+
+                return right + ((uv * w) + uuv) * T(2);
+                */
+
+                vec3 u = vec3(rotation.x, rotation.y, rotation.z);
+                vec3 v = position.xyz;
+                float w = rotation.w;
+                vec3 uv = cross(u, v);
+                vec3 uuv = cross(u, uv);
+                vec3 rotatedPos = v + ((uv * w) + uuv) * 2.0;
+
+                vec3 scaledPos = rotatedPos + wpos_scale.w;
+
+                vec3 worldPos = scaledPos + wpos_scale.xyz;
+
                 vec4 screenPos = _ViewProjectionMatrix * vec4(worldPos, 1.0);
 
                 gl_Position = screenPos;
@@ -214,7 +236,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
         array<Shader::Uniform, 1> systemUniforms{
             Shader::Uniform{"_ViewProjectionMatrix", 4, 4, 1, Shader::Uniform::Type::F32}};
 
-        array<string_view, 5> inputAttributes{"position", "color", "matrixColumn0", "matrixColumn1", "matrixColumn2"};
+        array<string_view, 4> inputAttributes{"position", "color", "rotation", "wpos_scale"};
 
         auto shader = Shader::New(name, vsCode, psCode, nullptr, 0, inputAttributes.data(), (ui32)inputAttributes.size(), systemUniforms.data(), (ui32)systemUniforms.size());
 

@@ -98,9 +98,8 @@ CubesInstanced::CubesInstanced(ui32 maxInstances)
     {
         VertexLayout::Attribute{"position", VertexLayout::Attribute::Formatt::R32G32B32F, 0, {}, {}},
         VertexLayout::Attribute{"color", VertexLayout::Attribute::Formatt::R32G32B32A32F, 0, {}, {}},
-        VertexLayout::Attribute{"matrixColumn0", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1},
-        VertexLayout::Attribute{"matrixColumn1", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1},
-        VertexLayout::Attribute{"matrixColumn2", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1}
+        VertexLayout::Attribute{"rotation", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1},
+        VertexLayout::Attribute{"wpos_scale", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1},
     };
 
     auto pipelineState = RendererPipelineState::New(shader);
@@ -120,19 +119,21 @@ CubesInstanced::CubesInstanced(ui32 maxInstances)
 
     RendererDataResource::AccessMode accessMode;
     accessMode.cpuMode.writeMode = RendererDataResource::CPUAccessMode::Mode::FrequentFull;
-    _vertexInstanceArray = RendererVertexArray::New(RendererArrayData<Matrix3x4>(BufferOwnedData{new byte[maxInstances * sizeof(Matrix3x4)], [](void *p) {delete[] p; }}, maxInstances), accessMode);
+    _vertexInstanceArray = RendererVertexArray::New(RendererArrayData<InstanceData>(BufferOwnedData{new byte[maxInstances * sizeof(InstanceData)], [](void *p) {delete[] p; }}, maxInstances), accessMode);
 }
 
-void CubesInstanced::Draw(const Camera *camera, const InstanceData *instances, ui32 instancesCount)
+auto CubesInstanced::Lock(ui32 instancesCount) -> InstanceData *
 {
-    auto *lock = (Matrix3x4 *)_vertexInstanceArray->LockDataRegion(instancesCount, 0, RendererDataResource::LockMode::Write);
-    for (ui32 instance = 0; instance < instancesCount; ++instance)
-    {
-        const auto &data = instances[instance];
-        lock[instance] = Matrix4x3::CreateRTS(data.rotation, data.position, Vector3{data.size, data.size, data.size}).GetTransposed();
-    }
-    _vertexInstanceArray->UnlockDataRegion();
+    return (InstanceData *)_vertexInstanceArray->LockDataRegion(instancesCount, 0, RendererDataResource::LockMode::Write);
+}
 
+void CubesInstanced::Unlock()
+{
+    _vertexInstanceArray->UnlockDataRegion();
+}
+
+void CubesInstanced::Draw(const Camera *camera, ui32 instancesCount)
+{
     Application::GetRenderer().BindIndexArray(_indexArray);
     Application::GetRenderer().BindVertexArray(_vertexArray, 0);
     Application::GetRenderer().BindVertexArray(_vertexInstanceArray, 1);

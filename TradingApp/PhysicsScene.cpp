@@ -17,11 +17,12 @@ static void PlaceAsTallTower();
 
 namespace
 {
-    static constexpr uiw CubesCounts = 36 * 185;
+    static constexpr uiw TowerWidth = 7;
+
+    static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 150;
     static constexpr uiw CubesSmallCount = 6;
     static constexpr uiw CubesMediumCount = 100;
     vector<CubesInstanced::InstanceData> Cubes{};
-    unique_ptr<CubesInstanced> InstancedCubes{};
 }
 
 bool PhysicsScene::Create()
@@ -37,8 +38,6 @@ bool PhysicsScene::Create()
     }
 
     Restart();
-
-    InstancedCubes = make_unique<CubesInstanced>(Cubes.size());
 
     return true;
 }
@@ -68,9 +67,7 @@ void PhysicsScene::Draw(const Camera &camera)
 {
     SceneBackground::Draw({MathPi<f32>() * 0.5f, 0, 0}, camera);
 
-    InstancedCubes->Draw(&camera, Cubes.data(), (ui32)Cubes.size());
-
-    PhysX::FinishUpdate();
+    PhysX::Draw(camera);
 }
 
 void PlaceSparse()
@@ -82,7 +79,7 @@ void PlaceSparse()
         for (uiw z = 0; z < CubesMediumCount; ++z)
         {
             Vector3 pos{x * 2.0f, 0.5f + (rand() / (f32)RAND_MAX) * 5.0f, z * 2.0f};
-            Cubes[x * CubesMediumCount + z] = CubesInstanced::InstanceData{pos, {}, 1.0f};
+            Cubes[x * CubesMediumCount + z] = CubesInstanced::InstanceData{{}, pos, 1.0f};
         }
     }
 }
@@ -107,7 +104,7 @@ void PlaceAsHugeCube()
             for (uiw z = 0; z < CubesSmallCount; ++z)
             {
                 Vector3 pos{xInitial + x, yInitial + y, zInitial + z};
-                Cubes[computeIndex(x, y, z)] = CubesInstanced::InstanceData{pos, {}, 1.0f};
+                Cubes[computeIndex(x, y, z)] = CubesInstanced::InstanceData{{}, pos, 1.0f};
             }
         }
     }
@@ -115,18 +112,18 @@ void PlaceAsHugeCube()
 
 void PlaceAsTallTower()
 {
-    assert(CubesCounts % 36 == 0);
+    assert(CubesCounts % (TowerWidth * TowerWidth) == 0);
 
     Cubes.resize(CubesCounts);
 
-    for (ui32 index = 0; index < CubesCounts / 36; ++index)
+    for (ui32 index = 0; index < CubesCounts / (TowerWidth * TowerWidth); ++index)
     {
-        for (ui32 x = 0; x < 6; ++x)
+        for (ui32 x = 0; x < TowerWidth; ++x)
         {
-            for (ui32 z = 0; z < 6; ++z)
+            for (ui32 z = 0; z < TowerWidth; ++z)
             {
-                ui32 indexOffset = x * 6 + z;
-                Cubes[index * 36 + indexOffset] = CubesInstanced::InstanceData{{(f32)x, 0.5f + index, (f32)z}, {}, 1.0f};
+                ui32 indexOffset = x * TowerWidth + z;
+                Cubes[index * (TowerWidth * TowerWidth) + indexOffset] = CubesInstanced::InstanceData{{}, {(f32)x, 0.5f + index, (f32)z}, 1.0f};
             }
         }
     }
