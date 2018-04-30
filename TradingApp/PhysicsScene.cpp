@@ -4,6 +4,7 @@
 #include <MatrixMathTypes.hpp>
 #include <MathFunctions.hpp>
 #include "CubesInstanced.hpp"
+#include "SpheresInstanced.hpp"
 #include "PhysX.hpp"
 
 using namespace EngineCore;
@@ -19,10 +20,11 @@ namespace
 {
     static constexpr uiw TowerWidth = 7;
 
-    static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 150;
+    static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 165;
     static constexpr uiw CubesSmallCount = 6;
     static constexpr uiw CubesMediumCount = 100;
     vector<CubesInstanced::InstanceData> Cubes{};
+    vector<SpheresInstanced::InstanceData> Spheres{};
 }
 
 bool PhysicsScene::Create()
@@ -56,11 +58,14 @@ void PhysicsScene::Update()
 
 void PhysicsScene::Restart()
 {
+    Cubes.clear();
+    Spheres.clear();
+
     //PlaceSparse();
     //PlaceAsHugeCube();
     PlaceAsTallTower();
 
-    PhysX::SetObjects(Cubes);
+    PhysX::SetObjects(Cubes, Spheres);
 }
 
 void PhysicsScene::Draw(const Camera &camera)
@@ -116,6 +121,8 @@ void PlaceAsTallTower()
 
     Cubes.resize(CubesCounts);
 
+    f32 y = 0.5f;
+
     for (ui32 index = 0; index < CubesCounts / (TowerWidth * TowerWidth); ++index)
     {
         for (ui32 x = 0; x < TowerWidth; ++x)
@@ -123,10 +130,57 @@ void PlaceAsTallTower()
             for (ui32 z = 0; z < TowerWidth; ++z)
             {
                 ui32 indexOffset = x * TowerWidth + z;
-                Cubes[index * (TowerWidth * TowerWidth) + indexOffset] = CubesInstanced::InstanceData{{}, {(f32)x, 0.5f + index, (f32)z}, 1.0f};
+                Cubes[index * (TowerWidth * TowerWidth) + indexOffset] = CubesInstanced::InstanceData{{}, {(f32)x, y, (f32)z}, 1.0f};
             }
         }
+
+        y += 1.0f;
     }
+
+    for (ui32 x = 0; x < TowerWidth; ++x)
+    {
+        Cubes.push_back(CubesInstanced::InstanceData{{}, {(f32)x, y, 0.0f}, 1.0f});
+        Cubes.push_back(CubesInstanced::InstanceData{{}, {(f32)x, y, (f32)(TowerWidth - 1)}, 1.0f});
+    }
+
+    for (ui32 z = 1; z < TowerWidth - 1; ++z)
+    {
+        Cubes.push_back(CubesInstanced::InstanceData{{}, {0.0f, y, (f32)z}, 1.0f});
+        Cubes.push_back(CubesInstanced::InstanceData{{}, {(f32)(TowerWidth - 1), y, (f32)z}, 1.0f});
+    }
+
+    /*Spheres.resize(1);
+    Spheres[0] = SpheresInstanced::InstanceData{{}, {TowerWidth / 2.0f, Cubes.back().position.y + 1.0f, TowerWidth / 2.0f}, 1.0f};*/
+
+    /*Spheres.resize(CubesCounts);
+
+    f32 y = 0.5f;
+
+    for (ui32 index = 0; index < CubesCounts / (TowerWidth * TowerWidth); ++index)
+    {
+        for (ui32 x = 0; x < TowerWidth; ++x)
+        {
+            for (ui32 z = 0; z < TowerWidth; ++z)
+            {
+                ui32 indexOffset = x * TowerWidth + z;
+                Spheres[index * (TowerWidth * TowerWidth) + indexOffset] = SpheresInstanced::InstanceData{{}, {(f32)x, y, (f32)z}, 1.0f};
+            }
+        }
+
+        y += 1.0f;
+    }
+
+    for (ui32 x = 0; x < TowerWidth; ++x)
+    {
+        Spheres.push_back(SpheresInstanced::InstanceData{{}, {(f32)x, y, 0.0f}, 1.0f});
+        Spheres.push_back(SpheresInstanced::InstanceData{{}, {(f32)x, y, (f32)(TowerWidth - 1)}, 1.0f});
+    }
+
+    for (ui32 z = 1; z < TowerWidth - 1; ++z)
+    {
+        Spheres.push_back(SpheresInstanced::InstanceData{{}, {0.0f, y, (f32)z}, 1.0f});
+        Spheres.push_back(SpheresInstanced::InstanceData{{}, {(f32)(TowerWidth - 1), y, (f32)z}, 1.0f});
+    }*/
 }
 
 /*void PlaceRandomly()

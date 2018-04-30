@@ -424,7 +424,6 @@ public:
 
         if (instanceCount == 0)
         {
-            SOFTBREAK;
             SENDLOG(Warning, "Draw called with 0 instance count\n");
             return;
         }
@@ -878,6 +877,11 @@ public:
     virtual void SwapBuffers() override
     {
         _context->SwapBuffers();
+    }
+
+    virtual void *RendererContext() override
+    {
+        return _context->ContextPointer();
     }
 
     void *AddBackendData(void **backendDataPointer, RendererBackendDataBase::BackendDataType type)

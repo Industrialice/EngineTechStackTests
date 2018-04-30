@@ -4,6 +4,7 @@
 #include <Application.hpp>
 #include <Logger.hpp>
 #include <MathFunctions.hpp>
+#include <Renderer.hpp>
 
 #ifdef DEBUG
     #pragma comment(lib, "PxFoundationDEBUG_x64.lib")
@@ -27,6 +28,10 @@ using namespace physx;
 
 #define PVD_HOST "127.0.0.1" // Set this to the IP address of the system running the PhysX Visual Debugger that you want to connect to.
 
+enum class ProcessingOn { CPU, GPU };
+enum class BroadPhaseType { SAP, MBP, GPU };
+static bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhaseType broadPhaseType);
+
 namespace
 {
     PxDefaultAllocator DefaultAllocator{};
@@ -39,16 +44,17 @@ namespace
     PxScene *PhysXScene{};
     PxMaterial *PhysXMaterial{};
     PxRigidStatic *GroundPlane{};
+    PxCudaContextManager *CudaContexManager{};
 
     bool IsInitialized = false;
 
-    struct PhysXCubeData
+    struct PhysXActorData
     {
         f32 size;
         PxRigidDynamic *actor{};
         PxShape *shape{};
 
-        ~PhysXCubeData()
+        ~PhysXActorData()
         {
             if (PhysXScene)
             {
@@ -59,9 +65,10 @@ namespace
             }
         }
     };
-    vector<PhysXCubeData> PhysXCubeDatas{};
+    vector<PhysXActorData> PhysXCubeDatas{}, PhysXSphereDatas{};
 
     unique_ptr<CubesInstanced> InstancedCubes{};
+    unique_ptr<SpheresInstanced> InstancedSpheres{};
 }
 
 bool PhysX::Create()
@@ -99,7 +106,7 @@ bool PhysX::Create()
         return false;
     }
 
-    CpuDispatcher = PxDefaultCpuDispatcherCreate(4);
+    CpuDispatcher = PxDefaultCpuDispatcherCreate(3);
     if (!CpuDispatcher)
     {
         SENDLOG(Error, "PhysX::Create -> PxDefaultCpuDispatcherCreate failed\n");
@@ -107,14 +114,42 @@ bool PhysX::Create()
     }
 
     PxSceneDesc sceneDesc(Physics->getTolerancesScale());
+
+    if (!SetSceneProcessing(sceneDesc, ProcessingOn::CPU, BroadPhaseType::GPU))
+    {
+        SENDLOG(Error, "PhysX::Create -> SetSceneProcessing failed\n");
+        return false;
+    }
+
+    auto filterShader = [](PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void *constantBlock, PxU32 constantBlockSize) -> PxFilterFlags
+    {
+        pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+        return PxFilterFlag::eDEFAULT;
+    };
+
     sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
     sceneDesc.cpuDispatcher = CpuDispatcher;
-    sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+    //sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+    sceneDesc.filterShader = filterShader;
     PhysXScene = Physics->createScene(sceneDesc);
     if (!PhysXScene)
     {
         SENDLOG(Error, "PhysX::Create -> Physics->createScene failed\n");
         return false;
+    }
+
+    // required by MBP
+    PxBounds3 region;
+    region.minimum = {-100.0f, 0.0f, -100.0f};
+    region.maximum = {100.0f, 200.0f, 100.0f};
+    PxBounds3 bounds[256];
+    const PxU32 nbRegions = PxBroadPhaseExt::createRegionsFromWorldBounds(bounds, region, 4);
+    for (PxU32 i = 0; i < nbRegions; ++i)
+    {
+        PxBroadPhaseRegion region;
+        region.bounds = bounds[i];
+        region.userData = (void *)i;
+        PhysXScene->addBroadPhaseRegion(region);
     }
 
     PxPvdSceneClient* pvdClient = PhysXScene->getScenePvdClient();
@@ -157,6 +192,11 @@ void PhysX::Destroy()
         CpuDispatcher->release();
         CpuDispatcher = nullptr;
     }
+    if (CudaContexManager)
+    {
+        CudaContexManager->release();
+        CudaContexManager = nullptr;
+    }
     PxCloseExtensions();
     if (Cooking)
     {
@@ -197,27 +237,44 @@ void PhysX::Draw(const EngineCore::Camera &camera)
         return;
     }
 
-    PhysXScene->fetchResults(true);
-
-    CubesInstanced::InstanceData *lock = InstancedCubes->Lock(PhysXCubeDatas.size());
-
-    for (const auto &data : PhysXCubeDatas)
+    if (PhysXCubeDatas.size())
     {
-        const auto &phyPos = data.actor->getGlobalPose();
+        CubesInstanced::InstanceData *cubeLock = InstancedCubes->Lock(PhysXCubeDatas.size());
+        for (const auto &data : PhysXCubeDatas)
+        {
+            const auto &phyPos = data.actor->getGlobalPose();
 
-        lock->position = {phyPos.p.x, phyPos.p.y, phyPos.p.z};
-        lock->rotation = {phyPos.q.x, phyPos.q.y, phyPos.q.z, phyPos.q.w};
-        lock->size = data.size;
+            cubeLock->position = {phyPos.p.x, phyPos.p.y, phyPos.p.z};
+            cubeLock->rotation = {phyPos.q.x, phyPos.q.y, phyPos.q.z, phyPos.q.w};
+            cubeLock->size = data.size;
 
-        ++lock;
+            ++cubeLock;
+        }
+        InstancedCubes->Unlock();
+        InstancedCubes->Draw(&camera, (ui32)PhysXCubeDatas.size());
     }
 
-    InstancedCubes->Unlock();
+    if (PhysXSphereDatas.size())
+    {
+        SpheresInstanced::InstanceData *sphereLock = InstancedSpheres->Lock(PhysXSphereDatas.size());
+        for (const auto &data : PhysXSphereDatas)
+        {
+            const auto &phyPos = data.actor->getGlobalPose();
 
-    InstancedCubes->Draw(&camera, (ui32)PhysXCubeDatas.size());
+            sphereLock->position = {phyPos.p.x, phyPos.p.y, phyPos.p.z};
+            sphereLock->rotation = {phyPos.q.x, phyPos.q.y, phyPos.q.z, phyPos.q.w};
+            sphereLock->size = data.size;
+
+            ++sphereLock;
+        }
+        InstancedSpheres->Unlock();
+        InstancedSpheres->Draw(&camera, (ui32)PhysXSphereDatas.size());
+    }
+
+    PhysXScene->fetchResults(true);
 }
 
-void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &objects)
+void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<SpheresInstanced::InstanceData> &spheres)
 {
     if (!IsInitialized)
     {
@@ -225,17 +282,20 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &objects)
     }
 
     PhysXCubeDatas.clear();
+    PhysXSphereDatas.clear();
 
     if (!InstancedCubes)
     {
-        InstancedCubes = make_unique<CubesInstanced>(objects.size());
+        InstancedCubes = make_unique<CubesInstanced>(cubes.size());
     }
 
-    PhysXCubeDatas.resize(objects.size());
-    for (uiw index = 0, size = objects.size(); index < size; ++index)
+    PxShape *defaultCubeShape = Physics->createShape(PxBoxGeometry(0.5f, 0.5f, 0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
+
+    PhysXCubeDatas.resize(cubes.size());
+    for (uiw index = 0, size = cubes.size(); index < size; ++index)
     {
         auto &data = PhysXCubeDatas[index];
-        auto &object = objects[index];
+        auto &object = cubes[index];
 
         auto position = object.position;
         auto rotation = object.rotation;
@@ -243,9 +303,124 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &objects)
 
         data.size = object.size;
         data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
-        data.shape = data.actor->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial);
+        if (Distance(0.5f, halfSize) < DefaultEpsilon)
+        {
+            data.actor->attachShape(*defaultCubeShape);
+            data.shape = defaultCubeShape;
+        }
+        else
+        {
+            data.shape = data.actor->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
+        }
         PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
 
         PhysXScene->addActor(*data.actor);
     }
+
+    defaultCubeShape->release();
+
+    if (!InstancedSpheres)
+    {
+        InstancedSpheres = make_unique<SpheresInstanced>(10, 7, spheres.size());
+    }
+
+    PxShape *defaultSphereShape = Physics->createShape(PxSphereGeometry(0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
+
+    PhysXSphereDatas.resize(spheres.size());
+    for (uiw index = 0, size = spheres.size(); index < size; ++index)
+    {
+        auto &data = PhysXSphereDatas[index];
+        auto &object = spheres[index];
+
+        auto position = object.position;
+        auto rotation = object.rotation;
+        auto halfSize = object.size * 0.5f;
+
+        data.size = object.size;
+        data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
+        if (Distance(0.5f, halfSize) < DefaultEpsilon)
+        {
+            data.actor->attachShape(*defaultSphereShape);
+            data.shape = defaultSphereShape;
+        }
+        else
+        {
+            data.shape = data.actor->createShape(PxSphereGeometry(halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
+        }
+
+        PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
+
+        PhysXScene->addActor(*data.actor);
+    }
+
+    defaultSphereShape->release();
+}
+
+bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhaseType broadPhaseType)
+{
+    if (processingOn == ProcessingOn::GPU || broadPhaseType == BroadPhaseType::GPU)
+    {
+        /*PxU32 constraintBufferCapacity;	//!< Capacity of constraint buffer allocated in GPU global memory
+        PxU32 contactBufferCapacity;	//!< Capacity of contact buffer allocated in GPU global memory
+        PxU32 tempBufferCapacity;		//!< Capacity of temp buffer allocated in pinned host memory.
+        PxU32 contactStreamSize;		//!< Size of contact stream buffer allocated in pinned host memory. This is double-buffered so total allocation size = 2* contactStreamCapacity * sizeof(PxContact).
+        PxU32 patchStreamSize;			//!< Size of the contact patch stream buffer allocated in pinned host memory. This is double-buffered so total allocation size = 2 * patchStreamCapacity * sizeof(PxContactPatch).
+        PxU32 forceStreamCapacity;		//!< Capacity of force buffer allocated in pinned host memory.
+        PxU32 heapCapacity;				//!< Initial capacity of the GPU and pinned host memory heaps. Additional memory will be allocated if more memory is required.
+        PxU32 foundLostPairsCapacity;	//!< Capacity of found and lost buffers allocated in GPU global memory. This is used for the found/lost pair reports in the BP. */
+
+        PxgDynamicsMemoryConfig mc;
+        /*mc.constraintBufferCapacity *= 4;
+        mc.contactBufferCapacity *= 4;
+        mc.tempBufferCapacity *= 4;
+        mc.contactStreamSize *= 4;
+        mc.patchStreamSize *= 4;
+        mc.forceStreamCapacity *= 4;
+        mc.heapCapacity *= 4;
+        mc.foundLostPairsCapacity *= 4;*/
+        desc.gpuDynamicsConfig = mc;
+
+        HGLRC hg = wglGetCurrentContext();
+
+        PxCudaContextManagerDesc cudaContextManagerDesc;
+        //cudaContextManagerDesc.interopMode = PxCudaInteropMode::OGL_INTEROP;
+        //cudaContextManagerDesc.graphicsDevice = Application::GetRenderer().RendererContext();
+        //cudaContextManagerDesc.graphicsDevice = hg;
+        CudaContexManager = PxCreateCudaContextManager(*Foundation, cudaContextManagerDesc);
+        if (!CudaContexManager || !CudaContexManager->contextIsValid())
+        {
+            SENDLOG(Error, "PhysX::Create -> PxCreateCudaContextManager failed\n");
+            return false;
+        }
+        desc.gpuDispatcher = CudaContexManager->getGpuDispatcher();
+    }
+
+    switch (broadPhaseType)
+    {
+        case BroadPhaseType::MBP:
+        {
+            desc.broadPhaseType = PxBroadPhaseType::eMBP;
+        } break;
+        case BroadPhaseType::SAP:
+        {
+            desc.broadPhaseType = PxBroadPhaseType::eSAP;
+        } break;
+        case BroadPhaseType::GPU:
+        {
+            desc.broadPhaseType = PxBroadPhaseType::eGPU;
+        } break;
+    }
+    
+    switch (processingOn)
+    {
+        case ProcessingOn::GPU:
+        {
+            desc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS | PxSceneFlag::eENABLE_PCM;
+        } break;
+        case ProcessingOn::CPU:
+        {
+        } break;
+    }
+
+    return true;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CubesInstanced.hpp"
+#include "SpheresInstanced.hpp"
 
 namespace TradingApp::PhysX
 {
@@ -8,5 +9,5 @@ namespace TradingApp::PhysX
     void Destroy();
     void Update();
     void Draw(const EngineCore::Camera &camera);
-    void SetObjects(vector<CubesInstanced::InstanceData> &objects);
+    void SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<SpheresInstanced::InstanceData> &spheres);
 }

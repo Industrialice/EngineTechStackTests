@@ -30,50 +30,50 @@ CubesInstanced::CubesInstanced(ui32 maxInstances)
 
     static constexpr f32 transparency = 0.5f;
 
-    Vector4 frontColor{1, 1, 1, transparency};
+    Vector4 frontColor{0, 0, 1, transparency};
     Vector4 upColor{0, 1, 1, transparency};
-    Vector4 backColor{0, 0, 1, transparency};
+    Vector4 backColor{1, 1, 1, transparency};
     Vector4 downColor{1, 0, 0, transparency};
-    Vector4 leftColor{1, 1, 0, transparency};
-    Vector4 rightColor{1, 0, 1, transparency};
+    Vector4 leftColor{1, 0, 1, transparency};
+    Vector4 rightColor{1, 1, 0, transparency};
 
     RendererArrayData<Vertex> vertexArrayData
     {
         // front
         {{-0.5f, -0.5f, -0.5f}, frontColor},
-    {{-0.5f, 0.5f, -0.5f}, frontColor},
-    {{0.5f, -0.5f, -0.5f}, frontColor},
-    {{0.5f, 0.5f, -0.5f}, frontColor},
+        {{-0.5f, 0.5f, -0.5f}, frontColor},
+        {{0.5f, -0.5f, -0.5f}, frontColor},
+        {{0.5f, 0.5f, -0.5f}, frontColor},
 
-    // up
-    {{-0.5f, 0.5f, -0.5f}, upColor},
-    {{-0.5f, 0.5f, 0.5f}, upColor},
-    {{0.5f, 0.5f, -0.5f}, upColor},
-    {{0.5f, 0.5f, 0.5f}, upColor},
+        // up
+        {{-0.5f, 0.5f, -0.5f}, upColor},
+        {{-0.5f, 0.5f, 0.5f}, upColor},
+        {{0.5f, 0.5f, -0.5f}, upColor},
+        {{0.5f, 0.5f, 0.5f}, upColor},
 
-    // back
-    {{0.5f, -0.5f, 0.5f}, backColor},
-    {{0.5f, 0.5f, 0.5f}, backColor},
-    {{-0.5f, -0.5f, 0.5f}, backColor},
-    {{-0.5f, 0.5f, 0.5f}, backColor},
+        // back
+        {{0.5f, -0.5f, 0.5f}, backColor},
+        {{0.5f, 0.5f, 0.5f}, backColor},
+        {{-0.5f, -0.5f, 0.5f}, backColor},
+        {{-0.5f, 0.5f, 0.5f}, backColor},
 
-    // down
-    {{-0.5f, -0.5f, 0.5f}, downColor},
-    {{-0.5f, -0.5f, -0.5f}, downColor},
-    {{0.5f, -0.5f, 0.5f}, downColor},
-    {{0.5f, -0.5f, -0.5f}, downColor},
+        // down
+        {{-0.5f, -0.5f, 0.5f}, downColor},
+        {{-0.5f, -0.5f, -0.5f}, downColor},
+        {{0.5f, -0.5f, 0.5f}, downColor},
+        {{0.5f, -0.5f, -0.5f}, downColor},
 
-    // left
-    {{-0.5f, -0.5f, 0.5f}, leftColor},
-    {{-0.5f, 0.5f, 0.5f}, leftColor},
-    {{-0.5f, -0.5f, -0.5f}, leftColor},
-    {{-0.5f, 0.5f, -0.5f}, leftColor},
+        // left
+        {{-0.5f, -0.5f, 0.5f}, leftColor},
+        {{-0.5f, 0.5f, 0.5f}, leftColor},
+        {{-0.5f, -0.5f, -0.5f}, leftColor},
+        {{-0.5f, 0.5f, -0.5f}, leftColor},
 
-    // right
-    {{0.5f, -0.5f, -0.5f}, rightColor},
-    {{0.5f, 0.5f, -0.5f}, rightColor},
-    {{0.5f, -0.5f, 0.5f}, rightColor},
-    {{0.5f, 0.5f, 0.5f}, rightColor},
+        // right
+        {{0.5f, -0.5f, -0.5f}, rightColor},
+        {{0.5f, 0.5f, -0.5f}, rightColor},
+        {{0.5f, -0.5f, 0.5f}, rightColor},
+        {{0.5f, 0.5f, 0.5f}, rightColor},
     };
 
     auto vertexArray = RendererVertexArray::New(move(vertexArrayData));

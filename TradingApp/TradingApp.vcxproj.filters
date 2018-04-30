@@ -35,6 +35,9 @@
     <ClCompile Include="CubesInstanced.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SpheresInstanced.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Scene.hpp">
@@ -62,6 +65,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CubesInstanced.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SpheresInstanced.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

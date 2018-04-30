@@ -17,6 +17,11 @@ class OpenGLContextWindowsImpl final : public OGLRenderer::OpenGLContextWindows
 	{
 		::SwapBuffers(_windowContext);
 	}
+
+    virtual void *ContextPointer()
+    {
+        return _oglContext;
+    }
 		
 	virtual HDC WindowContext() const override
 	{
