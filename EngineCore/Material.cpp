@@ -98,7 +98,7 @@ bool Material::UniformF32(uid id, const f32 *values, ui32 count, ui32 offset)
 		return false;
 	}
 
-	MemCpy(memory->get() + offset, values, count);
+	MemOps::Copy(memory->get() + offset, values, count);
 	BackendDataMayBeDirty();
 	return true;
 }
@@ -121,7 +121,7 @@ bool Material::UniformI32(uid id, const i32 *values, ui32 count, ui32 offset)
 		return false;
 	}
 
-	MemCpy(memory->get() + offset, values, count);
+    MemOps::Copy(memory->get() + offset, values, count);
 	BackendDataMayBeDirty();
 	return true;
 }
@@ -144,7 +144,7 @@ bool Material::UniformUI32(uid id, const ui32 *values, ui32 count, ui32 offset)
 		return false;
 	}
 
-	MemCpy(memory->get() + offset, values, count);
+    MemOps::Copy(memory->get() + offset, values, count);
 	BackendDataMayBeDirty();
 	return true;
 }
@@ -167,7 +167,7 @@ bool Material::UniformBool(uid id, const bool *values, ui32 count, ui32 offset)
 		return false;
 	}
 
-	MemCpy(memory->get() + offset, values, count);
+    MemOps::Copy(memory->get() + offset, values, count);
 	BackendDataMayBeDirty();
 	return true;
 }

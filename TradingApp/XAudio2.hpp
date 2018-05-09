@@ -17,10 +17,13 @@ namespace TradingApp
     protected:
         XAudioEngine() = default;
         static AudioSource AssignAudioSource(void *voice);
+        static void *ExtractAudioSource(AudioSource audio);
 
     public:
         virtual ~XAudioEngine() = default;
-        virtual AudioSource AddAudio(const ui8 *audioData, uiw dataSize) = 0;
+        virtual AudioSource AddAudio(unique_ptr<const ui8[]> audioData, uiw dataStartOffset, uiw dataSize) = 0;
+        virtual void StartAudio(AudioSource audio) = 0;
+        virtual void StopAudio(AudioSource audio) = 0;
 
         static unique_ptr<XAudioEngine> New();
     };

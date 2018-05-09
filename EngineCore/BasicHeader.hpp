@@ -4,8 +4,6 @@
 #define WINPLATFORM
 #endif
 
-#define NOMINMAX
-
 #ifdef WINPLATFORM
 #include "WinAPI.hpp"
 #endif
@@ -89,10 +87,5 @@ using string_utf8 = std::basic_string<utf8char>;
 using string_utf32 = std::basic_string<utf32char>;
 
 #define SVIEWARG(stringView) (i32)stringView.size(), stringView.data()
-
-template <typename T> inline void MemCpy(T *__restrict target, const T *source, uiw size)
-{
-	memcpy(target, source, size * sizeof(T));
-}
 
 constexpr ui32 RenderTargetsLimit = 8;

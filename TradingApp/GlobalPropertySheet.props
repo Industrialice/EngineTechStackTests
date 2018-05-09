@@ -6,7 +6,7 @@
     <IncludePath>C:\Users\Colgate\Documents\Visual Studio 2017\Projects\StdLib2018\Core\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)$(Configuration)_$(PlatformShortName)\;C:\Users\Colgate\Documents\Visual Studio 2017\Projects\StdLib2018\$(Configuration)_$(Platform)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)_$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)$(Configuration)_$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)$(Configuration)_$(Platform)\Intermediate$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile />

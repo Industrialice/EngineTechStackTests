@@ -120,6 +120,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AudioWaveFormatParser.cpp" />
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="CubesInstanced.cpp" />
     <ClCompile Include="Line3D.cpp" />
@@ -135,6 +136,7 @@
     <ClCompile Include="XAudio2.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AudioWaveFormatParser.hpp" />
     <ClInclude Include="Cube.hpp" />
     <ClInclude Include="CubesInstanced.hpp" />
     <ClInclude Include="Line3D.hpp" />

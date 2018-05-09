@@ -9,6 +9,7 @@
 #include "SpheresInstanced.hpp"
 #include "PhysX.hpp"
 #include "XAudio2.hpp"
+#include "AudioWaveFormatParser.hpp"
 
 using namespace EngineCore;
 using namespace TradingApp;
@@ -17,8 +18,7 @@ static void PlaceSparse();
 static void PlaceAsHugeCube();
 static void PlaceAsTallTower();
 static void PlaceHelicopter();
-//static void PlaceRandomly();
-//static void PlaceCubeRandomly(CubesInstanced &cube);
+static void AddTestAudio();
 
 namespace
 {
@@ -49,6 +49,8 @@ bool PhysicsScene::Create()
     {
         return false;
     }
+
+    AddTestAudio();
 
     Restart();
 
@@ -219,25 +221,31 @@ void PlaceHelicopter()
     }
 }
 
-/*void PlaceRandomly()
+void AddTestAudio()
 {
-    Cubes.resize(CubesCounts);
-
-    for (ui32 index = 0; index < CubesCounts; ++index)
+    FILE *f = fopen("../Resources/Audio/[MLP] [PMV] [SFM] - Flutterwonder.wav", "rb");
+    if (!f)
     {
-        PlaceCubeRandomly(Cubes[index]);
+        SENDLOG(Error, "Failed to open the test audio\n");
+        return;
     }
+
+    fseek(f, 0, SEEK_END);
+    ui32 fileSize = (ui32)ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    auto data = make_unique<ui8[]>(fileSize);
+    fread(data.get(), 1, fileSize, f);
+
+    fclose(f);
+
+    auto parsedFile = ParseWaveFormatHeader(data.get(), fileSize);
+    if (!parsedFile)
+    {
+        SENDLOG(Error, "ParseWaveFormatHeader for the test audio failed\n");
+        return;
+    }
+
+    auto audio = AudioEngine->AddAudio(move(data), parsedFile->dataStartOffset, parsedFile->dataChunkHeader.chunkDataSize);
+    AudioEngine->StartAudio(audio);
 }
-
-void PlaceCubeRandomly(PhysicsCube &cube)
-{
-    f32 x = ((rand() - RAND_MAX / 2) / (f32)RAND_MAX) * 35;
-    f32 y = (rand() / (f32)RAND_MAX) * 90 + 0.5f + 5;
-    f32 z = ((rand() - RAND_MAX / 2) / (f32)RAND_MAX) * 35;
-
-    f32 rx = (rand() / (f32)RAND_MAX) * MathPi<f32>() * 2;
-    f32 ry = (rand() / (f32)RAND_MAX) * MathPi<f32>() * 2;
-    f32 rz = (rand() / (f32)RAND_MAX) * MathPi<f32>() * 2;
-
-    cube = PhysicsCube({x, y, z}, Quaternion::FromEuler({rx, ry, rz}), 1.0f);
-}*/

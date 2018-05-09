@@ -7,7 +7,10 @@ template <typename T, uiw MaxElements> class RingBuffer
     static_assert(std::is_trivially_copyable_v<T>, "only trivial types are allowed for this implementation");
 
 	static constexpr bool isOverflowWrapped = MaxElements == 256 || MaxElements == 65536;
-	using indexType = conditional_t<MaxElements == 65536, ui16, conditional_t<MaxElements == 256, ui8, uiw>>;
+	using indexType = 
+        conditional_t<MaxElements == 65536, ui16, 
+        conditional_t<MaxElements == 256, ui8,
+        conditional_t<MaxElements <= ui32_max, ui32, uiw>>>;
 
 	array<T, MaxElements> _elements;
 	indexType _head = 0; // index of the most recently added element

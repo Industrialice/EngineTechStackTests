@@ -13,14 +13,14 @@ class XAudioEngineImpl final : public XAudioEngine
 {
     IXAudio2 *_xAudio{};
     IXAudio2MasteringVoice *_masteringVoice{};
-    vector<IXAudio2SourceVoice *> _voices{};
+    vector<pair<IXAudio2SourceVoice *, unique_ptr<const ui8[]>>> _voices{};
 
 public:
     ~XAudioEngineImpl() override
     {
         for (auto &voice : _voices)
         {
-            voice->DestroyVoice();
+            voice.first->DestroyVoice();
         }
         if (_masteringVoice)
         {
@@ -60,17 +60,17 @@ public:
         return _masteringVoice != nullptr;
     }
 
-    virtual AudioSource AddAudio(const ui8 *audioData, uiw dataSize) override
+    virtual AudioSource AddAudio(unique_ptr<const ui8[]> audioData, uiw dataStartOffset, uiw dataSize) override
     {
         IXAudio2SourceVoice *voice = nullptr;
 
         WAVEFORMATEX format{};
-        format.nChannels = 0;
-        format.nSamplesPerSec = 0;
-        format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
-        format.nAvgBytesPerSec = format.nSamplesPerSec * sizeof(f32) * format.nChannels;
-        format.nBlockAlign = sizeof(f32) * format.nChannels;
-        format.wBitsPerSample = sizeof(f32) * 8;
+        format.nChannels = 2;
+        format.nSamplesPerSec = 44100;
+        format.wFormatTag = WAVE_FORMAT_PCM;
+        format.nAvgBytesPerSec = format.nSamplesPerSec * sizeof(ui16) * format.nChannels;
+        format.nBlockAlign = sizeof(ui16) * format.nChannels;
+        format.wBitsPerSample = sizeof(ui16) * 8;
 
         HRESULT hr = _xAudio->CreateSourceVoice(&voice, &format, XAUDIO2_VOICE_NOSRC | XAUDIO2_VOICE_NOPITCH, 2.0f /* ??? */);
         if (FAILED(hr))
@@ -80,9 +80,38 @@ public:
             return {};
         }
 
-        _voices.emplace_back(voice);
+        XAUDIO2_BUFFER audioDataBuffer{};
+        audioDataBuffer.AudioBytes = dataSize;
+        audioDataBuffer.pAudioData = audioData.get() + dataStartOffset;
+        hr = voice->SubmitSourceBuffer(&audioDataBuffer);
+        if (FAILED(hr))
+        {
+            voice->DestroyVoice();
+            SENDLOG(Error, "SubmitSourceBuffer failed, error %s\n", XAudioErrorToString(hr));
+            return {};
+        }
+
+        _voices.emplace_back(pair(voice, move(audioData)));
 
         return AssignAudioSource(voice);
+    }
+
+    virtual void StartAudio(AudioSource audio) override
+    {
+        HRESULT hr = ((IXAudio2SourceVoice *)ExtractAudioSource(audio))->Start();
+        if (FAILED(hr))
+        {
+            SENDLOG(Error, "Failed to play audio source\n");
+        }
+    }
+    
+    virtual void StopAudio(AudioSource audio) override
+    {
+        HRESULT hr = ((IXAudio2SourceVoice *)ExtractAudioSource(audio))->Stop();
+        if (FAILED(hr))
+        {
+            SENDLOG(Error, "Failed to stop audio source\n");
+        }
     }
 };
 
@@ -91,6 +120,11 @@ auto XAudioEngine::AssignAudioSource(void *voice) -> AudioSource
     AudioSource source;
     source._source = voice;
     return source;
+}
+
+void *XAudioEngine::ExtractAudioSource(AudioSource audio)
+{
+    return audio._source;
 }
 
 unique_ptr<XAudioEngine> XAudioEngine::New()
