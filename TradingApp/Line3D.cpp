@@ -102,7 +102,7 @@ Line3D::Line3D()
         }
     }
 
-    RendererArrayData<Vertex> vertexArrayData{BufferOwnedData{(byte *)posTexcoordData.release(), [](void *p) {delete[] p; }}, vertexCount};
+    RendererArrayData<Vertex> vertexArrayData{BufferOwnedData{(ui8 *)posTexcoordData.release(), [](void *p) {delete[] p; }}, vertexCount};
 
     auto vertexArray = RendererVertexArray::New(move(vertexArrayData));
 

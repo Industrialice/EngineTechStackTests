@@ -188,18 +188,21 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
 
             void main()
             {
-                /*vec3 u = vec3(rotation.x, rotation.y, rotation.z);
-                vec3 v = position.xyz;
-                float w = rotation.w;
-                vec3 rotatedPos = 2.0f * dot(u, v) * u + (w * w - dot(u, u)) * v + 2.0f * w * cross(u, v);*/
+                vec4 outColor = color;
 
-                /*
-                Vec3_t const	qvec(x, y, z);
-                Vec3_t const	uv  = Cross( qvec, right );
-                Vec3_t const	uuv = Cross( qvec, uv );
+                float scale = wpos_scale.w;
+                uint scaleInt = floatBitsToUint(scale);
+                if ((scaleInt & 0x80000000) != 0)
+                {
+                    float gray = color.r * 0.299 + color.g * 0.587 + color.b * 0.114;
+                    outColor = vec4(gray, gray, gray, color.a);
+                }
+                if ((scaleInt & 0x1) != 0)
+                {
+                    outColor.rgb -= vec3(0.1, 0.3, 0.5);
+                }
 
-                return right + ((uv * w) + uuv) * T(2);
-                */
+                scale = abs(scale);
 
                 vec3 u = vec3(rotation.x, rotation.y, rotation.z);
                 vec3 v = position.xyz;
@@ -208,15 +211,14 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
                 vec3 uuv = cross(u, uv);
                 vec3 rotatedPos = v + ((uv * w) + uuv) * 2.0;
 
-                vec3 scaledPos = rotatedPos + wpos_scale.w;
+                vec3 scaledPos = rotatedPos + scale;
 
                 vec3 worldPos = scaledPos + wpos_scale.xyz;
 
                 vec4 screenPos = _ViewProjectionMatrix * vec4(worldPos, 1.0);
 
                 gl_Position = screenPos;
-
-                procColor = color;
+                procColor = outColor;
             }
         );
 

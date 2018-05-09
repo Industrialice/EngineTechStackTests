@@ -65,9 +65,6 @@
     <ClCompile Include="WinVirtualKeysMapping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MatrixMathTypes.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="BasicHeader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -127,9 +124,6 @@
     <ClInclude Include="VertexLayout.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MatrixMathTypes.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RendererDataResource.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -140,12 +134,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WinVKInput.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MathFunctions.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="_MatrixMathFunctions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WinAPI.hpp">

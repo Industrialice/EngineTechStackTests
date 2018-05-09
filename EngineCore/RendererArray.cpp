@@ -29,7 +29,7 @@ bool RendererArray::UpdateDataRegion(BufferOwnedData data, ui32 numberOfElements
     return true;
 }
 
-byte *RendererArray::LockDataRegion(ui32 regionNumberOfElements, ui32 regionStartOffset, LockMode access)
+ui8 *RendererArray::LockDataRegion(ui32 regionNumberOfElements, ui32 regionStartOffset, LockMode access)
 {
     if (_type == Typet::Undefined)
     {

@@ -120,7 +120,7 @@ SpheresInstanced::SpheresInstanced(ui32 slices, ui32 layerCuts, ui32 maxInstance
 
     RendererDataResource::AccessMode accessMode;
     accessMode.cpuMode.writeMode = RendererDataResource::CPUAccessMode::Mode::FrequentFull;
-    _vertexInstanceArray = RendererVertexArray::New(RendererArrayData<InstanceData>(BufferOwnedData{new byte[maxInstances * sizeof(InstanceData)], [](void *p) {delete[] p; }}, maxInstances), accessMode);
+    _vertexInstanceArray = RendererVertexArray::New(RendererArrayData<InstanceData>(BufferOwnedData{new ui8[maxInstances * sizeof(InstanceData)], [](void *p) {delete[] p; }}, maxInstances), accessMode);
 }
 
 auto SpheresInstanced::Lock(ui32 instancesCount) -> InstanceData *

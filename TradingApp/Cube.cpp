@@ -120,7 +120,7 @@ Cube::Cube()
     _vertexArray = move(vertexArray);
 }
 
-void Cube::Draw(const Camera *camera, const Vector3 &position, const EngineCore::Vector3 &rotation, f32 size)
+void Cube::Draw(const Camera *camera, const Vector3 &position, const Vector3 &rotation, f32 size)
 {
     if (_material == nullptr || _pipelineState == nullptr || _vertexArray == nullptr || _indexArray == nullptr)
     {
@@ -135,7 +135,7 @@ void Cube::Draw(const Camera *camera, const Vector3 &position, const EngineCore:
     Application::GetRenderer().DrawIndexedWithCamera(camera, &modelMatrix, _pipelineState.get(), _material.get(), PrimitiveTopology::TriangleEnumeration, _indexArray->NumberOfElements());
 }
 
-void Cube::Draw(const Camera *camera, const Vector3 &position, const EngineCore::Quaternion &rotation, f32 size)
+void Cube::Draw(const Camera *camera, const Vector3 &position, const Quaternion &rotation, f32 size)
 {
     if (_material == nullptr || _pipelineState == nullptr || _vertexArray == nullptr || _indexArray == nullptr)
     {

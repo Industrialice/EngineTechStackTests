@@ -32,6 +32,17 @@ enum class ProcessingOn { CPU, GPU };
 enum class BroadPhaseType { SAP, MBP, GPU };
 static bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhaseType broadPhaseType);
 
+class SimulationCallback : public PxSimulationEventCallback
+{
+public:
+    virtual void onConstraintBreak(PxConstraintInfo *constraints, PxU32 count) override;
+    virtual void onWake(PxActor **actors, PxU32 count) override;
+    virtual void onSleep(PxActor **actors, PxU32 count) override;
+    virtual void onTrigger(PxTriggerPair* pairs, PxU32 count) override;
+    virtual void onContact(const PxContactPairHeader &pairHeader, const PxContactPair *pairs, PxU32 numPairs) override;
+    virtual void onAdvance(const PxRigidBody * const *bodyBuffer, const PxTransform *poseBuffer, const PxU32 count) override;
+};
+
 namespace
 {
     PxDefaultAllocator DefaultAllocator{};
@@ -50,13 +61,15 @@ namespace
 
     struct PhysXActorData
     {
-        f32 size;
+        bool isWoke = true;
+        ui32 contactsCount = 0;
+        f32 size{};
         PxRigidDynamic *actor{};
         PxShape *shape{};
 
         ~PhysXActorData()
         {
-            if (PhysXScene)
+            if (PhysXScene && actor && shape)
             {
                 PhysXScene->removeActor(*actor);
                 actor->detachShape(*shape);
@@ -66,9 +79,17 @@ namespace
         }
     };
     vector<PhysXActorData> PhysXCubeDatas{}, PhysXSphereDatas{};
+    PhysXActorData PhysXPlaneData{};
 
     unique_ptr<CubesInstanced> InstancedCubes{};
     unique_ptr<SpheresInstanced> InstancedSpheres{};
+
+    ui32 SimulationMemorySize = 16384 * 64; // 1024 KB
+    unique_ptr<ui8, void(*)(void *p)> SimulationMemory = {(ui8 *)_aligned_malloc(SimulationMemorySize, 16), [](void *p) { _aligned_free(p); }};
+
+    SimulationCallback SimCallback{};
+
+    vector<PhysX::ContactInfo> NewContactInfos{};
 }
 
 bool PhysX::Create()
@@ -115,7 +136,12 @@ bool PhysX::Create()
 
     PxSceneDesc sceneDesc(Physics->getTolerancesScale());
 
-    if (!SetSceneProcessing(sceneDesc, ProcessingOn::CPU, BroadPhaseType::GPU))
+    PxSceneLimits sceneLimits;
+    sceneLimits.maxNbActors = 10'000;
+    sceneLimits.maxNbBodies = 10'000;
+    sceneLimits.maxNbDynamicShapes = 10'000;
+
+    if (!SetSceneProcessing(sceneDesc, ProcessingOn::CPU, BroadPhaseType::SAP))
     {
         SENDLOG(Error, "PhysX::Create -> SetSceneProcessing failed\n");
         return false;
@@ -123,14 +149,17 @@ bool PhysX::Create()
 
     auto filterShader = [](PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void *constantBlock, PxU32 constantBlockSize) -> PxFilterFlags
     {
-        pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+        pairFlags = PxPairFlag::eCONTACT_DEFAULT | PxPairFlag::eNOTIFY_TOUCH_FOUND | PxPairFlag::eNOTIFY_TOUCH_LOST | PxPairFlag::eNOTIFY_CONTACT_POINTS;
         return PxFilterFlag::eDEFAULT;
     };
-
+    
     sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
     sceneDesc.cpuDispatcher = CpuDispatcher;
     //sceneDesc.filterShader = PxDefaultSimulationFilterShader;
     sceneDesc.filterShader = filterShader;
+    sceneDesc.simulationEventCallback = &SimCallback;
+    sceneDesc.limits = sceneLimits;
+    sceneDesc.flags |= PxSceneFlag::eENABLE_PCM;
     PhysXScene = Physics->createScene(sceneDesc);
     if (!PhysXScene)
     {
@@ -160,10 +189,11 @@ bool PhysX::Create()
         pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
     }
 
-    PhysXMaterial = Physics->createMaterial(0.5f, 0.5f, 0.6f);
+    PhysXMaterial = Physics->createMaterial(0.75f, 0.5f, 0.25f);
 
-    GroundPlane = PxCreatePlane(*Physics, PxPlane(0, 1, 0, 0), *PhysXMaterial);
+    GroundPlane = PxCreatePlane(*Physics, PxPlane(0, 1, 0, 1), *PhysXMaterial);
     PhysXScene->addActor(*GroundPlane);
+    GroundPlane->userData = &PhysXPlaneData;
 
     IsInitialized = true;
 
@@ -172,6 +202,10 @@ bool PhysX::Create()
 
 void PhysX::Destroy()
 {
+    PhysXPlaneData = {};
+    PhysXCubeDatas = {};
+    PhysXSphereDatas = {};
+
     if (GroundPlane)
     {
         GroundPlane->release();
@@ -227,49 +261,46 @@ void PhysX::Update()
         return;
     }
 
-    PhysXScene->simulate(Application::GetEngineTime().secondSinceLastFrame);
+    NewContactInfos.clear();
+
+    PhysXScene->simulate(Application::GetEngineTime().secondSinceLastFrame, nullptr, SimulationMemory.get(), SimulationMemorySize);
 }
 
-void PhysX::Draw(const EngineCore::Camera &camera)
+void PhysX::Draw(const Camera &camera)
 {
     if (!IsInitialized)
     {
         return;
     }
 
-    if (PhysXCubeDatas.size())
+    auto genericDraw = [](const Camera &camera, const auto &source, const auto &instancedObject)
     {
-        CubesInstanced::InstanceData *cubeLock = InstancedCubes->Lock(PhysXCubeDatas.size());
-        for (const auto &data : PhysXCubeDatas)
+        if (source.size() && instancedObject)
         {
-            const auto &phyPos = data.actor->getGlobalPose();
+            auto *lock = instancedObject->Lock(source.size());
+            for (const auto &data : source)
+            {
+                const auto &phyPos = data.actor->getGlobalPose();
 
-            cubeLock->position = {phyPos.p.x, phyPos.p.y, phyPos.p.z};
-            cubeLock->rotation = {phyPos.q.x, phyPos.q.y, phyPos.q.z, phyPos.q.w};
-            cubeLock->size = data.size;
+                lock->position = {phyPos.p.x, phyPos.p.y, phyPos.p.z};
+                lock->rotation = {phyPos.q.x, phyPos.q.y, phyPos.q.z, phyPos.q.w};
+                f32 size = data.size;
+                if (!data.isWoke)
+                {
+                    size = Funcs::SetBit(size, 31, 1);
+                }
+                size = Funcs::SetBit(size, 0, data.contactsCount > 0);
+                lock->size = size;
 
-            ++cubeLock;
+                ++lock;
+            }
+            instancedObject->Unlock();
+            instancedObject->Draw(&camera, (ui32)source.size());
         }
-        InstancedCubes->Unlock();
-        InstancedCubes->Draw(&camera, (ui32)PhysXCubeDatas.size());
-    }
+    };
 
-    if (PhysXSphereDatas.size())
-    {
-        SpheresInstanced::InstanceData *sphereLock = InstancedSpheres->Lock(PhysXSphereDatas.size());
-        for (const auto &data : PhysXSphereDatas)
-        {
-            const auto &phyPos = data.actor->getGlobalPose();
-
-            sphereLock->position = {phyPos.p.x, phyPos.p.y, phyPos.p.z};
-            sphereLock->rotation = {phyPos.q.x, phyPos.q.y, phyPos.q.z, phyPos.q.w};
-            sphereLock->size = data.size;
-
-            ++sphereLock;
-        }
-        InstancedSpheres->Unlock();
-        InstancedSpheres->Draw(&camera, (ui32)PhysXSphereDatas.size());
-    }
+    genericDraw(camera, PhysXCubeDatas, InstancedCubes.get());
+    genericDraw(camera, PhysXSphereDatas, InstancedSpheres.get());
 
     PhysXScene->fetchResults(true);
 }
@@ -281,6 +312,7 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
         return;
     }
 
+    NewContactInfos.clear();
     PhysXCubeDatas.clear();
     PhysXSphereDatas.clear();
 
@@ -288,6 +320,9 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
     {
         InstancedCubes = make_unique<CubesInstanced>(cubes.size());
     }
+
+    static constexpr f32 contactOffset = 0.0075f;
+    static constexpr f32 restOffset = 0.0f;
 
     PxShape *defaultCubeShape = Physics->createShape(PxBoxGeometry(0.5f, 0.5f, 0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
 
@@ -303,7 +338,7 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
 
         data.size = object.size;
         data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
-        if (Distance(0.5f, halfSize) < DefaultEpsilon)
+        if (Distance(0.5f, halfSize) < DefaultF32Epsilon)
         {
             data.actor->attachShape(*defaultCubeShape);
             data.shape = defaultCubeShape;
@@ -312,9 +347,15 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
         {
             data.shape = data.actor->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
         }
+
+        data.shape->setContactOffset(contactOffset);
+        data.shape->setRestOffset(restOffset);
         PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
 
+        data.actor->userData = &data;
+        data.actor->setActorFlag(PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
         PhysXScene->addActor(*data.actor);
+        data.actor->wakeUp();
     }
 
     defaultCubeShape->release();
@@ -338,7 +379,7 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
 
         data.size = object.size;
         data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
-        if (Distance(0.5f, halfSize) < DefaultEpsilon)
+        if (Distance(0.5f, halfSize) < DefaultF32Epsilon)
         {
             data.actor->attachShape(*defaultSphereShape);
             data.shape = defaultSphereShape;
@@ -348,12 +389,22 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
             data.shape = data.actor->createShape(PxSphereGeometry(halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
         }
 
+        data.shape->setContactOffset(contactOffset);
+        data.shape->setRestOffset(restOffset);
         PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
 
+        data.actor->userData = &data;
+        data.actor->setActorFlag(PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
         PhysXScene->addActor(*data.actor);
+        data.actor->wakeUp();
     }
 
     defaultSphereShape->release();
+}
+
+auto PhysX::GetNewContacts() -> pair<const ContactInfo *, uiw>
+{
+    return {NewContactInfos.data(), NewContactInfos.size()};
 }
 
 bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhaseType broadPhaseType)
@@ -415,7 +466,7 @@ bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhase
     {
         case ProcessingOn::GPU:
         {
-            desc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS | PxSceneFlag::eENABLE_PCM;
+            desc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
         } break;
         case ProcessingOn::CPU:
         {
@@ -424,3 +475,126 @@ bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhase
 
     return true;
 }
+
+void SimulationCallback::onConstraintBreak(PxConstraintInfo *constraints, PxU32 count)
+{}
+
+void SimulationCallback::onWake(PxActor **actors, PxU32 count)
+{
+    for (PxU32 index = 0; index < count; ++index)
+    {
+        PxActor *actor = actors[index];
+        PhysXActorData &data = *(PhysXActorData *)actor->userData;
+        data.isWoke = true;
+    }
+}
+
+void SimulationCallback::onSleep(PxActor **actors, PxU32 count)
+{
+    for (PxU32 index = 0; index < count; ++index)
+    {
+        PxActor *actor = actors[index];
+        PhysXActorData &data = *(PhysXActorData *)actor->userData;
+        data.isWoke = false;
+    }
+}
+
+void SimulationCallback::onTrigger(PxTriggerPair *pairs, PxU32 count)
+{}
+
+void SimulationCallback::onContact(const PxContactPairHeader &pairHeader, const PxContactPair *pairs, PxU32 numPairs)
+{
+    if (pairHeader.flags & (PxContactPairHeaderFlag::eREMOVED_ACTOR_0 | PxContactPairHeaderFlag::eREMOVED_ACTOR_1)) // From UE4, what is it???
+    {
+        return;
+    }
+
+    PxRigidActor *actor0 = pairHeader.actors[0];
+    PxRigidActor *actor1 = pairHeader.actors[1];
+
+    auto &actor0data = *(PhysXActorData *)actor0->userData;
+    auto &actor1data = *(PhysXActorData *)actor1->userData;
+
+    auto getNextContactPairPoint = [](const PxContactPair &pair, PxContactStreamIterator &iter, uiw &count) -> optional<PxContactPairPoint>
+    {
+        const PxU32 flippedContacts = (pair.flags & PxContactPairFlag::eINTERNAL_CONTACTS_ARE_FLIPPED);
+        const PxU32 hasImpulses = (pair.flags & PxContactPairFlag::eINTERNAL_HAS_IMPULSES);
+
+        if (iter.hasNextPatch())
+        {
+            iter.nextPatch();
+            if (iter.hasNextContact())
+            {
+                iter.nextContact();
+                PxContactPairPoint dst;
+                dst.position = iter.getContactPoint();
+                dst.separation = iter.getSeparation();
+                dst.normal = iter.getContactNormal();
+                if (!flippedContacts)
+                {
+                    dst.internalFaceIndex0 = iter.getFaceIndex0();
+                    dst.internalFaceIndex1 = iter.getFaceIndex1();
+                }
+                else
+                {
+                    dst.internalFaceIndex0 = iter.getFaceIndex1();
+                    dst.internalFaceIndex1 = iter.getFaceIndex0();
+                }
+
+                if (hasImpulses)
+                {
+                    const PxReal impulse = pair.contactImpulses[count];
+                    dst.impulse = dst.normal * impulse;
+                }
+                else
+                {
+                    dst.impulse = PxVec3(0.0f);
+                }
+
+                ++count;
+
+                return dst;
+            }
+        }
+
+        return {};
+    };
+
+    for (PxU32 pairIndex = 0; pairIndex < numPairs; ++pairIndex)
+    {
+        const auto &pair = pairs[pairIndex];
+
+        if (pair.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
+        {
+            if (actor0data.actor && actor1data.actor)
+            {
+                uiw count = 0;
+                PxContactStreamIterator iter(pair.contactPatches, pair.contactPoints, pair.getInternalFaceIndices(), pair.patchCount, pair.contactCount);
+                for (auto contactPoint = getNextContactPairPoint(pair, iter, count); contactPoint; contactPoint = getNextContactPairPoint(pair, iter, count))
+                {
+                    ++actor0data.contactsCount;
+                    ++actor1data.contactsCount;
+
+                    NewContactInfos.push_back({Vector3{contactPoint->position.x, contactPoint->position.y, contactPoint->position.z}, contactPoint->impulse.magnitude()});
+                }
+            }
+        }
+        else if (pair.events & PxPairFlag::eNOTIFY_TOUCH_LOST)
+        {
+            if (actor0data.actor && actor1data.actor)
+            {
+                uiw count = 0;
+                PxContactStreamIterator iter(pair.contactPatches, pair.contactPoints, pair.getInternalFaceIndices(), pair.patchCount, pair.contactCount);
+                for (auto contactPoint = getNextContactPairPoint(pair, iter, count); contactPoint; contactPoint = getNextContactPairPoint(pair, iter, count))
+                {
+                    assert(actor0data.contactsCount && actor1data.contactsCount);
+                    --actor0data.contactsCount;
+                    --actor1data.contactsCount;
+                }
+            }
+        }
+    }
+}
+
+void SimulationCallback::onAdvance(const PxRigidBody *const *bodyBuffer, const PxTransform *poseBuffer, const PxU32 count)
+{}

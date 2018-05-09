@@ -95,6 +95,8 @@ namespace EngineCore
 			KeyStateType keyState;
             ui32 timesKeyStateChanged;
 			chrono::time_point<chrono::steady_clock> occuredAt;
+
+            bool IsPressed() const;
 		};
 
         struct ListenerAndMask

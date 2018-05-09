@@ -132,6 +132,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneBackground.cpp" />
     <ClCompile Include="SpheresInstanced.cpp" />
+    <ClCompile Include="XAudio2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cube.hpp" />
@@ -144,6 +145,7 @@
     <ClInclude Include="Scene.hpp" />
     <ClInclude Include="SceneBackground.hpp" />
     <ClInclude Include="SpheresInstanced.hpp" />
+    <ClInclude Include="XAudio2.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

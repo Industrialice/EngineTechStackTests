@@ -172,7 +172,7 @@ bool Material::UniformBool(uid id, const bool *values, ui32 count, ui32 offset)
 	return true;
 }
 
-bool Material::UniformRaw(uid id, const byte *source, ui32 sizeInBytes, ui32 offset)
+bool Material::UniformRaw(uid id, const ui8 *source, ui32 sizeInBytes, ui32 offset)
 {
 	if (id.IsValid() == false)
 	{

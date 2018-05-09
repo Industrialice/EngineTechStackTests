@@ -93,7 +93,7 @@ namespace OGLRenderer
         };
         static_assert(std::is_trivially_copyable_v<TextureUniform>);
 
-        unique_ptr<byte[]> uniforms{};
+        unique_ptr<ui8[]> uniforms{};
 
         virtual ~MaterialBackendData() = default;
 

@@ -86,27 +86,24 @@ void KeyController::Dispatch(const ControlAction &action)
 
     if (auto keyAction = std::get_if<ControlAction::Key>(&cookedAction.action))
     {
-        ui32 deviceIndex;
-        LSNZB32(cookedAction.deviceType, &deviceIndex);
+        ui32 deviceIndex = Funcs::LeastSignificantNonZeroBit((ui32)cookedAction.deviceType);
         auto &deviceKeyStates = _keyStates[deviceIndex];
         auto &keyInfo = deviceKeyStates[(size_t)keyAction->key];
 
         bool wasPressed = keyInfo.keyState == KeyInfo::KeyStateType::Pressed;
+        bool isRepeating = wasPressed && keyAction->keyState == KeyInfo::KeyStateType::Pressed;
 
         ui32 currentKSCTimes = keyInfo.timesKeyStateChanged;
-        if (keyInfo.keyState != keyAction->keyState)
+        if (keyInfo.keyState != keyAction->keyState || isRepeating)
         {
             ++currentKSCTimes;
         }
 
         keyInfo = {keyAction->keyState, currentKSCTimes, cookedAction.occuredAt};
 
-        if (keyAction->keyState == KeyInfo::KeyStateType::Pressed) // if the key was already pressed, replace its pressed state with the repeated state
+        if (isRepeating)
         {
-            if (wasPressed)
-            {
-                keyAction->keyState = KeyInfo::KeyStateType::Repeated;
-            }
+            keyAction->keyState = KeyInfo::KeyStateType::Repeated;
         }
     }
 
@@ -181,8 +178,7 @@ void KeyController::RemoveListener(ListenerHandle &handle)
 
 auto KeyController::GetKeyInfo(vkeyt key, DeviceType deviceType) const -> KeyInfo
 {
-    ui32 deviceIndex;
-    MSNZB32(deviceType, &deviceIndex);
+    ui32 deviceIndex = Funcs::MostSignificantNonZeroBit((ui32)deviceType);
     auto &deviceKeyStates = _keyStates[deviceIndex];
     return deviceKeyStates[(size_t)key];
 }
@@ -218,4 +214,9 @@ bool KeyController::ListenerHandle::operator == (const ListenerHandle &other) co
 bool KeyController::ListenerHandle::operator != (const ListenerHandle &other) const
 {
     return !(this->operator==(other));
+}
+
+bool KeyController::KeyInfo::IsPressed() const
+{
+    return keyState != KeyStateType::Released;
 }

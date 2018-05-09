@@ -28,7 +28,7 @@ namespace EngineCore
         f64 secondsSinceStart{};
         f32 secondSinceLastFrame{};
         f32 unscaledSecondSinceLastFrame{};
-        f32 timeScale{};
+        f32 timeScale = 1.0f;
     };
 
 	// this is a god object, it supposed to contain all highest level systems

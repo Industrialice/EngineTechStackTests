@@ -6,13 +6,13 @@ namespace EngineCore
 {
     enum class LogLevel : ui32
     {
-        Error = BIT(0),
-        Info = BIT(1),
-        Warning = BIT(2),
-        Critical = BIT(3),
-        Debug = BIT(4),
-        ImportantInfo = BIT(5),
-        Other = BIT(6)
+        Error = Funcs::BitPos(0),
+        Info = Funcs::BitPos(1),
+        Warning = Funcs::BitPos(2),
+        Critical = Funcs::BitPos(3),
+        Debug = Funcs::BitPos(4),
+        ImportantInfo = Funcs::BitPos(5),
+        Other = Funcs::BitPos(6)
     };
 
     constexpr LogLevel LogLevel_All = LogLevel(UINT32_MAX);

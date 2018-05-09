@@ -24,8 +24,8 @@ namespace TradingApp
     public:
         struct InstanceData
         {
-            EngineCore::Quaternion rotation;
-            EngineCore::Vector3 position;
+            Quaternion rotation;
+            Vector3 position;
             f32 size;
         };
 

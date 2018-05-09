@@ -113,7 +113,7 @@ shared_ptr<Texture> CreateCellTexture(bool isUseThinStrips)
 
     BufferOwnedData textureData
     {
-        (byte *)new ui8[textureSizeInBytes],
+        (ui8 *)new ui8[textureSizeInBytes],
         [](void *p) {delete[] p; }
     };
 

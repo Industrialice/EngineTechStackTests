@@ -139,9 +139,9 @@ namespace EngineCore
             return UniformBool(UniformNameToId(name), values, count, offset);
         }
 
-		bool UniformRaw(uid id, const byte *source, ui32 sizeInBytes, ui32 offset = 0);
+		bool UniformRaw(uid id, const ui8 *source, ui32 sizeInBytes, ui32 offset = 0);
 
-        bool UniformRaw(string_view name, const byte *source, ui32 sizeInBytes, ui32 offset = 0)
+        bool UniformRaw(string_view name, const ui8 *source, ui32 sizeInBytes, ui32 offset = 0)
         {
             return UniformRaw(UniformNameToId(name), source, sizeInBytes, offset);
         }

@@ -23,10 +23,6 @@ namespace EngineCore
     class RendererCommandBuffer;
     class Camera;
 
-    struct Matrix4x4;
-    struct Matrix4x3;
-    struct Vector3;
-
 	class Renderer
 	{
     private:
@@ -55,7 +51,7 @@ namespace EngineCore
 
         virtual bool CreateArrayRegion(const RendererArray &array, BufferOwnedData data) = 0;
         virtual void UpdateArrayRegion(const RendererArray &array, BufferOwnedData data, ui32 sizeInBytes, ui32 offsetInBytes) = 0;
-        virtual byte *LockArrayRegionForWrite(const RendererArray &array, ui32 sizeInBytes, ui32 offsetInBytes) = 0;
+        virtual ui8 *LockArrayRegionForWrite(const RendererArray &array, ui32 sizeInBytes, ui32 offsetInBytes) = 0;
         virtual void UnlockArrayRegion(const RendererArray &array) = 0;
 
         virtual bool CreateTextureRegion(const Texture &texture, BufferOwnedData data, TextureDataFormat dataFormat) = 0;

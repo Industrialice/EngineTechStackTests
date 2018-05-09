@@ -377,7 +377,7 @@ bool OpenGLRendererProxy::CreateTextureRegion(const Texture &texture, BufferOwne
 
     ui32 elementSize = Texture::FormatSizeInBytes(texture.Format());
     ui8 mipLevels = texture.MipLevelsCount();
-    const byte *dataSource = data.get();
+    const ui8 *dataSource = data.get();
 
     if (isDepthStencilTexture)
     {

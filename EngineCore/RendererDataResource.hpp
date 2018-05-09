@@ -15,7 +15,7 @@ namespace EngineCore
         D32 = 128, D24S8, D24X8
     };
 
-    using BufferOwnedData = unique_ptr<byte[], function<void(void *)>>;
+    using BufferOwnedData = unique_ptr<ui8[], function<void(void *)>>;
 
     template <typename T> class RendererArrayData
     {
@@ -34,7 +34,7 @@ namespace EngineCore
         RendererArrayData(RendererArrayData &&) = default;
         RendererArrayData &operator = (RendererArrayData &&) = default;
 
-        RendererArrayData(initializer_list<T> values) : _data(new byte[values.size() * sizeof(T)], [](void *p) {delete[] p; }), _sizeInBytes(ui32(values.size() * sizeof(T)))
+        RendererArrayData(initializer_list<T> values) : _data(new ui8[values.size() * sizeof(T)], [](void *p) {delete[] p; }), _sizeInBytes(ui32(values.size() * sizeof(T)))
         {
             memcpy(_data.get(), values.begin(), sizeof(T) * values.size());
         }
@@ -42,7 +42,7 @@ namespace EngineCore
         RendererArrayData(BufferOwnedData data, ui32 numberOfElements) : _data(move(data)), _sizeInBytes(numberOfElements * sizeof(T))
         {}
 
-        RendererArrayData(const T *data, ui32 numberOfElements) : _data(new byte[numberOfElements * sizeof(T)], [](void *p) {delete[] p; }), _sizeInBytes(numberOfElements * sizeof(T))
+        RendererArrayData(const T *data, ui32 numberOfElements) : _data(new ui8[numberOfElements * sizeof(T)], [](void *p) {delete[] p; }), _sizeInBytes(numberOfElements * sizeof(T))
         {
             memcpy(_data.get(), data, numberOfElements * sizeof(T));
         }
@@ -55,7 +55,7 @@ namespace EngineCore
     public:
         enum class LockMode { ReadWrite, Read, Write };
 
-        using BufferOwnedData = unique_ptr<byte[], function<void(void *)>>;
+        using BufferOwnedData = unique_ptr<ui8[], function<void(void *)>>;
 
         struct CPUAccessMode
         {

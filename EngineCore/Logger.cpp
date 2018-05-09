@@ -88,7 +88,7 @@ void Logger::RemoveListener(ListenerHandleData &handle)
     {
         return;
     }
-    if (!AreSharedPointersEqual(strongOwner, shared_from_this()))
+    if (!Funcs::AreSharedPointersEqual(strongOwner, shared_from_this()))
     {
         SOFTBREAK;
         return;
@@ -129,7 +129,7 @@ void Logger::ListenerHandleData::Remove()
 
 bool Logger::ListenerHandleData::operator == (const ListenerHandleData &other) const
 {
-    return AreSharedPointersEqual(_owner, other._owner) && _messageListener == other._messageListener;
+    return Funcs::AreSharedPointersEqual(_owner, other._owner) && _messageListener == other._messageListener;
 }
 
 #endif

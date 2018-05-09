@@ -121,7 +121,6 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="MatrixMathTypes.cpp" />
     <ClCompile Include="VirtualKeys.cpp" />
     <ClCompile Include="WinHIDInput.cpp" />
     <ClCompile Include="KeyController.cpp" />
@@ -150,14 +149,11 @@
     <ClInclude Include="BasicHeader.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="ListenerHandle.hpp" />
-    <ClInclude Include="MathFunctions.hpp" />
     <ClInclude Include="WinAPI.hpp" />
     <ClInclude Include="WinHIDInput.hpp" />
     <ClInclude Include="KeyController.hpp" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="Material.hpp" />
-    <ClInclude Include="_MatrixMathFunctions.hpp" />
-    <ClInclude Include="MatrixMathTypes.hpp" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="RendererArray.hpp" />
     <ClInclude Include="RendererDataResource.hpp" />

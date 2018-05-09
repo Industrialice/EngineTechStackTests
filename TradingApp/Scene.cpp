@@ -137,7 +137,7 @@ void DrawPyramid(const Camera &camera)
         f32 color[4];
     };
 
-    byte *locked = PyramidVB->LockDataRegion(1, 1, RendererArray::LockMode::Write);
+    ui8 *locked = PyramidVB->LockDataRegion(1, 1, RendererArray::LockMode::Write);
     *(Vertex *)locked = Vertex{{1, -1, -1}, {randValue, randValue, randValue, 1}};
     PyramidVB->UnlockDataRegion();
 

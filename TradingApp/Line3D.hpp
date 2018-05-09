@@ -7,7 +7,6 @@ namespace EngineCore
     class RendererVertexArray;
     class RendererIndexArray;
     class Camera;
-    struct Vector3;
 }
 
 namespace TradingApp
@@ -23,6 +22,6 @@ namespace TradingApp
 
     public:
         Line3D();
-        void Draw(const EngineCore::Camera *camera, const EngineCore::Vector3 &point0, const EngineCore::Vector3 &point1, f32 thickness);
+        void Draw(const EngineCore::Camera *camera, const Vector3 &point0, const Vector3 &point1, f32 thickness);
     };
 }

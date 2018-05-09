@@ -56,10 +56,10 @@ bool OpenGLRendererProxy::CheckMaterialBackendData(const Material &material)
 			uniformsSizeOf += getUniformSizeOf(uniform);
 		}
 
-		backendData.uniforms.reset((byte *)new uiw[uniformsSizeOf]);
+		backendData.uniforms.reset((ui8 *)new uiw[uniformsSizeOf]);
 	}
 
-	byte *uniformsMemory = backendData.uniforms.get();
+	ui8 *uniformsMemory = backendData.uniforms.get();
 
 	for (ui32 uniformIndex = 0; uniformIndex < uniformsCount; ++uniformIndex)
 	{

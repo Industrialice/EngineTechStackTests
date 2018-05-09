@@ -23,7 +23,7 @@ namespace EngineCore
 
         bool UpdateDataRegion(BufferOwnedData data, ui32 numberOfElements, ui32 updateStartOffset);
 
-        byte *LockDataRegion(ui32 regionNumberOfElements, ui32 regionStartOffset, LockMode access);
+        ui8 *LockDataRegion(ui32 regionNumberOfElements, ui32 regionStartOffset, LockMode access);
         void UnlockDataRegion();
 
         ui32 NumberOfElements() const;

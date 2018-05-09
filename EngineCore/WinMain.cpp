@@ -55,6 +55,7 @@ namespace
 	FileAndCallback FileLogListener;
 
     ui32 SceneRestartedCounter;
+    ui32 UpTimeDeltaCounter, DownTimeDeltaCounter;
 }
 
 template <typename _Ty> struct MyCoroutineReturn
@@ -171,6 +172,8 @@ static MyCoroutineReturn<bool> ListenKeys(const ControlAction &action)
 
 int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
+    StdLib::Initialization::CoreInitialize({});
+
 	Application::Create();
 
     LogListener = Application::GetLogger().AddListener(LogRecipient);
@@ -280,6 +283,10 @@ bool CreateApplicationSubsystems()
 	}
     Application::SetRenderer(oglRenderer);
 
+    EngineTime engineTime;
+    //engineTime.timeScale = 0.5f;
+    Application::SetEngineTime(engineTime);
+
     auto renderTarget = RenderTarget::New();
 	Application::GetMainCamera()->RenderTarget(renderTarget);
     Application::GetMainCamera()->Position(Vector3(0, 5, -10));
@@ -296,6 +303,8 @@ bool CreateApplicationSubsystems()
 
 void ShutdownApp()
 {
+    SceneToDraw::Destroy();
+
 	auto mainWindow = Application::GetMainWindow();
 
     Application::SetRenderer(nullptr);
@@ -341,10 +350,9 @@ void MessageLoop()
             chrono::duration<f64> durationSinceStart = currentMemont - firstUpdate;
             chrono::duration<f32> durationSinceLastUpdate = currentMemont - lastUpdate;
 
-            EngineTime engineTime;
-            engineTime.timeScale = 1.0f;
-            engineTime.secondsSinceStart = durationSinceStart.count();
-            engineTime.secondSinceLastFrame = durationSinceLastUpdate.count();
+            EngineTime engineTime = Application::GetEngineTime();
+            engineTime.secondsSinceStart = durationSinceStart.count() * engineTime.timeScale;
+            engineTime.secondSinceLastFrame = durationSinceLastUpdate.count() * engineTime.timeScale;
             engineTime.unscaledSecondSinceLastFrame = durationSinceLastUpdate.count();
 
             lastUpdate = currentMemont;
@@ -357,42 +365,65 @@ void MessageLoop()
 			camera->ClearColorRGBA(array<f32, 4>{0, 0, 0, 1});
             camera->ClearDepthValue(1.0f);
 
-            float camMovementScale = engineTime.secondSinceLastFrame * 5;
-            if (Application::GetKeyController().GetKeyInfo(vkeyt::LShift).keyState != ControlAction::Key::KeyStateType::Released)
+            const auto &keyController = Application::GetKeyController();
+
+            float camMovementScale = engineTime.unscaledSecondSinceLastFrame * 5;
+            if (keyController.GetKeyInfo(vkeyt::LShift).IsPressed())
             {
                 camMovementScale *= 3;
             }
-            if (Application::GetKeyController().GetKeyInfo(vkeyt::LControl).keyState != ControlAction::Key::KeyStateType::Released)
+            if (keyController.GetKeyInfo(vkeyt::LControl).IsPressed())
             {
                 camMovementScale *= 0.33f;
             }
 
-            if (Application::GetKeyController().GetKeyInfo(vkeyt::S).keyState != ControlAction::Key::KeyStateType::Released)
+            if (keyController.GetKeyInfo(vkeyt::S).IsPressed())
             {
                 camera->MoveAlongForwardAxis(-camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkeyt::W).keyState != ControlAction::Key::KeyStateType::Released)
+            if (keyController.GetKeyInfo(vkeyt::W).IsPressed())
             {
                 camera->MoveAlongForwardAxis(camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkeyt::A).keyState != ControlAction::Key::KeyStateType::Released)
+            if (keyController.GetKeyInfo(vkeyt::A).IsPressed())
             {
                 camera->MoveAlongRightAxis(-camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkeyt::D).keyState != ControlAction::Key::KeyStateType::Released)
+            if (keyController.GetKeyInfo(vkeyt::D).IsPressed())
             {
                 camera->MoveAlongRightAxis(camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkeyt::R).keyState != ControlAction::Key::KeyStateType::Released)
+            if (keyController.GetKeyInfo(vkeyt::R).IsPressed())
             {
                 camera->MoveAlongUpAxis(camMovementScale);
             }
-            if (Application::GetKeyController().GetKeyInfo(vkeyt::F).keyState != ControlAction::Key::KeyStateType::Released)
+            if (keyController.GetKeyInfo(vkeyt::F).IsPressed())
             {
                 camera->MoveAlongUpAxis(-camMovementScale);
             }
 
-            if (ui32 newCounter = Application::GetKeyController().GetKeyInfo(vkeyt::Space).timesKeyStateChanged; newCounter != SceneRestartedCounter)
+            if (keyController.GetKeyInfo(vkeyt::LAlt).IsPressed())
+            {
+                while (UpTimeDeltaCounter != keyController.GetKeyInfo(vkeyt::UpArrow).timesKeyStateChanged)
+                {
+                    SENDLOG(Info, "SENT\n");
+                    ++UpTimeDeltaCounter;
+                    EngineTime engineTime = Application::GetEngineTime();
+                    engineTime.timeScale += 0.05f;
+                    Application::SetEngineTime(engineTime);
+                }
+                while (DownTimeDeltaCounter != keyController.GetKeyInfo(vkeyt::DownArrow).timesKeyStateChanged)
+                {
+                    SENDLOG(Info, "SENT\n");
+                    ++DownTimeDeltaCounter;
+                    EngineTime engineTime = Application::GetEngineTime();
+                    engineTime.timeScale -= 0.05f;
+                    engineTime.timeScale = std::max(engineTime.timeScale, 0.1f);
+                    Application::SetEngineTime(engineTime);
+                }
+            }
+
+            if (ui32 newCounter = keyController.GetKeyInfo(vkeyt::Space).timesKeyStateChanged; newCounter != SceneRestartedCounter)
             {
                 SceneRestartedCounter = newCounter;
                 SceneToDraw::Restart();

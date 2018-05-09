@@ -160,7 +160,7 @@ public:
         HasGLErrors();
     }
 
-    virtual byte *LockArrayRegionForWrite(const RendererArray &array, ui32 sizeInBytes, ui32 offsetInBytes) override
+    virtual ui8 *LockArrayRegionForWrite(const RendererArray &array, ui32 sizeInBytes, ui32 offsetInBytes) override
     {
         assert(RendererBackendData(array) != nullptr);
         auto &arrayData = *RendererBackendData<ArrayBackendData>(array);
@@ -170,7 +170,7 @@ public:
 
         if (arrayData.data == nullptr)
         {
-            arrayData.data = EngineCore::BufferOwnedData{new byte[arrayTotalSize], [](void *p) {delete[] p; }};
+            arrayData.data = EngineCore::BufferOwnedData{new ui8[arrayTotalSize], [](void *p) {delete[] p; }};
         }
 
         arrayData.lockStart = offsetInBytes;
@@ -330,10 +330,9 @@ public:
 
         if (_boundVertexArrays[number] != array)
         {
-            auto setBitFunc = array == nullptr ? &ResetBit<ui8> : &SetBit<ui8>;
-            _boundVertexBuffersThatNotNullptr = setBitFunc(_boundVertexBuffersThatNotNullptr, number);
+            _boundVertexBuffersThatNotNullptr = Funcs::SetBit(_boundVertexBuffersThatNotNullptr, number, array != nullptr);
             _boundVertexArrays[number] = array;
-            _vertexBufferBindingChanged = SetBit(_vertexBufferBindingChanged, number);
+            _vertexBufferBindingChanged = Funcs::SetBit(_vertexBufferBindingChanged, number, true);
         }
 
         return true;
@@ -512,7 +511,7 @@ public:
                 return false;
             }
 
-            if (IsBitSet(_boundVertexBuffersThatNotNullptr, attribute.VertexArrayNumber()) == false)
+            if (Funcs::IsBitSet(_boundVertexBuffersThatNotNullptr, attribute.VertexArrayNumber()) == false)
             {
                 SENDLOG(Error, "RendererPipelineState's vertex layout requests vertex array with number %u, but it isn't currently bound\n", (ui32)attribute.VertexArrayNumber());
                 return false;
@@ -610,7 +609,7 @@ public:
         }
 
         GLenum curTexUnit = 0;
-        const byte *uniformsMemory = materialBackendData.uniforms.get();
+        const ui8 *uniformsMemory = materialBackendData.uniforms.get();
 
         for (ui32 uniformIndex = 0; uniformIndex < shader->Uniforms().size(); ++uniformIndex)
         {
