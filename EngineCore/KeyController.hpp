@@ -35,7 +35,7 @@ namespace EngineCore
 		};
 
         variant<Key, MouseMove, MouseWheel> action{};
-        chrono::time_point<chrono::steady_clock> occuredAt{};
+        TimeMoment occuredAt{};
 		DeviceType deviceType = DeviceType::MouseKeyboard0;
 
 		ControlAction() {}
@@ -94,7 +94,7 @@ namespace EngineCore
 			using KeyStateType = ControlAction::Key::KeyStateType;
 			KeyStateType keyState;
             ui32 timesKeyStateChanged;
-			chrono::time_point<chrono::steady_clock> occuredAt;
+            TimeMoment occuredAt;
 
             bool IsPressed() const;
 		};

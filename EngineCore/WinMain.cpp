@@ -172,7 +172,7 @@ static MyCoroutineReturn<bool> ListenKeys(const ControlAction &action)
 
 int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-    StdLib::Initialization::CoreInitialize({});
+    StdLib::Initialization::PlatformAbstractionInitialize({});
 
 	Application::Create();
 
@@ -322,8 +322,8 @@ void ShutdownApp()
 void MessageLoop()
 {
 	MSG o_msg;
-    chrono::time_point<chrono::steady_clock> lastUpdate = chrono::steady_clock::now();
-    chrono::time_point<chrono::steady_clock> firstUpdate = chrono::steady_clock::now();
+    auto lastUpdate = TimeMoment::Now();
+    auto firstUpdate = TimeMoment::Now();
 
 	do
 	{
@@ -345,15 +345,15 @@ void MessageLoop()
 				HARDBREAK;
 			}
 
-            auto currentMemont = chrono::steady_clock::now();
+            auto currentMemont = TimeMoment::Now();
 
-            chrono::duration<f64> durationSinceStart = currentMemont - firstUpdate;
-            chrono::duration<f32> durationSinceLastUpdate = currentMemont - lastUpdate;
+            TimeDifference64 durationSinceStart = (currentMemont - firstUpdate).As64();
+            TimeDifference durationSinceLastUpdate = currentMemont - lastUpdate;
 
             EngineTime engineTime = Application::GetEngineTime();
-            engineTime.secondsSinceStart = durationSinceStart.count() * engineTime.timeScale;
-            engineTime.secondSinceLastFrame = durationSinceLastUpdate.count() * engineTime.timeScale;
-            engineTime.unscaledSecondSinceLastFrame = durationSinceLastUpdate.count();
+            engineTime.secondsSinceStart = durationSinceStart.ToSeconds() * engineTime.timeScale;
+            engineTime.secondSinceLastFrame = durationSinceLastUpdate.ToSeconds() * engineTime.timeScale;
+            engineTime.unscaledSecondSinceLastFrame = durationSinceLastUpdate.ToSeconds();
 
             lastUpdate = currentMemont;
 

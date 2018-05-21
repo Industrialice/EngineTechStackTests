@@ -105,7 +105,7 @@ void SceneBackground::Draw(const Vector3 &rotation, const Camera &camera)
 
 shared_ptr<Texture> CreateCellTexture(bool isUseThinStrips)
 {
-    chrono::time_point<chrono::steady_clock> funcStart = chrono::steady_clock::now();
+    auto funcStart = TimeMoment::Now();
 
     ui32 textureSize = 1024;
     ui32 textureMipLevelsCount = 1;//Texture::FullChainMipLevelsCount(textureSize, textureSize);
@@ -146,9 +146,9 @@ shared_ptr<Texture> CreateCellTexture(bool isUseThinStrips)
 
     texture->IsRequestFullMipChain(true);
 
-    chrono::duration<f32> delta = chrono::steady_clock::now() - funcStart;
+    TimeDifference delta = TimeMoment::Now() - funcStart;
 
-    SENDLOG(Info, "Texture generation with isUseThinStrips %s took %fs\n", isUseThinStrips ? "true" : "false", delta.count());
+    SENDLOG(Info, "Texture generation with isUseThinStrips %s took %fs\n", isUseThinStrips ? "true" : "false", delta.ToSeconds());
 
     return texture;
 }

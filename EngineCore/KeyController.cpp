@@ -17,17 +17,17 @@ uiw ControlsQueue::size() const
 
 void ControlsQueue::EnqueueKey(DeviceType deviceType, vkeyt key, ControlAction::Key::KeyStateType keyState)
 {
-    _actions.push_back({key, keyState, chrono::steady_clock::now(), deviceType});
+    _actions.push_back({key, keyState, TimeMoment::Now(), deviceType});
 }
 
 void ControlsQueue::EnqueueMouseMove(DeviceType deviceType, i32 deltaX, i32 deltaY)
 {
-    _actions.push_back({deltaX, deltaY, chrono::steady_clock::now(), deviceType});
+    _actions.push_back({deltaX, deltaY, TimeMoment::Now(), deviceType});
 }
 
 void ControlsQueue::EnqueueMouseWheel(DeviceType deviceType, i32 delta)
 {
-    _actions.push_back({delta, chrono::steady_clock::now(), deviceType});
+    _actions.push_back({delta, TimeMoment::Now(), deviceType});
 }
 
 auto ControlsQueue::Enumerate() const -> std::experimental::generator<ControlAction>
@@ -61,7 +61,7 @@ KeyController::KeyController()
     {
         for (auto &keyState : deviceKeyStates)
         {
-            keyState = {KeyInfo::KeyStateType::Released, 0, chrono::time_point<chrono::steady_clock>()};
+            keyState = {KeyInfo::KeyStateType::Released, 0, TimeMoment::Now()};
         }
     }
 }
