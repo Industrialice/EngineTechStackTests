@@ -1,8 +1,6 @@
 #include "BasicHeader.hpp"
 #include "Logger.hpp"
 
-#ifndef EXTASY_DISABLE_LOGGING
-
 using namespace EngineCore;
 
 Logger::Logger()
@@ -131,5 +129,3 @@ bool Logger::ListenerHandleData::operator == (const ListenerHandleData &other) c
 {
     return Funcs::AreSharedPointersEqual(_owner, other._owner) && _messageListener == other._messageListener;
 }
-
-#endif

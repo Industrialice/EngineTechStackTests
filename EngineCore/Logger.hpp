@@ -15,7 +15,7 @@ namespace EngineCore
         Other = Funcs::BitPos(6)
     };
 
-    constexpr LogLevel LogLevel_All = LogLevel(UINT32_MAX);
+    constexpr LogLevel LogLevel_All = LogLevel(ui32_max);
     constexpr LogLevel LogLevel_None = LogLevel(0);
     inline LogLevel operator - (LogLevel left, LogLevel right) { return LogLevel((uiw)left & ~(uiw)right); }
     inline LogLevel operator + (LogLevel left, LogLevel right) { return LogLevel((uiw)left | (uiw)right); }
@@ -24,7 +24,6 @@ namespace EngineCore
 
     class Logger : public std::enable_shared_from_this<Logger>
     {
-    #ifndef EXTASY_DISABLE_LOGGING
         struct MessageListener;
 
         struct ListenerHandleData
@@ -71,6 +70,5 @@ namespace EngineCore
         std::atomic<bool> _isEnabled{true};
         std::atomic<bool> _isThreadSafe{false};
         char _logBuffer[logBufferSize];
-    #endif
     };
 }

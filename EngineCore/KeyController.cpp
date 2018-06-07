@@ -86,7 +86,7 @@ void KeyController::Dispatch(const ControlAction &action)
 
     if (auto keyAction = std::get_if<ControlAction::Key>(&cookedAction.action))
     {
-        ui32 deviceIndex = Funcs::LeastSignificantNonZeroBit((ui32)cookedAction.deviceType);
+        ui32 deviceIndex = Funcs::IndexOfLeastSignificantNonZeroBit((ui32)cookedAction.deviceType);
         auto &deviceKeyStates = _keyStates[deviceIndex];
         auto &keyInfo = deviceKeyStates[(size_t)keyAction->key];
 
@@ -178,7 +178,7 @@ void KeyController::RemoveListener(ListenerHandle &handle)
 
 auto KeyController::GetKeyInfo(vkeyt key, DeviceType deviceType) const -> KeyInfo
 {
-    ui32 deviceIndex = Funcs::MostSignificantNonZeroBit((ui32)deviceType);
+    ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit((ui32)deviceType);
     auto &deviceKeyStates = _keyStates[deviceIndex];
     return deviceKeyStates[(size_t)key];
 }

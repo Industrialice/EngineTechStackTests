@@ -103,9 +103,9 @@ bool PhysX::Create()
         return false;
     }
 
-    Pvd = PxCreatePvd(*Foundation);
-    PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate(PVD_HOST, 5425, 10);
-    Pvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
+    //Pvd = PxCreatePvd(*Foundation);
+    //PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate(PVD_HOST, 5425, 10);
+    //Pvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
 
     Physics = PxCreatePhysics(PX_PHYSICS_VERSION, *Foundation, PxTolerancesScale(), false, Pvd);
     if (!Physics)
@@ -160,6 +160,7 @@ bool PhysX::Create()
     sceneDesc.simulationEventCallback = &SimCallback;
     sceneDesc.limits = sceneLimits;
     sceneDesc.flags |= PxSceneFlag::eENABLE_PCM;
+    sceneDesc.dynamicTreeRebuildRateHint = 100;
     PhysXScene = Physics->createScene(sceneDesc);
     if (!PhysXScene)
     {
@@ -175,10 +176,10 @@ bool PhysX::Create()
     const PxU32 nbRegions = PxBroadPhaseExt::createRegionsFromWorldBounds(bounds, region, 4);
     for (PxU32 i = 0; i < nbRegions; ++i)
     {
-        PxBroadPhaseRegion region;
-        region.bounds = bounds[i];
-        region.userData = (void *)i;
-        PhysXScene->addBroadPhaseRegion(region);
+        PxBroadPhaseRegion bpregion;
+        bpregion.bounds = bounds[i];
+        bpregion.userData = (void *)i;
+        PhysXScene->addBroadPhaseRegion(bpregion);
     }
 
     PxPvdSceneClient* pvdClient = PhysXScene->getScenePvdClient();
@@ -289,7 +290,7 @@ void PhysX::Draw(const Camera &camera)
                 {
                     size = Funcs::SetBit(size, 31, 1);
                 }
-                size = Funcs::SetBit(size, 0, data.contactsCount > 0);
+                //size = Funcs::SetBit(size, 0, data.contactsCount > 0);
                 lock->size = size;
 
                 ++lock;
@@ -504,7 +505,7 @@ void SimulationCallback::onTrigger(PxTriggerPair *pairs, PxU32 count)
 
 void SimulationCallback::onContact(const PxContactPairHeader &pairHeader, const PxContactPair *pairs, PxU32 numPairs)
 {
-    if (pairHeader.flags & (PxContactPairHeaderFlag::eREMOVED_ACTOR_0 | PxContactPairHeaderFlag::eREMOVED_ACTOR_1)) // From UE4, what is it???
+    if (pairHeader.flags & (PxContactPairHeaderFlag::eREMOVED_ACTOR_0 | PxContactPairHeaderFlag::eREMOVED_ACTOR_1)) // From UE4, what is this???
     {
         return;
     }

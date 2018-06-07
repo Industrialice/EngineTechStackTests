@@ -7,16 +7,29 @@
 
 namespace EngineCore
 {
-    // don't forget to change DeviceType_ConstantsCount in case you update DeviceType
-	enum class DeviceType : ui32 { 
-		MouseKeyboard0 = (1 << 0), MouseKeyboard1 = (1 << 1), MouseKeyboard2 = (1 << 2), MouseKeyboard3 = (1 << 3), 
-		Joystick0 = (1 << 4), Joystick1 = (1 << 5), Joystick2 = (1 << 6), Joystick3 = (1 << 7), Joystick4 = (1 << 8), Joystick5 = (1 << 9), Joystick6 = (1 << 10), Joystick7 = (1 << 11) };
-    constexpr ui32 DeviceType_ConstantsCount = 12;
+    // don't forget to change _keyStates in case you update DeviceType
+	enum class DeviceType : ui32 
+    { 
+		MouseKeyboard0 = Funcs::BitPos(0),
+        MouseKeyboard1 = Funcs::BitPos(1),
+        MouseKeyboard2 = Funcs::BitPos(2),
+        MouseKeyboard3 = Funcs::BitPos(3),
+		Joystick0 = Funcs::BitPos(4),
+        Joystick1 = Funcs::BitPos(5),
+        Joystick2 = Funcs::BitPos(6),
+        Joystick3 = Funcs::BitPos(7), 
+        Joystick4 = Funcs::BitPos(8),
+        Joystick5 = Funcs::BitPos(9),
+        Joystick6 = Funcs::BitPos(10),
+        Joystick7 = Funcs::BitPos(11)
+    };
 
-	constexpr DeviceType DeviceType_All = DeviceType(UINT32_MAX);
+	constexpr DeviceType DeviceType_All = DeviceType(ui32_max);
 	constexpr DeviceType DeviceType_None = DeviceType(0);
-	inline DeviceType operator - (DeviceType left, DeviceType right) { return DeviceType((ui32)left & ~(ui32)right); }
-	inline DeviceType operator + (DeviceType left, DeviceType right) { return DeviceType((ui32)left | (ui32)right); }
+    inline DeviceType operator - (DeviceType left, DeviceType right) { return DeviceType((uiw)left & ~(uiw)right); }
+    inline DeviceType operator + (DeviceType left, DeviceType right) { return DeviceType((uiw)left | (uiw)right); }
+    inline DeviceType &operator -= (DeviceType &left, DeviceType right) { left = left - right; return left; }
+    inline DeviceType &operator += (DeviceType &left, DeviceType right) { left = left + right; return left; }
 
 	struct ControlAction
 	{
@@ -136,6 +149,6 @@ namespace EngineCore
         vector<ImmutableListener> _immutableListeners{};
         bool _isMutableListenersDirty = false;
         bool _isCurrentlyEnumeratingImmutableListeners = false;
-        array<array<KeyInfo, (size_t)vkeyt::_size>, DeviceType_ConstantsCount> _keyStates{};
+        array<array<KeyInfo, (size_t)vkeyt::_size>, 12> _keyStates{};
 	};
 }

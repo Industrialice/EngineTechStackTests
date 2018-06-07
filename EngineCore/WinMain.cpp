@@ -31,28 +31,15 @@ static LRESULT WINAPI MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 static void MessageLoop();
 static void ShutdownApp();
 static void LogRecipient(LogLevel logLevel, string_view nullTerminatedText);
-static void FileLogRecipient(FILE *file, LogLevel logLevel, string_view nullTerminatedText);
+static void FileLogRecipient(File &file, LogLevel logLevel, string_view nullTerminatedText);
 static bool CreateApplicationSubsystems();
 
 namespace
 {
 	KeyController::ListenerHandle KeysListener;
 	Logger::ListenerHandle LogListener;
-
-	class FileAndCallback
-	{
-        unique_ptr<FILE, void(*)(FILE *)> file{nullptr, [](FILE *) {}};
-		Logger::ListenerHandle handle;
-
-    public:
-        FileAndCallback() = default;
-		FileAndCallback(decltype(file) &&file, decltype(handle) &&callback) : file(move(file)), handle(move(callback))
-		{}
-        FileAndCallback(FileAndCallback &&) = default;
-        FileAndCallback &operator = (FileAndCallback &&) = default;
-	};
-
-	FileAndCallback FileLogListener;
+    Logger::ListenerHandle FileLogListener;
+    File LogFile;
 
     ui32 SceneRestartedCounter;
     ui32 UpTimeDeltaCounter, DownTimeDeltaCounter;
@@ -62,7 +49,7 @@ template <typename _Ty> struct MyCoroutineReturn
 {
 	struct promise_type
 	{
-		_Ty value;
+		_Ty _value;
 
 		promise_type &get_return_object()
 		{
@@ -81,7 +68,7 @@ template <typename _Ty> struct MyCoroutineReturn
 
 		void yield_value(_Ty const &value)
 		{
-			this->value = value;
+            _value = value;
 		}
 	};
 
@@ -114,7 +101,7 @@ template <typename _Ty> struct MyCoroutineReturn
 
 	const _Ty &get() const
 	{
-		return _Coro.promise().value;
+		return _Coro.promise()._value;
 	}
 
 	auto &Handle()
@@ -178,22 +165,10 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
     LogListener = Application::GetLogger().AddListener(LogRecipient);
 
-	FILE *logFile = fopen("log.txt", "w");
-	if (logFile)
+    LogFile = File(FilePath::FromChar("log.txt"), FileOpenMode::CreateAlways, FileProcMode::Write);
+	if (LogFile.IsOpened())
 	{
-		auto closeFile = [](FILE *file)
-		{
-			if (file)
-			{
-				fclose(file);
-			}
-		};
-
-		auto uniqueFile = std::remove_const_t<decltype(FileAndCallback::file)>(logFile, closeFile);
-
-		FileLogListener = FileAndCallback{
-            move(uniqueFile),
-            Application::GetLogger().AddListener(std::bind(FileLogRecipient, logFile, std::placeholders::_1, std::placeholders::_2))};
+		FileLogListener = Application::GetLogger().AddListener(std::bind(FileLogRecipient, std::ref(LogFile), std::placeholders::_1, std::placeholders::_2));
 	}
 
 	SENDLOG(Info, "Log started\n");
@@ -408,7 +383,6 @@ void MessageLoop()
                 {
                     SENDLOG(Info, "SENT\n");
                     ++UpTimeDeltaCounter;
-                    EngineTime engineTime = Application::GetEngineTime();
                     engineTime.timeScale += 0.05f;
                     Application::SetEngineTime(engineTime);
                 }
@@ -416,7 +390,6 @@ void MessageLoop()
                 {
                     SENDLOG(Info, "SENT\n");
                     ++DownTimeDeltaCounter;
-                    EngineTime engineTime = Application::GetEngineTime();
                     engineTime.timeScale -= 0.05f;
                     engineTime.timeScale = std::max(engineTime.timeScale, 0.1f);
                     Application::SetEngineTime(engineTime);
@@ -446,8 +419,8 @@ optional<HWND> CreateSystemWindow(bool isFullscreen, const string &title, HINSTA
 	auto className = "window_" + title;
 
 	WNDCLASSA wc;
-	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;  //  means that we need to redraw the whole window if its size changes, not just a new portion, CS_OWNDC is required by OpenGL
-	wc.lpfnWndProc = MsgProc;  //  note that the message procedure runs in the same thread that created the window( it's a requirement )
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC; // means that we need to redraw the whole window if its size changes, not just a new portion, CS_OWNDC is required by OpenGL
+	wc.lpfnWndProc = MsgProc; // note that the message procedure runs in the same thread that created the window (it's a requirement)
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = instance;
@@ -633,9 +606,9 @@ void LogRecipient(LogLevel logLevel, string_view nullTerminatedText)
 	OutputDebugStringA(nullTerminatedText.data());
 }
 
-void FileLogRecipient(FILE *file, LogLevel logLevel, string_view nullTerminatedText)
+void FileLogRecipient(File &file, LogLevel logLevel, string_view nullTerminatedText)
 {
 	const char *tag = LogLevelToTag(logLevel);
-	fwrite(tag, 1, strlen(tag), file);
-	fwrite(nullTerminatedText.data(), 1, nullTerminatedText.size(), file);
+    file.Write(tag, (ui32)strlen(tag));
+    file.Write(nullTerminatedText.data(), (ui32)nullTerminatedText.size());
 }

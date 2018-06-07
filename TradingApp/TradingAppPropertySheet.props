@@ -3,7 +3,8 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir)\EngineCore\;$(PHYSX_SDK)/PhysX_3.4/Include;$(PHYSX_SDK)/PxShared/include;$(SolutionDir)\OpenGLRenderer\;$(SolutionDir)\External\XAudio2;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\EngineCore\;$(PHYSX_SDK)/PhysX_3.4/Include;$(PHYSX_SDK)/PxShared/include;$(SolutionDir)\OpenGLRenderer\;$(SolutionDir)\External\XAudio2\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\External\XAudio2\bin\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>

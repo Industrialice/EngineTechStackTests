@@ -9,7 +9,8 @@
 #include "SpheresInstanced.hpp"
 #include "PhysX.hpp"
 #include "XAudio2.hpp"
-#include "AudioWaveFormatParser.hpp"
+#include <Camera.hpp>
+#include "SoundCache.hpp"
 
 using namespace EngineCore;
 using namespace TradingApp;
@@ -19,6 +20,7 @@ static void PlaceAsHugeCube();
 static void PlaceAsTallTower();
 static void PlaceHelicopter();
 static void AddTestAudio();
+static void AddAudioToNewCollisions();
 
 namespace
 {
@@ -30,6 +32,14 @@ namespace
     vector<CubesInstanced::InstanceData> Cubes{};
     vector<SpheresInstanced::InstanceData> Spheres{};
     unique_ptr<XAudioEngine> AudioEngine{};
+    unique_ptr<SoundCache> SoundCacheInstance = SoundCache::New();
+
+    struct AudioSourceInRun
+    {
+        XAudioEngine::AudioSource audio;
+        TimeMoment startedAt;
+    };
+    AudioSourceInRun CollisionAudioSources[16]{};
 }
 
 bool PhysicsScene::Create()
@@ -50,7 +60,7 @@ bool PhysicsScene::Create()
         return false;
     }
 
-    AddTestAudio();
+    //AddTestAudio();
 
     Restart();
 
@@ -66,8 +76,12 @@ void PhysicsScene::Destroy()
 
 void PhysicsScene::Update()
 {
+    //AddAudioToNewCollisions();
+
     PhysX::Update();
     SceneBackground::Update();
+
+    AudioEngine->Update();
 }
 
 void PhysicsScene::Restart()
@@ -88,6 +102,13 @@ void PhysicsScene::Draw(const Camera &camera)
     SceneBackground::Draw({MathPi<f32>() * 0.5f, 0, 0}, camera);
 
     PhysX::Draw(camera);
+
+    XAudioEngine::PositioningInfo positioning;
+    positioning.orientFront = camera.ForwardAxis();
+    positioning.orientTop = camera.UpAxis();
+    positioning.position = camera.Position();
+    positioning.velocity = {};
+    AudioEngine->SetListenerPositioning(positioning);
 }
 
 void PlaceSparse()
@@ -223,29 +244,111 @@ void PlaceHelicopter()
 
 void AddTestAudio()
 {
-    FILE *f = fopen("../Resources/Audio/[MLP] [PMV] [SFM] - Flutterwonder.wav", "rb");
-    if (!f)
+    auto stream = SoundCacheInstance->GetAudioStream(FilePath::FromChar("../Resources/Audio/bullet_impact_concrete.wav"));
+    if (!stream)
     {
-        SENDLOG(Error, "Failed to open the test audio\n");
+        SENDLOG(Error, "Failed to load test audio file\n");
         return;
     }
 
-    fseek(f, 0, SEEK_END);
-    ui32 fileSize = (ui32)ftell(f);
-    fseek(f, 0, SEEK_SET);
+    XAudioEngine::PositioningInfo positioning;
+    positioning.orientFront = {0, 0, 1};
+    positioning.orientTop = {0, 1, 0};
+    positioning.position = {0, 0, 0};
+    positioning.velocity = {};
 
-    auto data = make_unique<ui8[]>(fileSize);
-    fread(data.get(), 1, fileSize, f);
+    auto audio = AudioEngine->AddAudio(move(*stream), true, positioning);
+}
 
-    fclose(f);
+void AddAudioToNewCollisions()
+{
+    auto currentMoment = TimeMoment::Now();
 
-    auto parsedFile = ParseWaveFormatHeader(data.get(), fileSize);
-    if (!parsedFile)
+    for (auto &audio : CollisionAudioSources)
     {
-        SENDLOG(Error, "ParseWaveFormatHeader for the test audio failed\n");
-        return;
+        if (!audio.audio.IsValid())
+        {
+            continue;
+        }
+        f32 delta = (currentMoment - audio.startedAt).ToSeconds();
+        if (delta - 0.05f >= AudioEngine->AudioLength(audio.audio))
+        {
+            AudioEngine->RemoveAudio(audio.audio);
+            audio.audio = {};
+        }
     }
 
-    auto audio = AudioEngine->AddAudio(move(data), parsedFile->dataStartOffset, parsedFile->dataChunkHeader.chunkDataSize);
-    AudioEngine->StartAudio(audio);
+    auto findFreeSlot = []() -> optional<uiw>
+    {
+        for (uiw index = 0; index < Funcs::CountOf(CollisionAudioSources); ++index)
+        {
+            if (!CollisionAudioSources[index].audio.IsValid())
+            {
+                return index;
+            }
+        }
+        return {};
+    };
+
+    auto findFreeableAudio = []() -> optional<uiw>
+    {
+        TimeMoment oldestAudioMoment;
+        uiw oldestAudioIndex = 0;
+
+        for (uiw index = 0; index < Funcs::CountOf(CollisionAudioSources); ++index)
+        {
+            if (CollisionAudioSources[index].startedAt < oldestAudioMoment)
+            {
+                oldestAudioMoment = CollisionAudioSources[index].startedAt;
+                oldestAudioIndex = index;
+            }
+        }
+
+        if (AudioEngine->AudioPositionPercent(CollisionAudioSources[oldestAudioIndex].audio) < 75)
+        {
+            return {};
+        }
+
+        return oldestAudioIndex;
+    };
+
+    auto newContacts = PhysX::GetNewContacts();
+    for (uiw index = 0; index < newContacts.second; ++index)
+    {
+        const auto &contact = newContacts.first[index];
+        if (contact.impulse < 0.25f)
+        {
+            continue;
+        }
+
+        uiw addToIndex;
+        auto freeSlot = findFreeSlot();
+        if (freeSlot)
+        {
+            addToIndex = *freeSlot;
+        }
+        else
+        {
+            auto freeableIndex = findFreeableAudio();
+            if (!freeableIndex)
+            {
+                return;
+            }
+            addToIndex = *freeableIndex;
+            AudioEngine->RemoveAudio(CollisionAudioSources[addToIndex].audio);
+        }
+
+        auto audioStream = SoundCacheInstance->GetAudioStream(FilePath::FromChar("../Resources/Audio/bullet_impact_concrete.wav"));
+        if (!audioStream)
+        {
+            SOFTBREAK;
+            return;
+        }
+
+        XAudioEngine::PositioningInfo positioning;
+        positioning.position = contact.position;
+
+        CollisionAudioSources[addToIndex].audio = AudioEngine->AddAudio(move(*audioStream), true, positioning);
+        CollisionAudioSources[addToIndex].startedAt = TimeMoment::Now();
+    }
 }

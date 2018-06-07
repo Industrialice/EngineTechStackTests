@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef WINPLATFORM
-
 #define NOGDICAPMASKS
 #define NOVIRTUALKEYCODES
 //#define NOWINMESSAGES
@@ -43,5 +41,3 @@
 #define NOMCX
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-
-#endif
