@@ -22,53 +22,54 @@ namespace EngineCore
     inline LogLevel &operator -= (LogLevel &left, LogLevel right) { left = left - right; return left; }
     inline LogLevel &operator += (LogLevel &left, LogLevel right) { left = left + right; return left; }
 
-    class Logger : public std::enable_shared_from_this<Logger>
+    class Logger
     {
-        struct MessageListener;
-
-        struct ListenerHandleData
+        struct LoggerLocation
         {
-            weak_ptr<Logger> _owner{};
-            const MessageListener *_messageListener{};
+            Logger *logger;
 
-            void Remove();
-            bool operator == (const ListenerHandleData &other) const;
+            using ListenerHandle = TListenerHandle<Logger, ui32, LoggerLocation>;
+
+            LoggerLocation(Logger *logger) : logger(logger) {}
+            void RemoveListener(ListenerHandle &handle);
         };
 
-    protected:
-        Logger(Logger &&) = delete;
-        Logger &operator = (Logger &&) = delete;
-        Logger();
-
     public:
-        static shared_ptr<Logger> New();
+        Logger();
+        Logger(const Logger &source);
+        Logger &operator = (const Logger &source);
+        Logger(Logger &&source);
+        Logger &operator = (Logger &&source);
 
         using ListenerCallbackType = function<void(LogLevel, string_view)>;
+        using ListenerHandle = LoggerLocation::ListenerHandle;
 
-        using ListenerHandle = TListenerHandle<ListenerHandleData>;
-
-        void Message(LogLevel level, const char *format, ...); // printf-family function is going to be used to convert the message into a string
+        NOINLINE void Message(LogLevel level, const char *format, ...); // printf-family function is going to be used to convert the message into a string
         ListenerHandle AddListener(const ListenerCallbackType &listener, LogLevel levelMask = LogLevel_All);
-        void RemoveListener(ListenerHandleData &handle);
+        void RemoveListener(ListenerHandle &handle);
         void IsEnabled(bool isEnabled);
         bool IsEnabled() const;
-        // these methods aren't thread safe themselves, call them from the main thread only
         void IsThreadSafe(bool isSafe);
         bool IsThreadSafe() const;
 
     private:
+        NOINLINE ui32 FindIDForListener() const;
+        
         struct MessageListener
         {
-            const ListenerCallbackType callback;
-            LogLevel levelMask;
+            ListenerCallbackType callback{};
+            LogLevel levelMask{};
+            ui32 id{};
         };
 
         static constexpr uiw logBufferSize = 65536;
 
         std::mutex _mutex{};
-        forward_list<MessageListener> _listeners{};
+        vector<MessageListener> _listeners{};
+        ui32 _currentId = 0;
         std::atomic<bool> _isEnabled{true};
         std::atomic<bool> _isThreadSafe{false};
         char _logBuffer[logBufferSize];
+        shared_ptr<LoggerLocation> _loggerLocation{};
     };
 }

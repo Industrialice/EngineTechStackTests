@@ -88,3 +88,36 @@ using string_utf32 = std::basic_string<utf32char>;
 #define SVIEWARG(stringView) (i32)stringView.size(), stringView.data()
 
 constexpr ui32 RenderTargetsLimit = 8;
+
+template <typename T, typename E, E T::*field, typename IT> [[nodiscard]] E FindSmallestID(IT start, IT end)
+{
+    static_assert(std::is_unsigned_v<E>);
+    
+    if (start == end)
+    {
+        return 0;
+    }
+
+    vector<E> temp;
+    for (; start != end; ++start)
+    {
+        const auto &value = *start;
+        temp.push_back(value.*field);
+    }
+
+    if (temp.front() != 0)
+    {
+        return 0;
+    }
+
+    for (uiw index = 0, size = temp.size() - 1; index != size; ++index)
+    {
+        E nextId = temp[index] + 1;
+        if (nextId != temp[index + 1])
+        {
+            return nextId;
+        }
+    }
+
+    return temp.back() + 1;
+}

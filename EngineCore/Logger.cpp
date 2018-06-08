@@ -4,15 +4,49 @@
 using namespace EngineCore;
 
 Logger::Logger()
-{}
-
-shared_ptr<Logger> Logger::New()
 {
-    struct Proxy : public Logger
+    _loggerLocation = make_shared<LoggerLocation>(this);
+}
+
+Logger::Logger(const Logger &source)
+{
+    _isEnabled = source._isEnabled.load();
+    _isThreadSafe = source._isThreadSafe.load();
+    _loggerLocation = make_shared<LoggerLocation>(this);
+}
+
+Logger &Logger::operator = (const Logger &source)
+{
+    if (this != &source)
     {
-        Proxy() : Logger() {}
-    };
-    return make_shared<Proxy>();
+        _isEnabled = source._isEnabled.load();
+        _isThreadSafe = source._isThreadSafe.load();
+        _loggerLocation = make_shared<LoggerLocation>(this);
+    }
+    return *this;
+}
+
+Logger::Logger(Logger &&source)
+{
+    _listeners = move(source._listeners);
+    source._listeners.clear();
+    _currentId = source._currentId;
+    _isEnabled = source._isEnabled.load();
+    _isThreadSafe = source._isThreadSafe.load();
+    _loggerLocation = move(source._loggerLocation);
+    _loggerLocation->logger = this;
+}
+
+Logger &Logger::operator = (Logger &&source)
+{
+    _listeners = move(source._listeners);
+    source._listeners.clear();
+    _currentId = source._currentId;
+    _isEnabled = source._isEnabled.load();
+    _isThreadSafe = source._isThreadSafe.load();
+    _loggerLocation = move(source._loggerLocation);
+    _loggerLocation->logger = this;
+    return *this;
 }
 
 void Logger::Message(LogLevel level, const char *format, ...)
@@ -45,8 +79,9 @@ void Logger::Message(LogLevel level, const char *format, ...)
         return;
     }
 
-    for (const auto &listener : _listeners)
+    for (auto it = _listeners.rbegin(); it != _listeners.rend(); ++it)
     {
+        const auto &listener = *it;
         if ((listener.levelMask + level) == listener.levelMask)
         {
             listener.callback(level, string_view(_logBuffer, (size_t)printed));
@@ -65,34 +100,49 @@ auto Logger::AddListener(const ListenerCallbackType &listener, LogLevel levelMas
     if ((ui32)levelMask == 0) // not an error, but probably an unexpected case
     {
         SOFTBREAK;
-        return ListenerHandle();
+        return {};
     }
 
-    _listeners.push_front({listener, levelMask});
+    ui32 id;
+    if (_currentId != ui32_max)
+    {
+        id = _currentId;
+        ++_currentId;
+    }
+    else
+    {
+        id = FindIDForListener();
+    }
 
-    return ListenerHandle{shared_from_this(), &_listeners.front()};
+    _listeners.push_back({listener, levelMask, id});
+
+    return {_loggerLocation, id};
 }
 
-void Logger::RemoveListener(ListenerHandleData &handle)
+void Logger::RemoveListener(ListenerHandle &handle)
 {
+    if (handle._owner.expired())
+    {
+        return;
+    }
+
+    ASSUME(Funcs::AreSharedPointersEqual(handle._owner, _loggerLocation));
+
     optional<std::scoped_lock<std::mutex>> scopeLock;
     if (_isThreadSafe.load())
     {
         scopeLock.emplace(_mutex);
     }
 
-    const auto &strongOwner = handle._owner.lock();
-    if (strongOwner == nullptr)
+    for (auto it = _listeners.begin(); ; ++it)
     {
-        return;
+        ASSUME(it != _listeners.end());
+        if (it->id == handle._id)
+        {
+            _listeners.erase(it);
+            break;
+        }
     }
-    if (!Funcs::AreSharedPointersEqual(strongOwner, shared_from_this()))
-    {
-        SOFTBREAK;
-        return;
-    }
-
-    _listeners.remove_if([&handle](const MessageListener &value) { return &value == handle._messageListener; });
 
     handle._owner.reset();
 }
@@ -116,16 +166,15 @@ bool Logger::IsThreadSafe() const
     return _isThreadSafe.load();
 }
 
-void Logger::ListenerHandleData::Remove()
+NOINLINE ui32 Logger::FindIDForListener() const
 {
-    const auto &strongOwner = _owner.lock();
-    if (strongOwner != nullptr)
-    {
-        strongOwner->RemoveListener(*this);
-    }
+    // this should never happen unless you have bogus code that calls AddListener/RemoveListener repeatedly
+    // you'd need 50k AddListener calls per second to exhaust ui32 within 24 hours
+    SOFTBREAK;
+    return FindSmallestID<MessageListener, ui32, &MessageListener::id>(_listeners.begin(), _listeners.end());
 }
 
-bool Logger::ListenerHandleData::operator == (const ListenerHandleData &other) const
+void Logger::LoggerLocation::RemoveListener(ListenerHandle &handle)
 {
-    return Funcs::AreSharedPointersEqual(_owner, other._owner) && _messageListener == other._messageListener;
+    logger->RemoveListener(handle);
 }

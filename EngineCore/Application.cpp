@@ -12,20 +12,34 @@
 
 using namespace EngineCore;
 
-static struct ApplicationData
+struct ApplicationData
 {
-    shared_ptr<KeyController> keyController;
-    AppWindow mainWindow;
-    shared_ptr<Renderer> renderer;
-    shared_ptr<Logger> logger;
-    shared_ptr<Camera> mainCamera;
-    EngineTime CurrentEngineTime;
+    Logger logger{};
+    shared_ptr<KeyController> keyController{};
+    AppWindow mainWindow{};
+    shared_ptr<Renderer> renderer{};
+    shared_ptr<Camera> mainCamera{};
+    EngineTime CurrentEngineTime{};
 
 #ifdef WINPLATFORM
-    unique_ptr<HIDInput> hid;
-    unique_ptr<VKInput> vkInput;
+    unique_ptr<HIDInput> hid{};
+    unique_ptr<VKInput> vkInput{};
 #endif
-} *Instance;
+};
+
+namespace
+{
+    // don't use unique_ptr because it seems to perform
+    // auto temp = ptr;
+    // ptr = nullptr;
+    // delete temp;
+    // which isn't gonna work because during delete
+    // you might get log messages for example
+    // which would call Instance->logger and still
+    // must acquire a valid pointer (because Logger
+    // hasn't been deleted yet)
+    ApplicationData *Instance{};
+}
 
 namespace EngineCore::Application
 {
@@ -35,7 +49,6 @@ namespace EngineCore::Application
         Instance = new ApplicationData;
         Instance->mainCamera = Camera::New();
         Instance->keyController = KeyController::New();
-        Instance->logger = Logger::New();
     }
 
     void Destroy()
@@ -85,7 +98,7 @@ void Application::SetRenderer(const shared_ptr<Renderer> &renderer)
 
 auto Application::GetLogger() -> Logger &
 {
-    return *Instance->logger;
+    return Instance->logger;
 }
 
 const shared_ptr<Camera> &Application::GetMainCamera()

@@ -17,16 +17,19 @@ uiw ControlsQueue::size() const
 
 void ControlsQueue::EnqueueKey(DeviceType deviceType, vkeyt key, ControlAction::Key::KeyStateType keyState)
 {
+    ASSUME(deviceType != DeviceType_None);
     _actions.push_back({key, keyState, TimeMoment::Now(), deviceType});
 }
 
 void ControlsQueue::EnqueueMouseMove(DeviceType deviceType, i32 deltaX, i32 deltaY)
 {
+    ASSUME(deviceType != DeviceType_None);
     _actions.push_back({deltaX, deltaY, TimeMoment::Now(), deviceType});
 }
 
 void ControlsQueue::EnqueueMouseWheel(DeviceType deviceType, i32 delta)
 {
+    ASSUME(deviceType != DeviceType_None);
     _actions.push_back({delta, TimeMoment::Now(), deviceType});
 }
 
@@ -47,14 +50,6 @@ shared_ptr<KeyController> KeyController::New()
     return make_shared<Proxy>();
 }
 
-KeyController::~KeyController()
-{
-    if (_mutableListeners.empty() == false)
-    {
-        SENDLOG(Warning, "KeyController is being deleted, but it still has listeners\n");
-    }
-}
-
 KeyController::KeyController()
 {
     for (auto &deviceKeyStates : _keyStates)
@@ -68,19 +63,11 @@ KeyController::KeyController()
 
 void KeyController::Dispatch(const ControlAction &action)
 {
-    if (_isMutableListenersDirty)
+    if (_isDispatchingInProgress)
     {
-        _immutableListeners.clear();
-
-        for (auto &value : _mutableListeners)
-        {
-            _immutableListeners.push_back({value.listener, value.deviceMask, &value});
-        }
-
-        _isMutableListenersDirty = false;
+        SOFTBREAK;
+        return;
     }
-
-    _isCurrentlyEnumeratingImmutableListeners = true;
 
     auto cookedAction = action;
 
@@ -107,15 +94,22 @@ void KeyController::Dispatch(const ControlAction &action)
         }
     }
 
-    for (const auto &listener : _immutableListeners)
+    _isDispatchingInProgress = true;
+    for (i32 index = (i32)_listeners.size() - 1; index >= 0; --index)
     {
+        const auto &listener = _listeners[index];
         if ((listener.deviceMask + action.deviceType) == listener.deviceMask)
         {
             listener.listener(cookedAction);
         }
     }
+    _isDispatchingInProgress = false;
 
-    _isCurrentlyEnumeratingImmutableListeners = false;
+    if (_isListenersDirty)
+    {
+        _listeners.erase(std::remove_if(_listeners.begin(), _listeners.end(), [](const MessageListener &listener) { return listener.deviceMask == DeviceType_None; }));
+        _isListenersDirty = false;
+    }
 }
 
 void KeyController::Dispatch(std::experimental::generator<ControlAction> enumerable)
@@ -134,86 +128,71 @@ auto KeyController::AddListener(const ListenerCallbackType &callback, DeviceType
     if (deviceMask == DeviceType_None) // not an error, but probably not what you wanted either
     {
         SOFTBREAK;
-        return ListenerHandle();
+        return {};
     }
 
-    _isMutableListenersDirty = true;
+    ui32 id;
+    if (_currentId != ui32_max)
+    {
+        id = _currentId;
+        ++_currentId;
+    }
+    else
+    {
+        id = FindIDForListener();
+    }
 
-    _mutableListeners.push_front({callback, deviceMask});
+    _listeners.push_back({callback, deviceMask, id});
 
-    return ListenerHandle{shared_from_this(), &_mutableListeners.front()};
+    return {shared_from_this(), id};
 }
 
 void KeyController::RemoveListener(ListenerHandle &handle)
 {
-    const auto &strongOwner = handle._owner.lock();
-    if (strongOwner == nullptr)
+    if (handle._owner.expired())
     {
         return;
     }
 
-    if (strongOwner.owner_before(shared_from_this()) != false || shared_from_this().owner_before(strongOwner) != false)
+    ASSUME(Funcs::AreSharedPointersEqual(handle._owner, shared_from_this()));
+
+    uiw index = 0;
+    for (; ; ++index)
     {
-        SOFTBREAK;
-        return;
-    }
-
-    _isMutableListenersDirty = true;
-
-    _mutableListeners.remove_if([&handle](const ListenerAndMask &value) { return &value == handle._listenerAndMask; });
-
-    if (_isCurrentlyEnumeratingImmutableListeners) // we need to make sure that the removed listener won't be called
-    {
-        auto result = std::find_if(_immutableListeners.begin(), _immutableListeners.end(),
-            [&handle](const ImmutableListener &value) { return value.listenerAndMask == handle._listenerAndMask; });
-
-        if (result != _immutableListeners.end())
+        ASSUME(index < _listeners.size());
+        if (_listeners[index].id == handle._id)
         {
-            result->deviceMask = DeviceType_None; // make sure it won't be called
+            break;
         }
+    }
+
+    if (_isDispatchingInProgress)
+    {
+        _listeners[index].deviceMask = DeviceType_None;
+        _isListenersDirty = true;
+    }
+    else
+    {
+        _listeners.erase(_listeners.begin() + index);
     }
 
     handle._owner.reset();
 }
 
+NOINLINE ui32 KeyController::FindIDForListener() const
+{
+    // this should never happen unless you have bogus code that calls AddListener/RemoveListener repeatedly
+    // you'd need 50k AddListener calls per second to exhaust ui32 within 24 hours
+    SOFTBREAK;
+    return FindSmallestID<MessageListener, ui32, &MessageListener::id>(_listeners.begin(), _listeners.end());
+}
+
 auto KeyController::GetKeyInfo(vkeyt key, DeviceType deviceType) const -> KeyInfo
 {
+    ASSUME(deviceType != DeviceType_None);
     ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit((ui32)deviceType);
     auto &deviceKeyStates = _keyStates[deviceIndex];
     return deviceKeyStates[(size_t)key];
-}
-
-void KeyController::ListenerHandle::Remove()
-{
-    const auto &strongOwner = _owner.lock();
-    if (strongOwner != nullptr)
-    {
-        strongOwner->RemoveListener(*this);
-    }
-}
-
-KeyController::ListenerHandle::~ListenerHandle()
-{
-    Remove();
-}
-
-auto KeyController::ListenerHandle::operator=(ListenerHandle &&source) -> ListenerHandle &
-{
-    assert(this != &source);
-    Remove();
-    _owner = move(source._owner);
-    _listenerAndMask = move(source._listenerAndMask);
-    return *this;
-}
-
-bool KeyController::ListenerHandle::operator == (const ListenerHandle &other) const
-{
-    return (_owner.owner_before(other._owner) == false && other._owner.owner_before(_owner) == false) && _listenerAndMask == other._listenerAndMask;
-}
-
-bool KeyController::ListenerHandle::operator != (const ListenerHandle &other) const
-{
-    return !(this->operator==(other));
 }
 
 bool KeyController::KeyInfo::IsPressed() const

@@ -2,6 +2,7 @@
 
 #include "VirtualKeys.hpp"
 #include "RingBuffer.h"
+#include "ListenerHandle.hpp"
 
 // TODO: window went active/inactive, multiple windows handling
 
@@ -77,29 +78,9 @@ namespace EngineCore
 
 	class KeyController : public std::enable_shared_from_this<KeyController>
 	{
-        struct ListenerAndMask;
-
     public:
         using ListenerCallbackType = function<bool(const ControlAction &action)>; // returns true if the key was blocked from going to any subsequent listeners
-
-        class ListenerHandle
-        {
-            friend KeyController;
-
-            weak_ptr<KeyController> _owner;
-            const ListenerAndMask *_listenerAndMask;
-
-            void Remove();
-
-        public:
-            ~ListenerHandle();
-            ListenerHandle() = default;
-            ListenerHandle(ListenerHandle &&source) = default;
-            ListenerHandle &operator = (ListenerHandle &&source);
-            ListenerHandle(const shared_ptr<KeyController> &keyController, const ListenerAndMask *listenerAndMask) : _owner(keyController), _listenerAndMask(listenerAndMask) {}
-            bool operator == (const ListenerHandle &other) const;
-            bool operator != (const ListenerHandle &other) const;
-        };
+        using ListenerHandle = TListenerHandle<KeyController, ui32>;
 
     private:
 		struct KeyInfo
@@ -112,12 +93,6 @@ namespace EngineCore
             bool IsPressed() const;
 		};
 
-        struct ListenerAndMask
-        {
-            const ListenerCallbackType listener;
-            DeviceType deviceMask;
-        };
-
     protected:
         KeyController();
         KeyController(KeyController &&) = delete;
@@ -126,7 +101,7 @@ namespace EngineCore
 	public:
         static shared_ptr<KeyController> New();
 
-        ~KeyController();
+        ~KeyController() = default;
 		void Dispatch(const ControlAction &action);
 		void Dispatch(std::experimental::generator<ControlAction> enumerable);
 		void Update(); // may be used for key repeating
@@ -135,20 +110,19 @@ namespace EngineCore
 		void RemoveListener(ListenerHandle &handle);
 
 	private:
-        struct ImmutableListener
+        NOINLINE ui32 FindIDForListener() const;
+
+        struct MessageListener
         {
-            const ListenerCallbackType listener{};
+            ListenerCallbackType listener{};
             DeviceType deviceMask{};
-            const ListenerAndMask *listenerAndMask{};
+            ui32 id{};
         };
 
-		// the reason behind 2 sets of listeners is this: while dispatching control events, new listeners may be added or removed
-		// that should be allowed and is defined as taking effect right after the dispatching of a ControlAction is finished
-		// immutable listeners set is used only for enumeration and is synchronized with mutable listeners before dispatching a ControlAction
-        forward_list<ListenerAndMask> _mutableListeners{};
-        vector<ImmutableListener> _immutableListeners{};
-        bool _isMutableListenersDirty = false;
-        bool _isCurrentlyEnumeratingImmutableListeners = false;
+        vector<MessageListener> _listeners{};
+        bool _isListenersDirty = false;
+        bool _isDispatchingInProgress = false;
+        ui32 _currentId = 0;
         array<array<KeyInfo, (size_t)vkeyt::_size>, 12> _keyStates{};
 	};
 }
