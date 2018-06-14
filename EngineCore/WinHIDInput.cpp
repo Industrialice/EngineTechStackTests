@@ -148,7 +148,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 
 		if (mouse.lLastX || mouse.lLastY)
 		{
-			controlsQueue.EnqueueMouseMove(DeviceType::MouseKeyboard0, mouse.lLastX, mouse.lLastY);
+            controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseMove{mouse.lLastX, mouse.lLastY});
 		}
 
 		if (mouse.usButtonFlags)
@@ -157,11 +157,11 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 			{
 				if (mouse.usButtonFlags & windowsUpKey)
 				{
-					controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, ControlAction::Key::KeyStateType::Released);
+                    controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyStateType::Released});
 				}
 				else if (mouse.usButtonFlags & windowsDownKey)
 				{
-					controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, ControlAction::Key::KeyStateType::Pressed);
+                    controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyStateType::Pressed});
 				}
 			};
 
@@ -174,7 +174,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 			if (mouse.usButtonFlags & RI_MOUSE_WHEEL)
 			{
 				//  TODO: some kind of normalization?
-				controlsQueue.EnqueueMouseWheel(DeviceType::MouseKeyboard0, (SHORT)mouse.usButtonData / -WHEEL_DELTA);
+                controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseWheel{(SHORT)mouse.usButtonData / -WHEEL_DELTA});
 			}
 		}
 	}
@@ -238,6 +238,6 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
             }
         }
 
-        controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, isReleasing ? ControlAction::Key::KeyStateType::Released : ControlAction::Key::KeyStateType::Pressed);
+        controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, isReleasing ? ControlAction::Key::KeyStateType::Released : ControlAction::Key::KeyStateType::Pressed});
 	}
 }

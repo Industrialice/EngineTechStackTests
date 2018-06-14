@@ -248,7 +248,7 @@ bool CreateApplicationSubsystems()
 		return coroutine->get();
 	};
 
-    KeysListener = Application::GetKeyController().AddListener(listenerLambda);
+    KeysListener = Application::GetKeyController().AddListener(listenerLambda, DeviceType::_AllDevices);
 
     auto oglRenderer = OGLRenderer::OpenGLRenderer::New(appWindow.fullscreen, TextureDataFormat::R8G8B8X8, 24, 8, {GetDC(*systemWindow)});
 	if (oglRenderer == nullptr)
@@ -541,7 +541,7 @@ LRESULT WINAPI MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 static const char *LogLevelToTag(LogLevel logLevel)
 {
-	switch (logLevel)
+	switch (logLevel._value)
 	{
 	case LogLevel::Critical:
 		return "[crt] ";
@@ -557,6 +557,10 @@ static const char *LogLevelToTag(LogLevel logLevel)
 		return "[oth] ";
 	case LogLevel::Warning:
 		return "[wrn] ";
+    case LogLevel::_None:
+    case LogLevel::_All:
+        HARDBREAK;
+        return "";
 	}
 
 	UNREACHABLE;
@@ -573,7 +577,7 @@ void LogRecipient(LogLevel logLevel, string_view nullTerminatedText)
 	if (logLevel == LogLevel::Critical/* || logLevel == LogLevel::Debug || logLevel == LogLevel::Error*/)
 	{
 		const char *tag = nullptr;
-		switch (logLevel) // fill out all the cases just in case
+		switch (logLevel._value) // fill out all the cases just in case
 		{
 		case LogLevel::Critical:
 			tag = "CRITICAL";
@@ -596,6 +600,10 @@ void LogRecipient(LogLevel logLevel, string_view nullTerminatedText)
 		case LogLevel::Warning:
 			tag = "WARNING";
 			break;
+        case LogLevel::_None:
+        case LogLevel::_All:
+            HARDBREAK;
+            return;
 		}
 
 		MessageBoxA(0, nullTerminatedText.data(), tag, 0);

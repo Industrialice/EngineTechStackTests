@@ -15,7 +15,9 @@ namespace EngineCore
             const auto &strongOwner = _owner.lock();
             if (strongOwner != nullptr)
             {
-                strongOwner->RemoveListener(*this); // it's bad to have this method name hardcoded, but if you use a template parameter, you will have problems defining such method itself
+                // it's bad to have this method name hardcoded, but if you use a template parameter, you will have problems defining such method itself
+                // make sure that RemoveListener is thread safe if you have listeners in different threads
+                strongOwner->RemoveListener(*this);
             }
         }
 

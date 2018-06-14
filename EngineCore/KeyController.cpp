@@ -15,24 +15,6 @@ uiw ControlsQueue::size() const
     return _actions.size();
 }
 
-void ControlsQueue::EnqueueKey(DeviceType deviceType, vkeyt key, ControlAction::Key::KeyStateType keyState)
-{
-    ASSUME(deviceType != DeviceType_None);
-    _actions.push_back({key, keyState, TimeMoment::Now(), deviceType});
-}
-
-void ControlsQueue::EnqueueMouseMove(DeviceType deviceType, i32 deltaX, i32 deltaY)
-{
-    ASSUME(deviceType != DeviceType_None);
-    _actions.push_back({deltaX, deltaY, TimeMoment::Now(), deviceType});
-}
-
-void ControlsQueue::EnqueueMouseWheel(DeviceType deviceType, i32 delta)
-{
-    ASSUME(deviceType != DeviceType_None);
-    _actions.push_back({delta, TimeMoment::Now(), deviceType});
-}
-
 auto ControlsQueue::Enumerate() const -> std::experimental::generator<ControlAction>
 {
     for (const auto &action : _actions)
@@ -51,15 +33,7 @@ shared_ptr<KeyController> KeyController::New()
 }
 
 KeyController::KeyController()
-{
-    for (auto &deviceKeyStates : _keyStates)
-    {
-        for (auto &keyState : deviceKeyStates)
-        {
-            keyState = {KeyInfo::KeyStateType::Released, 0, TimeMoment::Now()};
-        }
-    }
-}
+{}
 
 void KeyController::Dispatch(const ControlAction &action)
 {
@@ -70,12 +44,33 @@ void KeyController::Dispatch(const ControlAction &action)
     }
 
     auto cookedAction = action;
+    ui32 value = cookedAction.device._value;
 
-    if (auto keyAction = std::get_if<ControlAction::Key>(&cookedAction.action))
+    if (auto mouseMoveAction = std::get_if<ControlAction::MouseMove>(&cookedAction.action))
     {
-        ui32 deviceIndex = Funcs::IndexOfLeastSignificantNonZeroBit((ui32)cookedAction.deviceType);
-        auto &deviceKeyStates = _keyStates[deviceIndex];
-        auto &keyInfo = deviceKeyStates[(size_t)keyAction->key];
+        if (_mousePositionInfos[0])
+        {
+            _mousePositionInfos[0]->x += mouseMoveAction->deltaX;
+            _mousePositionInfos[0]->y += mouseMoveAction->deltaY;
+        }
+        else
+        {
+            _mousePositionInfos[0] = PositionInfo{mouseMoveAction->deltaX, mouseMoveAction->deltaY};
+        }
+    }
+    else if (auto keyAction = std::get_if<ControlAction::Key>(&cookedAction.action))
+    {
+        auto getKeyStates = [this, value]() -> AllKeyStates &
+        {
+            if (value == DeviceType::MouseKeyboard)
+            {
+                return _mouseKeyboardKeyStates[0];
+            }
+            ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Joystick0);
+            return _joystickKeyStates[index];
+        };
+
+        auto &keyInfo = getKeyStates()[(size_t)keyAction->key];
 
         bool wasPressed = keyInfo.keyState == KeyInfo::KeyStateType::Pressed;
         bool isRepeating = wasPressed && keyAction->keyState == KeyInfo::KeyStateType::Pressed;
@@ -93,21 +88,54 @@ void KeyController::Dispatch(const ControlAction &action)
             keyAction->keyState = KeyInfo::KeyStateType::Repeated;
         }
     }
+    else if (auto mouseSetPositionAction = std::get_if<ControlAction::MouseSetPosition>(&cookedAction.action))
+    {
+        _mousePositionInfos[0] = PositionInfo{mouseSetPositionAction->x, mouseSetPositionAction->y};
+    }
+    else if (auto touchDownAction = std::get_if<ControlAction::TouchDown>(&cookedAction.action))
+    {
+        ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Touch0);
+        _touchPositionInfos[deviceIndex] = PositionInfo{touchDownAction->x, touchDownAction->y};
+    }
+    else if (auto touchMoveAction = std::get_if<ControlAction::TouchMove>(&cookedAction.action))
+    {
+        ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Touch0);
+        if (!_touchPositionInfos[deviceIndex])
+        {
+            SOFTBREAK;
+            return;
+        }
+        _touchPositionInfos[deviceIndex]->x += touchMoveAction->deltaX;
+        _touchPositionInfos[deviceIndex]->y += touchMoveAction->deltaY;
+    }
+    else if (auto touchUpAction = std::get_if<ControlAction::TouchUp>(&cookedAction.action))
+    {
+        ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Touch0);
+        if (!_touchPositionInfos[deviceIndex])
+        {
+            SOFTBREAK;
+            return;
+        }
+        _touchPositionInfos[deviceIndex] = {};
+    }
 
     _isDispatchingInProgress = true;
     for (i32 index = (i32)_listeners.size() - 1; index >= 0; --index)
     {
         const auto &listener = _listeners[index];
-        if ((listener.deviceMask + action.deviceType) == listener.deviceMask)
+        if ((listener.deviceMask + action.device) == listener.deviceMask)
         {
-            listener.listener(cookedAction);
+            if (listener.listener(cookedAction))
+            {
+                break;
+            }
         }
     }
     _isDispatchingInProgress = false;
 
     if (_isListenersDirty)
     {
-        _listeners.erase(std::remove_if(_listeners.begin(), _listeners.end(), [](const MessageListener &listener) { return listener.deviceMask == DeviceType_None; }));
+        _listeners.erase(std::remove_if(_listeners.begin(), _listeners.end(), [](const MessageListener &listener) { return listener.deviceMask == DeviceType::_None; }));
         _isListenersDirty = false;
     }
 }
@@ -125,7 +153,7 @@ void KeyController::Update()
 
 auto KeyController::AddListener(const ListenerCallbackType &callback, DeviceType deviceMask) -> ListenerHandle
 {
-    if (deviceMask == DeviceType_None) // not an error, but probably not what you wanted either
+    if (deviceMask == DeviceType::_None) // not an error, but probably not what you wanted either
     {
         SOFTBREAK;
         return {};
@@ -168,7 +196,7 @@ void KeyController::RemoveListener(ListenerHandle &handle)
 
     if (_isDispatchingInProgress)
     {
-        _listeners[index].deviceMask = DeviceType_None;
+        _listeners[index].deviceMask = DeviceType::_None;
         _isListenersDirty = true;
     }
     else
@@ -187,15 +215,70 @@ NOINLINE ui32 KeyController::FindIDForListener() const
     return FindSmallestID<MessageListener, ui32, &MessageListener::id>(_listeners.begin(), _listeners.end());
 }
 
-auto KeyController::GetKeyInfo(vkeyt key, DeviceType deviceType) const -> KeyInfo
+auto KeyController::GetKeyInfo(vkeyt key, DeviceType device) const -> KeyInfo
 {
-    ASSUME(deviceType != DeviceType_None);
-    ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit((ui32)deviceType);
-    auto &deviceKeyStates = _keyStates[deviceIndex];
-    return deviceKeyStates[(size_t)key];
+    ASSUME(Funcs::IndexOfMostSignificantNonZeroBit(device._value) == Funcs::IndexOfLeastSignificantNonZeroBit(device._value));
+    ui32 value = device._value;
+    if (value == DeviceType::MouseKeyboard)
+    {
+        return _mouseKeyboardKeyStates[0][(ui32)key];
+    }
+    if (value >= DeviceType::Joystick0 && value <= DeviceType::Joystick7)
+    {
+        ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Joystick0);
+        return _joystickKeyStates[index][(ui32)key];
+    }
+    return {};
+}
+
+auto KeyController::GetPositionInfo(DeviceType device) const -> optional<PositionInfo>
+{
+    ASSUME(Funcs::IndexOfMostSignificantNonZeroBit(device._value) == Funcs::IndexOfLeastSignificantNonZeroBit(device._value));
+    ui32 value = device._value;
+    if (value == DeviceType::MouseKeyboard)
+    {
+        return _mousePositionInfos[0];
+    }
+    if (value >= DeviceType::Touch0 && value <= DeviceType::Touch9)
+    {
+        ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Touch0);
+        return _touchPositionInfos[index];
+    }
+    return {};
+}
+
+auto KeyController::GetAllKeyStates(DeviceType device) const -> const AllKeyStates &
+{
+    ASSUME(Funcs::IndexOfMostSignificantNonZeroBit(device._value) == Funcs::IndexOfLeastSignificantNonZeroBit(device._value));
+    ui32 value = device._value;
+    if (value == DeviceType::MouseKeyboard)
+    {
+        return _mouseKeyboardKeyStates[0];
+    }
+    if (value >= DeviceType::Joystick0 && value <= DeviceType::Joystick7)
+    {
+        ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Joystick0);
+        return _joystickKeyStates[index];
+    }
+    return _defaultKeyStates[0];
 }
 
 bool KeyController::KeyInfo::IsPressed() const
 {
     return keyState != KeyStateType::Released;
+}
+
+ui32 EngineCore::DeviceIndex(DeviceType device)
+{
+    ASSUME(Funcs::IndexOfMostSignificantNonZeroBit(device._value) == Funcs::IndexOfLeastSignificantNonZeroBit(device._value));
+    ui32 value = device._value;
+    if (value >= DeviceType::Touch0 && value <= DeviceType::Touch9)
+    {
+        return Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Touch0);
+    }
+    if (value >= DeviceType::Joystick0 && value <= DeviceType::Joystick7)
+    {
+        return Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Joystick0);
+    }
+    return 0;
 }

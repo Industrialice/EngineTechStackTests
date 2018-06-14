@@ -26,7 +26,7 @@ void VKInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM
 
 		if (deltaX || deltaY)
 		{
-			controlsQueue.EnqueueMouseMove(DeviceType::MouseKeyboard0, deltaX, deltaY);
+            controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseMove{deltaX, deltaY});
 
             _lastMouseX = mousePos.x;
             _lastMouseY = mousePos.y;
@@ -42,7 +42,7 @@ void VKInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM
 
 		vkeyt key = GetPlatformMapping()[wParam];
 
-		controlsQueue.EnqueueKey(DeviceType::MouseKeyboard0, key, msg == WM_KEYDOWN ? ControlAction::Key::KeyStateType::Pressed : ControlAction::Key::KeyStateType::Released);
+        controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, msg == WM_KEYDOWN ? ControlAction::Key::KeyStateType::Pressed : ControlAction::Key::KeyStateType::Released});
 	}
 	else
 	{

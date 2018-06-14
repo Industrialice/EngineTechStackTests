@@ -8,37 +8,44 @@
 
 namespace EngineCore
 {
-    // don't forget to change _keyStates in case you update DeviceType
-	enum class DeviceType : ui32 
-    { 
-		MouseKeyboard0 = Funcs::BitPos(0),
-        MouseKeyboard1 = Funcs::BitPos(1),
-        MouseKeyboard2 = Funcs::BitPos(2),
-        MouseKeyboard3 = Funcs::BitPos(3),
-		Joystick0 = Funcs::BitPos(4),
-        Joystick1 = Funcs::BitPos(5),
-        Joystick2 = Funcs::BitPos(6),
-        Joystick3 = Funcs::BitPos(7), 
-        Joystick4 = Funcs::BitPos(8),
-        Joystick5 = Funcs::BitPos(9),
-        Joystick6 = Funcs::BitPos(10),
-        Joystick7 = Funcs::BitPos(11)
-    };
+    ENUM_COMBINABLE(DeviceType, ui32,
+        _None = 0,
+		MouseKeyboard = Funcs::BitPos(0),
+        Touch0 = Funcs::BitPos(1),
+        Touch1 = Funcs::BitPos(2),
+        Touch2 = Funcs::BitPos(3),
+        Touch3 = Funcs::BitPos(4),
+        Touch4 = Funcs::BitPos(5),
+        Touch5 = Funcs::BitPos(6),
+        Touch6 = Funcs::BitPos(7),
+        Touch7 = Funcs::BitPos(8),
+        Touch8 = Funcs::BitPos(9),
+        Touch9 = Funcs::BitPos(10),
+		Joystick0 = Funcs::BitPos(11),
+        Joystick1 = Funcs::BitPos(12),
+        Joystick2 = Funcs::BitPos(13),
+        Joystick3 = Funcs::BitPos(14), 
+        Joystick4 = Funcs::BitPos(15),
+        Joystick5 = Funcs::BitPos(16),
+        Joystick6 = Funcs::BitPos(17),
+        Joystick7 = Funcs::BitPos(18),
+        _AllTouchs = Touch0 | Touch1 | Touch2 | Touch3 | Touch4 | Touch5 | Touch6 | Touch7 | Touch8 | Touch9,
+        _AllJoysticks = Joystick0 | Joystick1 | Joystick2 | Joystick3 | Joystick4 | Joystick5 | Joystick6 | Joystick7,
+        _AllDevices = MouseKeyboard | _AllTouchs | _AllJoysticks);
 
-	constexpr DeviceType DeviceType_All = DeviceType(ui32_max);
-	constexpr DeviceType DeviceType_None = DeviceType(0);
-    inline DeviceType operator - (DeviceType left, DeviceType right) { return DeviceType((uiw)left & ~(uiw)right); }
-    inline DeviceType operator + (DeviceType left, DeviceType right) { return DeviceType((uiw)left | (uiw)right); }
-    inline DeviceType &operator -= (DeviceType &left, DeviceType right) { left = left - right; return left; }
-    inline DeviceType &operator += (DeviceType &left, DeviceType right) { left = left + right; return left; }
+    ui32 DeviceIndex(DeviceType device);
 
 	struct ControlAction
 	{
 		struct Key
 		{
             vkeyt key{};
-			enum class KeyStateType { Pressed, Released, Repeated } keyState;
+            enum class KeyStateType { Released, Pressed, Repeated } keyState{};
 		};
+        struct MouseSetPosition
+        {
+            i32 x{}, y{};
+        };
 		struct MouseMove
 		{
             i32 deltaX{}, deltaY{};
@@ -47,21 +54,61 @@ namespace EngineCore
 		{
             i32 delta{};
 		};
+        struct TouchDown
+        {
+            i32 x{}, y{};
+        };
+        struct TouchMove
+        {
+            i32 deltaX{}, deltaY{};
+        };
+        struct TouchUp
+        {
+            i32 lastX{}, lastY{};
+        };
+        struct TouchLongPress
+        {
+            i32 x{}, y{};
+        };
+        struct TouchDoubleTap
+        {
+            i32 x{}, y{};
+        };
+        struct TouchZoomStart
+        {
+            i32 focusX{}, focusY{};
+        };
+        struct TouchZoom
+        {
+            i32 focusX{}, focusY{};
+            f32 delta{};
+        };
+        struct TouchZoomEnd
+        {};
 
-        variant<Key, MouseMove, MouseWheel> action{};
+        variant<Key, MouseSetPosition, MouseMove, MouseWheel, TouchDown, TouchMove, TouchUp, TouchLongPress, TouchDoubleTap, TouchZoomStart, TouchZoom, TouchZoomEnd> action{};
         TimeMoment occuredAt{};
-		DeviceType deviceType = DeviceType::MouseKeyboard0;
+		DeviceType device = DeviceType::_None;
 
 		ControlAction() {}
-		ControlAction(vkeyt key, Key::KeyStateType state, const decltype(occuredAt) &occuredAt, DeviceType deviceType) : action{ Key{key, state} }, occuredAt{ occuredAt }, deviceType{ deviceType } {}
-		ControlAction(i32 deltaX, i32 deltaY, const decltype(occuredAt) &occuredAt, DeviceType deviceType) : action{ MouseMove{deltaX, deltaY} }, occuredAt{ occuredAt }, deviceType{ deviceType } {}
-		ControlAction(i32 delta, const decltype(occuredAt) &occuredAt, DeviceType deviceType) : action{ MouseWheel{delta} }, occuredAt{ occuredAt }, deviceType{ deviceType } {}
+        ControlAction(Key actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(MouseSetPosition actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(MouseMove actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(MouseWheel actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(TouchDown actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(TouchMove actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(TouchUp actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(TouchLongPress actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(TouchDoubleTap actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(TouchZoomStart actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(TouchZoom actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
+        ControlAction(TouchZoomEnd actionData, const TimeMoment &occuredAt, DeviceType device) : action{actionData}, occuredAt{occuredAt}, device{device} {}
 	};
 
 	class ControlsQueue
 	{
 		using ringBufferType = RingBuffer<ControlAction, 256>;
-		using const_iterator = ringBufferType::const_iterator<>;
+		using const_iterator = ringBufferType::const_iterator;
 		ringBufferType _actions;
 
 	public:
@@ -69,9 +116,11 @@ namespace EngineCore
 		void clear();
 		uiw size() const;
 
-		void EnqueueKey(DeviceType deviceType, vkeyt key, ControlAction::Key::KeyStateType keyState);
-		void EnqueueMouseMove(DeviceType deviceType, i32 deltaX, i32 deltaY);
-		void EnqueueMouseWheel(DeviceType deviceType, i32 delta);
+        template <typename T> void Enqueue(DeviceType device, T action)
+        {
+            ASSUME(device != DeviceType::_None);
+            _actions.push_back(ControlAction{action, TimeMoment::Now(), device});
+        }
 
 		std::experimental::generator<ControlAction> Enumerate() const;
 	};
@@ -79,19 +128,25 @@ namespace EngineCore
 	class KeyController : public std::enable_shared_from_this<KeyController>
 	{
     public:
-        using ListenerCallbackType = function<bool(const ControlAction &action)>; // returns true if the key was blocked from going to any subsequent listeners
+        using ListenerCallbackType = function<bool(const ControlAction &action)>; // must return true if the action needs to be blocked from going to any subsequent listeners
         using ListenerHandle = TListenerHandle<KeyController, ui32>;
 
-    private:
-		struct KeyInfo
-		{
-			using KeyStateType = ControlAction::Key::KeyStateType;
-			KeyStateType keyState;
-            ui32 timesKeyStateChanged;
-            TimeMoment occuredAt;
+        struct PositionInfo
+        {
+            i32 x{}, y{};
+        };
+
+        struct KeyInfo
+        {
+            using KeyStateType = ControlAction::Key::KeyStateType;
+            KeyStateType keyState{};
+            ui32 timesKeyStateChanged{};
+            TimeMoment occuredAt = TimeMoment::Now();
 
             bool IsPressed() const;
-		};
+        };
+        
+        using AllKeyStates = array<KeyInfo, (size_t)vkeyt::_size>;
 
     protected:
         KeyController();
@@ -105,8 +160,10 @@ namespace EngineCore
 		void Dispatch(const ControlAction &action);
 		void Dispatch(std::experimental::generator<ControlAction> enumerable);
 		void Update(); // may be used for key repeating
-		KeyInfo GetKeyInfo(vkeyt key, DeviceType deviceType = DeviceType::MouseKeyboard0) const;
-        ListenerHandle AddListener(const ListenerCallbackType &callback, DeviceType deviceMask = DeviceType_All); // will try to find a listener with the same owner in the current set of listeners, if successful, will check the pointers, if they also correspond, will remove the currently added callback
+		KeyInfo GetKeyInfo(vkeyt key, DeviceType device = DeviceType::MouseKeyboard) const; // always default for Touch
+        optional<PositionInfo> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const; // always nullopt for Keyboard and Joystick
+        const AllKeyStates &GetAllKeyStates(DeviceType device = DeviceType::MouseKeyboard) const; // always default for Touch
+        ListenerHandle AddListener(const ListenerCallbackType &callback, DeviceType deviceMask);
 		void RemoveListener(ListenerHandle &handle);
 
 	private:
@@ -123,6 +180,10 @@ namespace EngineCore
         bool _isListenersDirty = false;
         bool _isDispatchingInProgress = false;
         ui32 _currentId = 0;
-        array<array<KeyInfo, (size_t)vkeyt::_size>, 12> _keyStates{};
+        array<AllKeyStates, 1> _mouseKeyboardKeyStates{};
+        array<AllKeyStates, 8> _joystickKeyStates{};
+        const array<AllKeyStates, 1> _defaultKeyStates{};
+        array<optional<PositionInfo>, 1> _mousePositionInfos{};
+        array<optional<PositionInfo>, 10> _touchPositionInfos{};
 	};
 }

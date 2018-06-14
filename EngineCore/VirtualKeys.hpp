@@ -40,13 +40,13 @@ namespace EngineCore
         OEM6,         //  ]} for US
         OEM7,         //  '" for US
         Select, Start, Stop,
-        /*L1, L2, L3, L4, R1, R2, R3, R4,
+        L1, L2, L3, L4, R1, R2, R3, R4,
         Key0, Key1, Key2, Key3, Key4, Key5, Key6, Key7, Key8, Key9,
-        Key10, Key11, Key12, Key13, Key14, Key15,*/
+        Key10, Key11, Key12, Key13, Key14, Key15,
         _size
     };
 
-    inline bool operator == (vkeyt vKey, char pKey) { return vKey == vkeyt(pKey); }
+    /*inline bool operator == (vkeyt vKey, char pKey) { return vKey == vkeyt(pKey); }
     inline bool operator == (char pKey, vkeyt vKey) { return vKey == vkeyt(pKey); }
     inline bool operator != (vkeyt vKey, char pKey) { return vKey != vkeyt(pKey); }
     inline bool operator != (char pKey, vkeyt vKey) { return vKey != vkeyt(pKey); }
@@ -54,7 +54,7 @@ namespace EngineCore
     inline bool operator == (vkeyt vKey, ui8 pKey) { return vKey == vkeyt(pKey); }
     inline bool operator == (ui8 pKey, vkeyt vKey) { return vKey == vkeyt(pKey); }
     inline bool operator != (vkeyt vKey, ui8 pKey) { return vKey != vkeyt(pKey); }
-    inline bool operator != (ui8 pKey, vkeyt vKey) { return vKey != vkeyt(pKey); }
+    inline bool operator != (ui8 pKey, vkeyt vKey) { return vKey != vkeyt(pKey); }*/
 
     namespace VirtualKeys
     {

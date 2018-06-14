@@ -102,7 +102,7 @@ public:
 		}
 	}
 
-	template <typename T = T, uiw MaxElements = MaxElements, typename IndexType = indexType> class const_iterator : public std::iterator<std::forward_iterator_tag, T>
+	template <typename T = T, uiw MaxElements = MaxElements, typename IndexType = indexType> class _const_iterator : public std::iterator<std::forward_iterator_tag, T>
 	{
 		static constexpr bool isOverflowWrapped = MaxElements == 256 || MaxElements == 65536;
 
@@ -124,10 +124,10 @@ public:
 		}
 
 	public:
-		const_iterator(const T *elements, IndexType head, IndexType tail, IndexType isEmpty) : _elements(elements), _head(head), _tail(tail), _isEmpty(isEmpty)
+		_const_iterator(const T *elements, IndexType head, IndexType tail, IndexType isEmpty) : _elements(elements), _head(head), _tail(tail), _isEmpty(isEmpty)
 		{}
 
-		const_iterator &operator ++ ()
+		_const_iterator &operator ++ ()
 		{
 			if (_head == _tail)
 			{
@@ -141,19 +141,19 @@ public:
 			return *this;
 		}
 
-		const_iterator &operator ++ (int)
+        _const_iterator &operator ++ (int)
 		{
 			auto ret = *this;
 			this->operator++();
 			return ret;
 		}
 
-		bool operator == (const const_iterator &other) const
+		bool operator == (const _const_iterator &other) const
 		{
 			return _head == other._head && _isEmpty == other._isEmpty;
 		}
 
-		bool operator != (const const_iterator &other) const
+		bool operator != (const _const_iterator &other) const
 		{
 			return !this->operator == (other);
 		}
@@ -169,6 +169,8 @@ public:
 		}
 	};
 
+    using const_iterator = _const_iterator<>;
+
 	auto begin() const
 	{
 		return cbegin();
@@ -176,7 +178,7 @@ public:
 
 	auto cbegin() const
 	{
-		return const_iterator<T, MaxElements, indexType>(_elements.data(), _tail, _head, _isEmtpy);
+		return const_iterator(_elements.data(), _tail, _head, _isEmtpy);
 	}
 
 	auto end() const
@@ -186,6 +188,6 @@ public:
 
 	auto cend() const
 	{
-		return const_iterator<T, MaxElements, indexType>(_elements.data(), _head, _head, 1);
+		return const_iterator(_elements.data(), _head, _head, 1);
 	}
 };

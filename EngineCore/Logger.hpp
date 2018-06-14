@@ -4,23 +4,16 @@
 
 namespace EngineCore
 {
-    enum class LogLevel : ui32
-    {
+    ENUM_COMBINABLE(LogLevel, ui32,
+        _None = 0,
         Error = Funcs::BitPos(0),
         Info = Funcs::BitPos(1),
         Warning = Funcs::BitPos(2),
         Critical = Funcs::BitPos(3),
         Debug = Funcs::BitPos(4),
         ImportantInfo = Funcs::BitPos(5),
-        Other = Funcs::BitPos(6)
-    };
-
-    constexpr LogLevel LogLevel_All = LogLevel(ui32_max);
-    constexpr LogLevel LogLevel_None = LogLevel(0);
-    inline LogLevel operator - (LogLevel left, LogLevel right) { return LogLevel((uiw)left & ~(uiw)right); }
-    inline LogLevel operator + (LogLevel left, LogLevel right) { return LogLevel((uiw)left | (uiw)right); }
-    inline LogLevel &operator -= (LogLevel &left, LogLevel right) { left = left - right; return left; }
-    inline LogLevel &operator += (LogLevel &left, LogLevel right) { left = left + right; return left; }
+        Other = Funcs::BitPos(6),
+        _All = ui32_max);
 
     class Logger
     {
@@ -35,9 +28,9 @@ namespace EngineCore
         };
 
     public:
+        // note that if you have listeners in different threads,
+        // moving or destroying logger will be a race condition
         Logger();
-        Logger(const Logger &source);
-        Logger &operator = (const Logger &source);
         Logger(Logger &&source);
         Logger &operator = (Logger &&source);
 
@@ -45,7 +38,7 @@ namespace EngineCore
         using ListenerHandle = LoggerLocation::ListenerHandle;
 
         NOINLINE void Message(LogLevel level, const char *format, ...); // printf-family function is going to be used to convert the message into a string
-        ListenerHandle AddListener(const ListenerCallbackType &listener, LogLevel levelMask = LogLevel_All);
+        ListenerHandle AddListener(const ListenerCallbackType &listener, LogLevel levelMask = LogLevel::_All);
         void RemoveListener(ListenerHandle &handle);
         void IsEnabled(bool isEnabled);
         bool IsEnabled() const;

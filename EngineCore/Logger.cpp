@@ -8,24 +8,6 @@ Logger::Logger()
     _loggerLocation = make_shared<LoggerLocation>(this);
 }
 
-Logger::Logger(const Logger &source)
-{
-    _isEnabled = source._isEnabled.load();
-    _isThreadSafe = source._isThreadSafe.load();
-    _loggerLocation = make_shared<LoggerLocation>(this);
-}
-
-Logger &Logger::operator = (const Logger &source)
-{
-    if (this != &source)
-    {
-        _isEnabled = source._isEnabled.load();
-        _isThreadSafe = source._isThreadSafe.load();
-        _loggerLocation = make_shared<LoggerLocation>(this);
-    }
-    return *this;
-}
-
 Logger::Logger(Logger &&source)
 {
     _listeners = move(source._listeners);
@@ -97,7 +79,7 @@ auto Logger::AddListener(const ListenerCallbackType &listener, LogLevel levelMas
         scopeLock.emplace(_mutex);
     }
 
-    if ((ui32)levelMask == 0) // not an error, but probably an unexpected case
+    if (levelMask == LogLevel::_None) // not an error, but probably an unexpected case
     {
         SOFTBREAK;
         return {};
@@ -121,18 +103,18 @@ auto Logger::AddListener(const ListenerCallbackType &listener, LogLevel levelMas
 
 void Logger::RemoveListener(ListenerHandle &handle)
 {
+    optional<std::scoped_lock<std::mutex>> scopeLock;
+    if (_isThreadSafe.load())
+    {
+        scopeLock.emplace(_mutex);
+    }
+
     if (handle._owner.expired())
     {
         return;
     }
 
     ASSUME(Funcs::AreSharedPointersEqual(handle._owner, _loggerLocation));
-
-    optional<std::scoped_lock<std::mutex>> scopeLock;
-    if (_isThreadSafe.load())
-    {
-        scopeLock.emplace(_mutex);
-    }
 
     for (auto it = _listeners.begin(); ; ++it)
     {
