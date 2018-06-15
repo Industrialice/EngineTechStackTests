@@ -109,24 +109,24 @@ void Logger::RemoveListener(ListenerHandle &handle)
         scopeLock.emplace(_mutex);
     }
 
-    if (handle._owner.expired())
+    if (handle.Owner().expired())
     {
         return;
     }
 
-    ASSUME(Funcs::AreSharedPointersEqual(handle._owner, _loggerLocation));
+    ASSUME(Funcs::AreSharedPointersEqual(handle.Owner(), _loggerLocation));
 
     for (auto it = _listeners.begin(); ; ++it)
     {
         ASSUME(it != _listeners.end());
-        if (it->id == handle._id)
+        if (it->id == handle.Id())
         {
             _listeners.erase(it);
             break;
         }
     }
 
-    handle._owner.reset();
+    handle.Owner().reset();
 }
 
 void Logger::IsEnabled(bool isEnabled)

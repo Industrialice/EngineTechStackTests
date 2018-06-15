@@ -142,5 +142,8 @@
     <ClInclude Include="ListenerHandle.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IKeyController.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

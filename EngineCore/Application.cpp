@@ -15,7 +15,7 @@ using namespace EngineCore;
 struct ApplicationData
 {
     Logger logger{};
-    shared_ptr<KeyController> keyController{};
+    shared_ptr<IKeyController> keyController{};
     AppWindow mainWindow{};
     shared_ptr<Renderer> renderer{};
     shared_ptr<Camera> mainCamera{};
@@ -48,7 +48,7 @@ namespace EngineCore::Application
         assert(Instance == nullptr);
         Instance = new ApplicationData;
         Instance->mainCamera = Camera::New();
-        Instance->keyController = KeyController::New();
+        Instance->keyController = EmptyKeyController::New();
     }
 
     void Destroy()
@@ -71,9 +71,14 @@ namespace EngineCore::Application
     }
 }
 
-auto Application::GetKeyController() -> KeyController &
+auto Application::GetKeyController() -> IKeyController &
 {
     return *Instance->keyController;
+}
+
+void Application::SetKeyController(const shared_ptr<IKeyController> &controller)
+{
+    Instance->keyController = controller;
 }
 
 auto Application::GetMainWindow() -> const AppWindow &

@@ -32,9 +32,6 @@ shared_ptr<KeyController> KeyController::New()
     return make_shared<Proxy>();
 }
 
-KeyController::KeyController()
-{}
-
 void KeyController::Dispatch(const ControlAction &action)
 {
     if (_isDispatchingInProgress)
@@ -177,18 +174,17 @@ auto KeyController::AddListener(const ListenerCallbackType &callback, DeviceType
 
 void KeyController::RemoveListener(ListenerHandle &handle)
 {
-    if (handle._owner.expired())
+    if (handle.Owner().expired())
     {
         return;
     }
 
-    ASSUME(Funcs::AreSharedPointersEqual(handle._owner, shared_from_this()));
+    ASSUME(Funcs::AreSharedPointersEqual(handle.Owner(), shared_from_this()));
 
     uiw index = 0;
     for (; ; ++index)
     {
-        ASSUME(index < _listeners.size());
-        if (_listeners[index].id == handle._id)
+        if (_listeners[index].id == handle.Id())
         {
             break;
         }
@@ -204,7 +200,7 @@ void KeyController::RemoveListener(ListenerHandle &handle)
         _listeners.erase(_listeners.begin() + index);
     }
 
-    handle._owner.reset();
+    handle.Owner().reset();
 }
 
 NOINLINE ui32 KeyController::FindIDForListener() const
@@ -260,25 +256,5 @@ auto KeyController::GetAllKeyStates(DeviceType device) const -> const AllKeyStat
         ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Joystick0);
         return _joystickKeyStates[index];
     }
-    return _defaultKeyStates[0];
-}
-
-bool KeyController::KeyInfo::IsPressed() const
-{
-    return keyState != KeyStateType::Released;
-}
-
-ui32 EngineCore::DeviceIndex(DeviceType device)
-{
-    ASSUME(Funcs::IndexOfMostSignificantNonZeroBit(device._value) == Funcs::IndexOfLeastSignificantNonZeroBit(device._value));
-    ui32 value = device._value;
-    if (value >= DeviceType::Touch0 && value <= DeviceType::Touch9)
-    {
-        return Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Touch0);
-    }
-    if (value >= DeviceType::Joystick0 && value <= DeviceType::Joystick7)
-    {
-        return Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Joystick0);
-    }
-    return 0;
+    return _defaultKeyStates;
 }

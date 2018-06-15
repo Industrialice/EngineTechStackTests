@@ -2,12 +2,10 @@
 
 namespace EngineCore
 {
-    template <typename OwnerType, typename IdType, typename StorageType = OwnerType> class TListenerHandle
+    template <typename OwnerType, typename IdType> class TListenerHandle
     {
-        friend OwnerType;
-
         IdType _id{};
-        weak_ptr<StorageType> _owner{};
+        weak_ptr<OwnerType> _owner{};
 
     public:
         ~TListenerHandle()
@@ -23,10 +21,10 @@ namespace EngineCore
 
         TListenerHandle() = default;
 
-        TListenerHandle(const weak_ptr<StorageType> &owner, IdType id) : _owner(owner), _id(id)
+        TListenerHandle(const weak_ptr<OwnerType> &owner, IdType id) : _owner(owner), _id(id)
         {}
 
-        TListenerHandle(weak_ptr<StorageType> &&owner, IdType id) : _owner(move(owner)), _id(id)
+        TListenerHandle(weak_ptr<OwnerType> &&owner, IdType id) : _owner(move(owner)), _id(id)
         {}
 
         TListenerHandle(TListenerHandle &&source) : _owner(move(source._owner)), _id(source._id)
@@ -49,6 +47,21 @@ namespace EngineCore
         bool operator != (const TListenerHandle &other) const
         {
             return !this->operator == (other);
+        }
+
+        IdType Id() const
+        {
+            return _id;
+        }
+
+        const weak_ptr<OwnerType> &Owner() const
+        {
+            return _owner;
+        }
+
+        weak_ptr<OwnerType> &Owner()
+        {
+            return _owner;
         }
     };
 

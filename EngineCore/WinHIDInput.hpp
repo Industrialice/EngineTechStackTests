@@ -1,6 +1,6 @@
 #pragma once
 
-#include "KeyController.hpp"
+#include "IKeyController.hpp"
 
 namespace EngineCore
 {

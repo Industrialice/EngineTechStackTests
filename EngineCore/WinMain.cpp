@@ -8,6 +8,7 @@
 #include "Camera.hpp"
 #include "RenderTarget.hpp"
 #include <OpenGLRenderer.hpp>
+#include "KeyController.hpp"
 
 using namespace EngineCore;
 
@@ -36,7 +37,7 @@ static bool CreateApplicationSubsystems();
 
 namespace
 {
-	KeyController::ListenerHandle KeysListener;
+	IKeyController::ListenerHandle KeysListener;
 	Logger::ListenerHandle LogListener;
     Logger::ListenerHandle FileLogListener;
     File LogFile;
@@ -164,6 +165,8 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Application::Create();
 
     LogListener = Application::GetLogger().AddListener(LogRecipient);
+
+    Application::SetKeyController(KeyController::New());
 
     LogFile = File(FilePath::FromChar("log.txt"), FileOpenMode::CreateAlways, FileProcMode::Write);
 	if (LogFile.IsOpened())

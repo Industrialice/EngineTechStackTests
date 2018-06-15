@@ -2,7 +2,7 @@
 
 namespace EngineCore
 {
-	class KeyController;
+	class IKeyController;
 	class Renderer;
 	class Logger;
 	class HIDInput;
@@ -34,7 +34,8 @@ namespace EngineCore
 	// this is a god object, it supposed to contain all highest level systems
 	namespace Application
 	{
-		KeyController &GetKeyController();
+        IKeyController &GetKeyController();
+        void SetKeyController(const shared_ptr<IKeyController> &controller);
 		const AppWindow &GetMainWindow();
 		void SetMainWindow(const AppWindow &window);
 		Renderer &GetRenderer();
