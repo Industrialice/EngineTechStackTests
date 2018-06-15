@@ -71,7 +71,7 @@ void Logger::Message(LogLevel level, const char *format, ...)
     }
 }
 
-auto Logger::AddListener(const ListenerCallbackType &listener, LogLevel levelMask) -> ListenerHandle
+auto Logger::OnMessage(const ListenerCallbackType &listener, LogLevel levelMask) -> ListenerHandle
 {
     optional<std::scoped_lock<std::mutex>> scopeLock;
     if (_isThreadSafe.load())
@@ -85,16 +85,7 @@ auto Logger::AddListener(const ListenerCallbackType &listener, LogLevel levelMas
         return {};
     }
 
-    ui32 id;
-    if (_currentId != ui32_max)
-    {
-        id = _currentId;
-        ++_currentId;
-    }
-    else
-    {
-        id = FindIDForListener();
-    }
+    ui32 id = AssignId<MessageListener, ui32, &MessageListener::id>(_currentId, _listeners.begin(), _listeners.end());
 
     _listeners.push_back({listener, levelMask, id});
 
@@ -146,14 +137,6 @@ void Logger::IsThreadSafe(bool isSafe)
 bool Logger::IsThreadSafe() const
 {
     return _isThreadSafe.load();
-}
-
-NOINLINE ui32 Logger::FindIDForListener() const
-{
-    // this should never happen unless you have bogus code that calls AddListener/RemoveListener repeatedly
-    // you'd need 50k AddListener calls per second to exhaust ui32 within 24 hours
-    SOFTBREAK;
-    return FindSmallestID<MessageListener, ui32, &MessageListener::id>(_listeners.begin(), _listeners.end());
 }
 
 void Logger::LoggerLocation::RemoveListener(ListenerHandle &handle)

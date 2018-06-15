@@ -18,8 +18,8 @@
 [inf] HIDInput::Register's completed
 [inf] Using HID input
 [inf] OpenGLRenderer's created
-[inf] Texture generation with isUseThinStrips true took 0.785014s
-[inf] Texture generation with isUseThinStrips false took 0.446044s
+[inf] Texture generation with isUseThinStrips true took 0.787223s
+[inf] Texture generation with isUseThinStrips false took 0.447904s
 [inf] SceneBackground's created
 [inf] Application subsystems're created
 [inf] Compiled a new shader

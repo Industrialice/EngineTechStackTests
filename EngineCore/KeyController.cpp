@@ -5,24 +5,6 @@
 
 using namespace EngineCore;
 
-void ControlsQueue::clear()
-{
-    _actions.clear();
-}
-
-uiw ControlsQueue::size() const
-{
-    return _actions.size();
-}
-
-auto ControlsQueue::Enumerate() const -> std::experimental::generator<ControlAction>
-{
-    for (const auto &action : _actions)
-    {
-        co_yield action;
-    }
-}
-
 shared_ptr<KeyController> KeyController::New()
 {
     struct Proxy : public KeyController
@@ -69,8 +51,8 @@ void KeyController::Dispatch(const ControlAction &action)
 
         auto &keyInfo = getKeyStates()[(size_t)keyAction->key];
 
-        bool wasPressed = keyInfo.keyState == KeyInfo::KeyStateType::Pressed;
-        bool isRepeating = wasPressed && keyAction->keyState == KeyInfo::KeyStateType::Pressed;
+        bool wasPressed = keyInfo.keyState == KeyInfo::KeyState::Pressed;
+        bool isRepeating = wasPressed && keyAction->keyState == KeyInfo::KeyState::Pressed;
 
         ui32 currentKSCTimes = keyInfo.timesKeyStateChanged;
         if (keyInfo.keyState != keyAction->keyState || isRepeating)
@@ -82,7 +64,7 @@ void KeyController::Dispatch(const ControlAction &action)
 
         if (isRepeating)
         {
-            keyAction->keyState = KeyInfo::KeyStateType::Repeated;
+            keyAction->keyState = KeyInfo::KeyState::Repeated;
         }
     }
     else if (auto mouseSetPositionAction = std::get_if<ControlAction::MouseSetPosition>(&cookedAction.action))
@@ -148,7 +130,7 @@ void KeyController::Dispatch(std::experimental::generator<ControlAction> enumera
 void KeyController::Update()
 {}
 
-auto KeyController::AddListener(const ListenerCallbackType &callback, DeviceType deviceMask) -> ListenerHandle
+auto KeyController::OnControlAction(const ListenerCallbackType &callback, DeviceType deviceMask) -> ListenerHandle
 {
     if (deviceMask == DeviceType::_None) // not an error, but probably not what you wanted either
     {
@@ -156,16 +138,7 @@ auto KeyController::AddListener(const ListenerCallbackType &callback, DeviceType
         return {};
     }
 
-    ui32 id;
-    if (_currentId != ui32_max)
-    {
-        id = _currentId;
-        ++_currentId;
-    }
-    else
-    {
-        id = FindIDForListener();
-    }
+    ui32 id = AssignId<MessageListener, ui32, &MessageListener::id>(_currentId, _listeners.begin(), _listeners.end());
 
     _listeners.push_back({callback, deviceMask, id});
 
@@ -201,14 +174,6 @@ void KeyController::RemoveListener(ListenerHandle &handle)
     }
 
     handle.Owner().reset();
-}
-
-NOINLINE ui32 KeyController::FindIDForListener() const
-{
-    // this should never happen unless you have bogus code that calls AddListener/RemoveListener repeatedly
-    // you'd need 50k AddListener calls per second to exhaust ui32 within 24 hours
-    SOFTBREAK;
-    return FindSmallestID<MessageListener, ui32, &MessageListener::id>(_listeners.begin(), _listeners.end());
 }
 
 auto KeyController::GetKeyInfo(vkeyt key, DeviceType device) const -> KeyInfo

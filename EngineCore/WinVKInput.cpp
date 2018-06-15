@@ -42,7 +42,7 @@ void VKInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM
 
 		vkeyt key = GetPlatformMapping()[wParam];
 
-        controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, msg == WM_KEYDOWN ? ControlAction::Key::KeyStateType::Pressed : ControlAction::Key::KeyStateType::Released});
+        controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, msg == WM_KEYDOWN ? ControlAction::Key::KeyState::Pressed : ControlAction::Key::KeyState::Released});
 	}
 	else
 	{

@@ -71,6 +71,9 @@
     <ClCompile Include="VirtualKeys.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RecordingKeyController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.hpp">
@@ -143,6 +146,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IKeyController.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RecordingKeyController.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

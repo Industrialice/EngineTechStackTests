@@ -121,3 +121,16 @@ template <typename T, typename E, E T::*field, typename IT> [[nodiscard]] E Find
 
     return temp.back() + 1;
 }
+
+template <typename T, typename E, E T::*field, typename IT>[[nodiscard]] NOINLINE E AssignId(E &currentId, IT start, IT end)
+{
+    if (currentId != std::numeric_limits<E>::max())
+    {
+        E id = currentId++;
+        return id;
+    }
+    // this should never happen unless you have bogus code that calls AssignId repeatedly
+    // you'd need 50k AssignId calls per second to exhaust ui32 within 24 hours
+    SOFTBREAK;
+    return FindSmallestID<T, E, field>(start, end);
+}

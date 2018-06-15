@@ -38,16 +38,14 @@ namespace EngineCore
         using ListenerHandle = LoggerLocation::ListenerHandle;
 
         NOINLINE void Message(LogLevel level, const char *format, ...); // printf-family function is going to be used to convert the message into a string
-        ListenerHandle AddListener(const ListenerCallbackType &listener, LogLevel levelMask = LogLevel::_All);
+        ListenerHandle OnMessage(const ListenerCallbackType &listener, LogLevel levelMask = LogLevel::_All);
         void RemoveListener(ListenerHandle &handle);
         void IsEnabled(bool isEnabled);
         bool IsEnabled() const;
         void IsThreadSafe(bool isSafe);
         bool IsThreadSafe() const;
 
-    private:
-        NOINLINE ui32 FindIDForListener() const;
-        
+    private:        
         struct MessageListener
         {
             ListenerCallbackType callback{};

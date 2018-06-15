@@ -9,6 +9,7 @@
 #include "RenderTarget.hpp"
 #include <OpenGLRenderer.hpp>
 #include "KeyController.hpp"
+#include "RecordingKeyController.hpp"
 
 using namespace EngineCore;
 
@@ -37,13 +38,15 @@ static bool CreateApplicationSubsystems();
 
 namespace
 {
-	IKeyController::ListenerHandle KeysListener;
-	Logger::ListenerHandle LogListener;
-    Logger::ListenerHandle FileLogListener;
-    File LogFile;
+    IKeyController::ListenerHandle KeysListener{};
+    Logger::ListenerHandle LogListener{};
+    Logger::ListenerHandle FileLogListener{};
+    File LogFile{};
+    vector<ControlAction> AllReceivedControlActions{};
+    IKeyController::ListenerHandle ControlActionRecordingListener{};
 
-    ui32 SceneRestartedCounter;
-    ui32 UpTimeDeltaCounter, DownTimeDeltaCounter;
+    ui32 SceneRestartedCounter{};
+    ui32 UpTimeDeltaCounter{}, DownTimeDeltaCounter{};
 }
 
 template <typename _Ty> struct MyCoroutineReturn
@@ -164,14 +167,21 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	Application::Create();
 
-    LogListener = Application::GetLogger().AddListener(LogRecipient);
+    LogListener = Application::GetLogger().OnMessage(LogRecipient);
 
-    Application::SetKeyController(KeyController::New());
+    auto recordingController = RecordingKeyController::New(KeyController::New());
+    ControlActionRecordingListener = recordingController->OnRecordingControlAction(
+        [](const ControlAction &action) -> bool
+        {
+            AllReceivedControlActions.push_back(action);
+            return false;
+        });
+    Application::SetKeyController(recordingController);
 
     LogFile = File(FilePath::FromChar("log.txt"), FileOpenMode::CreateAlways, FileProcMode::Write);
 	if (LogFile.IsOpened())
 	{
-		FileLogListener = Application::GetLogger().AddListener(std::bind(FileLogRecipient, std::ref(LogFile), std::placeholders::_1, std::placeholders::_2));
+		FileLogListener = Application::GetLogger().OnMessage(std::bind(FileLogRecipient, std::ref(LogFile), std::placeholders::_1, std::placeholders::_2));
 	}
 
 	SENDLOG(Info, "Log started\n");
@@ -251,7 +261,7 @@ bool CreateApplicationSubsystems()
 		return coroutine->get();
 	};
 
-    KeysListener = Application::GetKeyController().AddListener(listenerLambda, DeviceType::_AllDevices);
+    KeysListener = Application::GetKeyController().OnControlAction(listenerLambda, DeviceType::_AllDevices);
 
     auto oglRenderer = OGLRenderer::OpenGLRenderer::New(appWindow.fullscreen, TextureDataFormat::R8G8B8X8, 24, 8, {GetDC(*systemWindow)});
 	if (oglRenderer == nullptr)

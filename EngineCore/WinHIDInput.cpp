@@ -157,11 +157,11 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 			{
 				if (mouse.usButtonFlags & windowsUpKey)
 				{
-                    controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyStateType::Released});
+                    controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyState::Released});
 				}
 				else if (mouse.usButtonFlags & windowsDownKey)
 				{
-                    controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyStateType::Pressed});
+                    controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyState::Pressed});
 				}
 			};
 
@@ -238,6 +238,6 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
             }
         }
 
-        controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, isReleasing ? ControlAction::Key::KeyStateType::Released : ControlAction::Key::KeyStateType::Pressed});
+        controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, isReleasing ? ControlAction::Key::KeyState::Released : ControlAction::Key::KeyState::Pressed});
 	}
 }

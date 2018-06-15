@@ -20,15 +20,13 @@ namespace EngineCore
 		virtual void Dispatch(const ControlAction &action) override;
 		virtual void Dispatch(std::experimental::generator<ControlAction> enumerable) override;
         virtual void Update() override;
-        virtual KeyInfo GetKeyInfo(vkeyt key, DeviceType device = DeviceType::MouseKeyboard) const override;
-        virtual optional<PositionInfo> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const override;
-        virtual const AllKeyStates &GetAllKeyStates(DeviceType device = DeviceType::MouseKeyboard) const override;
-        virtual ListenerHandle AddListener(const ListenerCallbackType &callback, DeviceType deviceMask) override;
+        [[nodiscard]] virtual KeyInfo GetKeyInfo(vkeyt key, DeviceType device = DeviceType::MouseKeyboard) const override;
+        [[nodiscard]] virtual optional<PositionInfo> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const override;
+        [[nodiscard]] virtual const AllKeyStates &GetAllKeyStates(DeviceType device = DeviceType::MouseKeyboard) const override;
+        [[nodiscard]] virtual ListenerHandle OnControlAction(const ListenerCallbackType &callback, DeviceType deviceMask) override;
         virtual void RemoveListener(ListenerHandle &handle) override;
 
 	private:
-        NOINLINE ui32 FindIDForListener() const;
-
         struct MessageListener
         {
             ListenerCallbackType listener{};
