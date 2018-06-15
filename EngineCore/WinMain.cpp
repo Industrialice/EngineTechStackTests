@@ -134,13 +134,13 @@ static MyCoroutineReturn<bool> ListenKeys(const ControlAction &action)
 		}
 		else if (auto mouseMove = std::get_if<ControlAction::MouseMove>(&action.action))
 		{
-            if (mouseMove->deltaY)
+            if (mouseMove->delta.y)
             {
-                Application::GetMainCamera()->RotateAroundRightAxis(mouseMove->deltaY * 0.001f);
+                Application::GetMainCamera()->RotateAroundRightAxis(mouseMove->delta.y * 0.001f);
             }
-            if (mouseMove->deltaX)
+            if (mouseMove->delta.x)
             {
-                Application::GetMainCamera()->RotateAroundUpAxis(mouseMove->deltaX * 0.001f);
+                Application::GetMainCamera()->RotateAroundUpAxis(mouseMove->delta.x * 0.001f);
             }
 
 			//SENDLOG(Info, "%i mouse move action %i %i\n", number, mouseMove->deltaX, mouseMove->deltaY);

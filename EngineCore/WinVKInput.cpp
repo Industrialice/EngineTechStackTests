@@ -26,7 +26,7 @@ void VKInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM
 
 		if (deltaX || deltaY)
 		{
-            controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseMove{deltaX, deltaY});
+            controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseMove{{deltaX, deltaY}});
 
             _lastMouseX = mousePos.x;
             _lastMouseY = mousePos.y;

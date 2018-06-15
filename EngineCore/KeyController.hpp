@@ -21,7 +21,7 @@ namespace EngineCore
 		virtual void Dispatch(std::experimental::generator<ControlAction> enumerable) override;
         virtual void Update() override;
         [[nodiscard]] virtual KeyInfo GetKeyInfo(vkeyt key, DeviceType device = DeviceType::MouseKeyboard) const override;
-        [[nodiscard]] virtual optional<PositionInfo> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const override;
+        [[nodiscard]] virtual optional<i32Vector2> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const override;
         [[nodiscard]] virtual const AllKeyStates &GetAllKeyStates(DeviceType device = DeviceType::MouseKeyboard) const override;
         [[nodiscard]] virtual ListenerHandle OnControlAction(const ListenerCallbackType &callback, DeviceType deviceMask) override;
         virtual void RemoveListener(ListenerHandle &handle) override;
@@ -41,7 +41,7 @@ namespace EngineCore
         array<AllKeyStates, 1> _mouseKeyboardKeyStates{};
         array<AllKeyStates, 8> _joystickKeyStates{};
         const AllKeyStates _defaultKeyStates{};
-        array<optional<PositionInfo>, 1> _mousePositionInfos{};
-        array<optional<PositionInfo>, 10> _touchPositionInfos{};
+        array<optional<i32Vector2>, 1> _mousePositionInfos{};
+        array<optional<i32Vector2>, 10> _touchPositionInfos{};
 	};
 }

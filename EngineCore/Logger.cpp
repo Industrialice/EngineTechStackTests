@@ -86,9 +86,7 @@ auto Logger::OnMessage(const ListenerCallbackType &listener, LogLevel levelMask)
     }
 
     ui32 id = AssignId<MessageListener, ui32, &MessageListener::id>(_currentId, _listeners.begin(), _listeners.end());
-
     _listeners.push_back({listener, levelMask, id});
-
     return {_loggerLocation, id};
 }
 

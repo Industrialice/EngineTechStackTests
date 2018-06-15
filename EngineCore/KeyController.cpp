@@ -29,12 +29,11 @@ void KeyController::Dispatch(const ControlAction &action)
     {
         if (_mousePositionInfos[0])
         {
-            _mousePositionInfos[0]->x += mouseMoveAction->deltaX;
-            _mousePositionInfos[0]->y += mouseMoveAction->deltaY;
+            *_mousePositionInfos[0] += mouseMoveAction->delta;
         }
         else
         {
-            _mousePositionInfos[0] = PositionInfo{mouseMoveAction->deltaX, mouseMoveAction->deltaY};
+            _mousePositionInfos[0] = mouseMoveAction->delta;
         }
     }
     else if (auto keyAction = std::get_if<ControlAction::Key>(&cookedAction.action))
@@ -69,12 +68,12 @@ void KeyController::Dispatch(const ControlAction &action)
     }
     else if (auto mouseSetPositionAction = std::get_if<ControlAction::MouseSetPosition>(&cookedAction.action))
     {
-        _mousePositionInfos[0] = PositionInfo{mouseSetPositionAction->x, mouseSetPositionAction->y};
+        _mousePositionInfos[0] = mouseSetPositionAction->position;
     }
     else if (auto touchDownAction = std::get_if<ControlAction::TouchDown>(&cookedAction.action))
     {
         ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceType::Touch0);
-        _touchPositionInfos[deviceIndex] = PositionInfo{touchDownAction->x, touchDownAction->y};
+        _touchPositionInfos[deviceIndex] = touchDownAction->position;
     }
     else if (auto touchMoveAction = std::get_if<ControlAction::TouchMove>(&cookedAction.action))
     {
@@ -84,8 +83,7 @@ void KeyController::Dispatch(const ControlAction &action)
             SOFTBREAK;
             return;
         }
-        _touchPositionInfos[deviceIndex]->x += touchMoveAction->deltaX;
-        _touchPositionInfos[deviceIndex]->y += touchMoveAction->deltaY;
+        *_touchPositionInfos[deviceIndex] += touchMoveAction->delta;
     }
     else if (auto touchUpAction = std::get_if<ControlAction::TouchUp>(&cookedAction.action))
     {
@@ -139,9 +137,7 @@ auto KeyController::OnControlAction(const ListenerCallbackType &callback, Device
     }
 
     ui32 id = AssignId<MessageListener, ui32, &MessageListener::id>(_currentId, _listeners.begin(), _listeners.end());
-
     _listeners.push_back({callback, deviceMask, id});
-
     return {shared_from_this(), id};
 }
 
@@ -192,7 +188,7 @@ auto KeyController::GetKeyInfo(vkeyt key, DeviceType device) const -> KeyInfo
     return {};
 }
 
-auto KeyController::GetPositionInfo(DeviceType device) const -> optional<PositionInfo>
+auto KeyController::GetPositionInfo(DeviceType device) const -> optional<i32Vector2>
 {
     ASSUME(Funcs::IndexOfMostSignificantNonZeroBit(device._value) == Funcs::IndexOfLeastSignificantNonZeroBit(device._value));
     ui32 value = device._value;

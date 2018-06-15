@@ -49,7 +49,7 @@ auto RecordingKeyController::GetKeyInfo(vkeyt key, DeviceType device) const -> K
     return _nextController->GetKeyInfo(key, device);
 }
 
-auto RecordingKeyController::GetPositionInfo(DeviceType device) const -> optional<PositionInfo>
+auto RecordingKeyController::GetPositionInfo(DeviceType device) const -> optional<i32Vector2>
 {
     return _nextController->GetPositionInfo(device);
 }
@@ -95,8 +95,6 @@ void RecordingKeyController::RemoveListener(ListenerHandle &handle)
 auto RecordingKeyController::OnRecordingControlAction(const ListenerCallbackType &callback) -> ListenerHandle
 {
     ui32 id = AssignId<MessageListener, ui32, &MessageListener::id>(_currentId, _recordingListenerHandles.begin(), _recordingListenerHandles.end());
-
     _recordingListenerHandles.push_back({callback, id});
-
     return {shared_from_this(), id};
 }

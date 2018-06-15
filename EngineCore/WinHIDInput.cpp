@@ -148,7 +148,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 
 		if (mouse.lLastX || mouse.lLastY)
 		{
-            controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseMove{mouse.lLastX, mouse.lLastY});
+            controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseMove{{mouse.lLastX, mouse.lLastY}});
 		}
 
 		if (mouse.usButtonFlags)

@@ -55,11 +55,11 @@ namespace EngineCore
         };
         struct MouseSetPosition
         {
-            i32 x{}, y{};
+            i32Vector2 position{};
         };
         struct MouseMove
         {
-            i32 deltaX{}, deltaY{};
+            i32Vector2 delta{};
         };
         struct MouseWheel
         {
@@ -67,31 +67,31 @@ namespace EngineCore
         };
         struct TouchDown
         {
-            i32 x{}, y{};
+            i32Vector2 position{};
         };
         struct TouchMove
         {
-            i32 deltaX{}, deltaY{};
+            i32Vector2 delta{};
         };
         struct TouchUp
         {
-            i32 lastX{}, lastY{};
+            i32Vector2 lastPosition{};
         };
         struct TouchLongPress
         {
-            i32 x{}, y{};
+            i32Vector2 position{};
         };
         struct TouchDoubleTap
         {
-            i32 x{}, y{};
+            i32Vector2 position{};
         };
         struct TouchZoomStart
         {
-            i32 focusX{}, focusY{};
+            i32Vector2 focusPoint{};
         };
         struct TouchZoom
         {
-            i32 focusX{}, focusY{};
+            i32Vector2 focusPoint{};
             f32 delta{};
         };
         struct TouchZoomEnd
@@ -150,13 +150,8 @@ namespace EngineCore
     class IKeyController
     {
     public:
-        using ListenerCallbackType = function<bool(const ControlAction &action)>; // must return true if the action needs to be blocked from going to any subsequent listeners
+        using ListenerCallbackType = function<bool(const ControlAction &action)>; // return true if the action needs to be blocked from going to any subsequent listeners
         using ListenerHandle = TListenerHandle<IKeyController, ui32>;
-
-        struct PositionInfo
-        {
-            i32 x{}, y{};
-        };
 
         struct KeyInfo
         {
@@ -178,7 +173,7 @@ namespace EngineCore
         virtual void Dispatch(std::experimental::generator<ControlAction> enumerable) = 0;
         virtual void Update() = 0; // may be used for key repeating
         [[nodiscard]] virtual KeyInfo GetKeyInfo(vkeyt key, DeviceType device = DeviceType::MouseKeyboard) const = 0; // always default for Touch
-        [[nodiscard]] virtual optional<PositionInfo> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const = 0; // always nullopt for Joystick
+        [[nodiscard]] virtual optional<i32Vector2> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const = 0; // always nullopt for Joystick
         [[nodiscard]] virtual const AllKeyStates &GetAllKeyStates(DeviceType device = DeviceType::MouseKeyboard) const = 0; // always default for Touch
         [[nodiscard]] virtual ListenerHandle OnControlAction(const ListenerCallbackType &callback, DeviceType deviceMask) = 0;
         virtual void RemoveListener(ListenerHandle &handle) = 0;
@@ -206,7 +201,7 @@ namespace EngineCore
         virtual void Dispatch(std::experimental::generator<ControlAction> enumerable) override {}
         virtual void Update() override {}
         [[nodiscard]] virtual KeyInfo GetKeyInfo(vkeyt key, DeviceType device = DeviceType::MouseKeyboard) const override { return {}; }
-        [[nodiscard]] virtual optional<PositionInfo> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const override { return {}; }
+        [[nodiscard]] virtual optional<i32Vector2> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const override { return {}; }
         [[nodiscard]] virtual const AllKeyStates &GetAllKeyStates(DeviceType device = DeviceType::MouseKeyboard) const override { return _defaultKeyStates; }
         [[nodiscard]] virtual ListenerHandle OnControlAction(const ListenerCallbackType &callback, DeviceType deviceMask) override { return {}; }
         virtual void RemoveListener(ListenerHandle &handle) override {}
