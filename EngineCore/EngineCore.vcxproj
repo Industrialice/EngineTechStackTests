@@ -121,6 +121,7 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="IKeyController.cpp" />
     <ClCompile Include="RecordingKeyController.cpp" />
     <ClCompile Include="VirtualKeys.cpp" />
     <ClCompile Include="WinHIDInput.cpp" />

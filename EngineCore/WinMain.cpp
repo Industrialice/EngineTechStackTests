@@ -87,7 +87,7 @@ template <typename _Ty> struct MyCoroutineReturn
 		_Right._Coro = nullptr;
 	}
 
-	MyCoroutineReturn &operator = (MyCoroutineReturn &&_Right)
+	MyCoroutineReturn &operator = (MyCoroutineReturn &&_Right) noexcept
 	{
 		assert(this != std::addressof(_Right));
 		_Coro = _Right._Coro;
@@ -125,7 +125,7 @@ static MyCoroutineReturn<bool> ListenKeys(const ControlAction &action)
 	{
 		if (auto key = std::get_if<ControlAction::Key>(&action.action))
 		{
-			if (key->key == vkeyt::Escape)
+			if (key->key == KeyCode::Escape)
 			{
 				PostQuitMessage(0);
 			}
@@ -356,50 +356,50 @@ void MessageLoop()
             const auto &keyController = Application::GetKeyController();
 
             float camMovementScale = engineTime.unscaledSecondSinceLastFrame * 5;
-            if (keyController.GetKeyInfo(vkeyt::LShift).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::LShift).IsPressed())
             {
                 camMovementScale *= 3;
             }
-            if (keyController.GetKeyInfo(vkeyt::LControl).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::LControl).IsPressed())
             {
                 camMovementScale *= 0.33f;
             }
 
-            if (keyController.GetKeyInfo(vkeyt::S).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::S).IsPressed())
             {
                 camera->MoveAlongForwardAxis(-camMovementScale);
             }
-            if (keyController.GetKeyInfo(vkeyt::W).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::W).IsPressed())
             {
                 camera->MoveAlongForwardAxis(camMovementScale);
             }
-            if (keyController.GetKeyInfo(vkeyt::A).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::A).IsPressed())
             {
                 camera->MoveAlongRightAxis(-camMovementScale);
             }
-            if (keyController.GetKeyInfo(vkeyt::D).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::D).IsPressed())
             {
                 camera->MoveAlongRightAxis(camMovementScale);
             }
-            if (keyController.GetKeyInfo(vkeyt::R).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::R).IsPressed())
             {
                 camera->MoveAlongUpAxis(camMovementScale);
             }
-            if (keyController.GetKeyInfo(vkeyt::F).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::F).IsPressed())
             {
                 camera->MoveAlongUpAxis(-camMovementScale);
             }
 
-            if (keyController.GetKeyInfo(vkeyt::LAlt).IsPressed())
+            if (keyController.GetKeyInfo(KeyCode::LAlt).IsPressed())
             {
-                while (UpTimeDeltaCounter != keyController.GetKeyInfo(vkeyt::UpArrow).timesKeyStateChanged)
+                while (UpTimeDeltaCounter != keyController.GetKeyInfo(KeyCode::UpArrow).timesKeyStateChanged)
                 {
                     SENDLOG(Info, "SENT\n");
                     ++UpTimeDeltaCounter;
                     engineTime.timeScale += 0.05f;
                     Application::SetEngineTime(engineTime);
                 }
-                while (DownTimeDeltaCounter != keyController.GetKeyInfo(vkeyt::DownArrow).timesKeyStateChanged)
+                while (DownTimeDeltaCounter != keyController.GetKeyInfo(KeyCode::DownArrow).timesKeyStateChanged)
                 {
                     SENDLOG(Info, "SENT\n");
                     ++DownTimeDeltaCounter;
@@ -409,7 +409,7 @@ void MessageLoop()
                 }
             }
 
-            if (ui32 newCounter = keyController.GetKeyInfo(vkeyt::Space).timesKeyStateChanged; newCounter != SceneRestartedCounter)
+            if (ui32 newCounter = keyController.GetKeyInfo(KeyCode::Space).timesKeyStateChanged; newCounter != SceneRestartedCounter)
             {
                 SceneRestartedCounter = newCounter;
                 SceneToDraw::Restart();
@@ -562,7 +562,7 @@ static const char *LogLevelToTag(LogLevel logLevel)
 		return "[dbg] ";
 	case LogLevel::Error:
 		return "[err] ";
-	case LogLevel::ImportantInfo:
+	case LogLevel::Attention:
 		return "[imp] ";
 	case LogLevel::Info:
 		return "[inf] ";
@@ -601,7 +601,7 @@ void LogRecipient(LogLevel logLevel, string_view nullTerminatedText)
 		case LogLevel::Error:
 			tag = "ERROR";
 			break;
-		case LogLevel::ImportantInfo:
+		case LogLevel::Attention:
 			tag = "IMPORTANT INFO";
 			break;
 		case LogLevel::Info:

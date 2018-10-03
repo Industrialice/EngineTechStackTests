@@ -44,7 +44,7 @@ void RecordingKeyController::Update()
     return _nextController->Update();
 }
 
-auto RecordingKeyController::GetKeyInfo(vkeyt key, DeviceType device) const -> KeyInfo
+auto RecordingKeyController::GetKeyInfo(KeyCode key, DeviceType device) const -> KeyInfo
 {
     return _nextController->GetKeyInfo(key, device);
 }

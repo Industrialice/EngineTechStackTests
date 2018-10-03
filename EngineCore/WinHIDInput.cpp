@@ -8,7 +8,7 @@ using namespace EngineCore;
 
 namespace EngineCore
 {
-    auto GetPlatformMapping() -> const array<vkeyt, 256> &; // from WinVirtualKeysMapping.cpp
+    auto GetPlatformMapping() -> const array<KeyCode, 256> &; // from WinVirtualKeysMapping.cpp
 }
 
 HIDInput::~HIDInput()
@@ -153,7 +153,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 
 		if (mouse.usButtonFlags)
 		{
-			auto checkKey = [&controlsQueue, &mouse](USHORT windowsUpKey, USHORT windowsDownKey, vkeyt key)
+			auto checkKey = [&controlsQueue, &mouse](USHORT windowsUpKey, USHORT windowsDownKey, KeyCode key)
 			{
 				if (mouse.usButtonFlags & windowsUpKey)
 				{
@@ -165,11 +165,11 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 				}
 			};
 
-			checkKey(RI_MOUSE_BUTTON_1_UP, RI_MOUSE_BUTTON_1_DOWN, vkeyt::MButton0);
-			checkKey(RI_MOUSE_BUTTON_2_UP, RI_MOUSE_BUTTON_2_DOWN, vkeyt::MButton1);
-			checkKey(RI_MOUSE_BUTTON_3_UP, RI_MOUSE_BUTTON_3_DOWN, vkeyt::MButton2);
-			checkKey(RI_MOUSE_BUTTON_4_UP, RI_MOUSE_BUTTON_4_DOWN, vkeyt::MButton3);
-			checkKey(RI_MOUSE_BUTTON_5_UP, RI_MOUSE_BUTTON_5_DOWN, vkeyt::MButton4);
+			checkKey(RI_MOUSE_BUTTON_1_UP, RI_MOUSE_BUTTON_1_DOWN, KeyCode::MButton0);
+			checkKey(RI_MOUSE_BUTTON_2_UP, RI_MOUSE_BUTTON_2_DOWN, KeyCode::MButton1);
+			checkKey(RI_MOUSE_BUTTON_3_UP, RI_MOUSE_BUTTON_3_DOWN, KeyCode::MButton2);
+			checkKey(RI_MOUSE_BUTTON_4_UP, RI_MOUSE_BUTTON_4_DOWN, KeyCode::MButton3);
+			checkKey(RI_MOUSE_BUTTON_5_UP, RI_MOUSE_BUTTON_5_DOWN, KeyCode::MButton4);
 
 			if (mouse.usButtonFlags & RI_MOUSE_WHEEL)
 			{
@@ -189,50 +189,50 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 		}
 
         bool isReleasing = (kb.Flags & RI_KEY_BREAK) != 0;
-        vkeyt key = GetPlatformMapping()[kb.VKey];
+        KeyCode key = GetPlatformMapping()[kb.VKey];
 
         // we need additional processing to distinguish between actual left keys and right keys
-        if (key == vkeyt::LShift || key == vkeyt::LControl || key == vkeyt::LAlt || key == vkeyt::LEnter || key == vkeyt::LDelete)
+        if (key == KeyCode::LShift || key == KeyCode::LControl || key == KeyCode::LAlt || key == KeyCode::LEnter || key == KeyCode::LDelete)
         {
-            if (key == vkeyt::LShift)
+            if (key == KeyCode::LShift)
             {
                 if (kb.MakeCode != 0x2A)
                 {
-                    key = vkeyt::RShift;
+                    key = KeyCode::RShift;
                 }
             }
             else
             {
                 bool hasE0Flag = (kb.Flags & RI_KEY_E0) != 0;
 
-                if (key == vkeyt::LControl)
+                if (key == KeyCode::LControl)
                 {
                     if (hasE0Flag)
                     {
-                        key = vkeyt::RControl;
+                        key = KeyCode::RControl;
                     }
                 }
-                else if (key == vkeyt::LAlt)
+                else if (key == KeyCode::LAlt)
                 {
                     if (hasE0Flag)
                     {
-                        key = vkeyt::RAlt;
+                        key = KeyCode::RAlt;
                     }
                 }
-                else if (key == vkeyt::LEnter)
+                else if (key == KeyCode::LEnter)
                 {
                     if (hasE0Flag)
                     {
-                        key = vkeyt::REnter;
+                        key = KeyCode::REnter;
                     }
                 }
                 else
                 {
-                    assert(key == vkeyt::LDelete);
+                    assert(key == KeyCode::LDelete);
 
                     if (hasE0Flag == false) // swapped
                     {
-                        key = vkeyt::RDelete;
+                        key = KeyCode::RDelete;
                     }
                 }
             }

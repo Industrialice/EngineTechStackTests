@@ -280,7 +280,7 @@ void AddAudioToNewCollisions()
 
     auto findFreeSlot = []() -> optional<uiw>
     {
-        for (uiw index = 0; index < Funcs::CountOf(CollisionAudioSources); ++index)
+        for (uiw index = 0; index < CountOf(CollisionAudioSources); ++index)
         {
             if (!CollisionAudioSources[index].audio.IsValid())
             {
@@ -295,7 +295,7 @@ void AddAudioToNewCollisions()
         TimeMoment oldestAudioMoment;
         uiw oldestAudioIndex = 0;
 
-        for (uiw index = 0; index < Funcs::CountOf(CollisionAudioSources); ++index)
+        for (uiw index = 0; index < CountOf(CollisionAudioSources); ++index)
         {
             if (CollisionAudioSources[index].startedAt < oldestAudioMoment)
             {

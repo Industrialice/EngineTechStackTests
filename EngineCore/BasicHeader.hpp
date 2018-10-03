@@ -105,6 +105,8 @@ template <typename T, typename E, E T::*field, typename IT> [[nodiscard]] E Find
         temp.push_back(value.*field);
     }
 
+    std::sort(temp.begin(), temp.end());
+
     if (temp.front() != 0)
     {
         return 0;
@@ -122,7 +124,7 @@ template <typename T, typename E, E T::*field, typename IT> [[nodiscard]] E Find
     return temp.back() + 1;
 }
 
-template <typename T, typename E, E T::*field, typename IT>[[nodiscard]] NOINLINE E AssignId(E &currentId, IT start, IT end)
+template <typename T, typename E, E T::*field, typename IT> [[nodiscard]] NOINLINE E AssignId(E &currentId, IT start, IT end)
 {
     if (currentId != std::numeric_limits<E>::max())
     {

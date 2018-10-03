@@ -3,15 +3,19 @@
 
 using namespace EngineCore;
 
-Logger::Logger()
+void Logger::RemoveListener(LoggerLocation *instance, void *handle)
 {
-    _loggerLocation = make_shared<LoggerLocation>(this);
+    instance->logger->RemoveListener(*(ListenerHandle *)handle);
 }
 
-Logger::Logger(Logger &&source)
+Logger::Logger()
+{
+    _loggerLocation = make_shared<LoggerLocation>(*this);
+}
+
+Logger::Logger(Logger &&source) noexcept
 {
     _listeners = move(source._listeners);
-    source._listeners.clear();
     _currentId = source._currentId;
     _isEnabled = source._isEnabled.load();
     _isThreadSafe = source._isThreadSafe.load();
@@ -19,10 +23,9 @@ Logger::Logger(Logger &&source)
     _loggerLocation->logger = this;
 }
 
-Logger &Logger::operator = (Logger &&source)
+Logger &Logger::operator = (Logger &&source) noexcept
 {
     _listeners = move(source._listeners);
-    source._listeners.clear();
     _currentId = source._currentId;
     _isEnabled = source._isEnabled.load();
     _isThreadSafe = source._isThreadSafe.load();
@@ -98,7 +101,9 @@ void Logger::RemoveListener(ListenerHandle &handle)
         scopeLock.emplace(_mutex);
     }
 
-    if (handle.Owner().expired())
+    weak_ptr<ListenerHandle::ownerType> currentOwner{};
+    handle.Owner().swap(currentOwner);
+    if (currentOwner.expired())
     {
         return;
     }
@@ -114,8 +119,6 @@ void Logger::RemoveListener(ListenerHandle &handle)
             break;
         }
     }
-
-    handle.Owner().reset();
 }
 
 void Logger::IsEnabled(bool isEnabled)
@@ -135,9 +138,4 @@ void Logger::IsThreadSafe(bool isSafe)
 bool Logger::IsThreadSafe() const
 {
     return _isThreadSafe.load();
-}
-
-void Logger::LoggerLocation::RemoveListener(ListenerHandle &handle)
-{
-    logger->RemoveListener(handle);
 }

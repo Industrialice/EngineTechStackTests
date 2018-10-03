@@ -3,102 +3,102 @@
 
 using namespace EngineCore;
 
-bool VirtualKeys::IsLetter(vkeyt key)
+bool VirtualKeys::IsLetter(KeyCode key)
 {
-    return key >= vkeyt::A && key <= vkeyt::Z;
+    return key >= KeyCode::A && key <= KeyCode::Z;
 }
 
-bool VirtualKeys::IsDigit(vkeyt key)
+bool VirtualKeys::IsDigit(KeyCode key)
 {
-    return key >= vkeyt::Digit0 && key <= vkeyt::Digit9;
+    return key >= KeyCode::Digit0 && key <= KeyCode::Digit9;
 }
 
-bool VirtualKeys::IsNPadKey(vkeyt key)
+bool VirtualKeys::IsNPadKey(KeyCode key)
 {
-    return key >= vkeyt::NPad0 && key <= vkeyt::NPadDiv;
+    return key >= KeyCode::NPad0 && key <= KeyCode::NPadDiv;
 }
 
-bool VirtualKeys::IsNPadDigit(vkeyt key)
+bool VirtualKeys::IsNPadDigit(KeyCode key)
 {
-    return key >= vkeyt::NPad0 && key <= vkeyt::NPad9;
+    return key >= KeyCode::NPad0 && key <= KeyCode::NPad9;
 }
 
-bool VirtualKeys::IsNPadArrow(vkeyt key)
+bool VirtualKeys::IsNPadArrow(KeyCode key)
 {
-    return key == vkeyt::NPad4 || key == vkeyt::NPad8 || key == vkeyt::NPad2 || key == vkeyt::NPad6;
+    return key == KeyCode::NPad4 || key == KeyCode::NPad8 || key == KeyCode::NPad2 || key == KeyCode::NPad6;
 }
 
-bool VirtualKeys::IsMouseButton(vkeyt key)
+bool VirtualKeys::IsMouseButton(KeyCode key)
 {
-    return key >= vkeyt::MButton0 && key <= vkeyt::MButton6;
+    return key >= KeyCode::MButton0 && key <= KeyCode::MButton6;
 }
 
-bool VirtualKeys::IsArrowKey(vkeyt key)
+bool VirtualKeys::IsArrowKey(KeyCode key)
 {
-    return key >= vkeyt::UpArrow && key <= vkeyt::RightArrow;
+    return key >= KeyCode::UpArrow && key <= KeyCode::RightArrow;
 }
 
-bool VirtualKeys::IsFKey(vkeyt key)
+bool VirtualKeys::IsFKey(KeyCode key)
 {
-    return key >= vkeyt::F1 && key <= vkeyt::F24;
+    return key >= KeyCode::F1 && key <= KeyCode::F24;
 }
 
-bool VirtualKeys::IsShift(vkeyt key)
+bool VirtualKeys::IsShift(KeyCode key)
 {
-    return key == vkeyt::LShift || key == vkeyt::RShift;
+    return key == KeyCode::LShift || key == KeyCode::RShift;
 }
 
-bool VirtualKeys::IsControl(vkeyt key)
+bool VirtualKeys::IsControl(KeyCode key)
 {
-    return key == vkeyt::LControl || key == vkeyt::RControl;
+    return key == KeyCode::LControl || key == KeyCode::RControl;
 }
 
-bool VirtualKeys::IsAlt(vkeyt key)
+bool VirtualKeys::IsAlt(KeyCode key)
 {
-    return key == vkeyt::LAlt || key == vkeyt::RAlt;
+    return key == KeyCode::LAlt || key == KeyCode::RAlt;
 }
 
-bool VirtualKeys::IsSystem(vkeyt key)
+bool VirtualKeys::IsSystem(KeyCode key)
 {
-    return key == vkeyt::LSystem || key == vkeyt::RSystem;
+    return key == KeyCode::LSystem || key == KeyCode::RSystem;
 }
 
-bool VirtualKeys::IsEnter(vkeyt key)
+bool VirtualKeys::IsEnter(KeyCode key)
 {
-    return key == vkeyt::LEnter || key == vkeyt::REnter;
+    return key == KeyCode::LEnter || key == KeyCode::REnter;
 }
 
-bool VirtualKeys::IsDelete(vkeyt key)
+bool VirtualKeys::IsDelete(KeyCode key)
 {
-    return key == vkeyt::LDelete || key == vkeyt::RDelete;
+    return key == KeyCode::LDelete || key == KeyCode::RDelete;
 }
 
-ui32 VirtualKeys::KeyNumber(vkeyt key)
+ui32 VirtualKeys::KeyNumber(KeyCode key)
 {
     if (IsDigit(key))
     {
-        return (ui32)key - (ui32)vkeyt::Digit0;
+        return (ui32)key - (ui32)KeyCode::Digit0;
     }
     if (IsMouseButton(key))
     {
-        return (ui32)key - (ui32)vkeyt::MButton0;
+        return (ui32)key - (ui32)KeyCode::MButton0;
     }
     if (IsNPadDigit(key))
     {
-        return (ui32)key - (ui32)vkeyt::NPad0;
+        return (ui32)key - (ui32)KeyCode::NPad0;
     }
     if (IsFKey(key))
     {
-        return (ui32)key - (ui32)vkeyt::F1 + 1;
+        return (ui32)key - (ui32)KeyCode::F1 + 1;
     }
     return 0;
 }
 
-char VirtualKeys::ToAlpha(vkeyt key, bool isUpperCase)
+char VirtualKeys::ToAlpha(KeyCode key, bool isUpperCase)
 {
     if (IsLetter(key))
     {
-        return ((ui32)key - (ui32)vkeyt::A) + (isUpperCase ? 'A' : 'a');
+        return ((ui32)key - (ui32)KeyCode::A) + (isUpperCase ? 'A' : 'a');
     }
     return '\0';
 }

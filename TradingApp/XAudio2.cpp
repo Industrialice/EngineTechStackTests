@@ -354,7 +354,7 @@ public:
             volumeCurvePoints[0].DSPSetting = 1.0f;
             volumeCurvePoints[1].Distance = 1.0f;
             volumeCurvePoints[1].DSPSetting = 1.0f;
-            volumeCurve.PointCount = Funcs::CountOf(volumeCurvePoints);
+            volumeCurve.PointCount = CountOf(volumeCurvePoints);
             volumeCurve.pPoints = volumeCurvePoints;
 
             X3DAUDIO_DISTANCE_CURVE reverbCurve{};
@@ -363,7 +363,7 @@ public:
             reverbCurvePoints[0].DSPSetting = 0.5f;
             reverbCurvePoints[1].Distance = 1.0f;
             reverbCurvePoints[1].DSPSetting = 0.5f;
-            reverbCurve.PointCount = Funcs::CountOf(reverbCurvePoints);
+            reverbCurve.PointCount = CountOf(reverbCurvePoints);
             reverbCurve.pPoints = reverbCurvePoints;
 
             FLOAT32 channelAzimuths[8]{};

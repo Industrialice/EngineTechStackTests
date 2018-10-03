@@ -324,6 +324,8 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
 
     static constexpr f32 contactOffset = 0.0075f;
     static constexpr f32 restOffset = 0.0f;
+    static constexpr f32 sleepThreshold = 0.01f;
+    static constexpr f32 wakeCounter = 0.2f;
 
     PxShape *defaultCubeShape = Physics->createShape(PxBoxGeometry(0.5f, 0.5f, 0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
 
@@ -339,6 +341,8 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
 
         data.size = object.size;
         data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
+        data.actor->setSleepThreshold(sleepThreshold);
+        data.actor->setWakeCounter(wakeCounter);
         if (Distance(0.5f, halfSize) < DefaultF32Epsilon)
         {
             data.actor->attachShape(*defaultCubeShape);

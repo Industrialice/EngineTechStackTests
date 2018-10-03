@@ -27,9 +27,9 @@ namespace EngineCore
         Joystick5 = Funcs::BitPos(16),
         Joystick6 = Funcs::BitPos(17),
         Joystick7 = Funcs::BitPos(18),
-        _AllTouchs = Touch0 | Touch1 | Touch2 | Touch3 | Touch4 | Touch5 | Touch6 | Touch7 | Touch8 | Touch9,
+        _AllTouches = Touch0 | Touch1 | Touch2 | Touch3 | Touch4 | Touch5 | Touch6 | Touch7 | Touch8 | Touch9,
         _AllJoysticks = Joystick0 | Joystick1 | Joystick2 | Joystick3 | Joystick4 | Joystick5 | Joystick6 | Joystick7,
-        _AllDevices = MouseKeyboard | _AllTouchs | _AllJoysticks);
+        _AllDevices = MouseKeyboard | _AllTouches | _AllJoysticks);
 
     inline ui32 DeviceIndex(DeviceType device)
     {
@@ -50,7 +50,7 @@ namespace EngineCore
     {
         struct Key
         {
-            vkeyt key{};
+            KeyCode key{};
             enum class KeyState { Released, Pressed, Repeated } keyState{};
         };
         struct MouseSetPosition
@@ -149,9 +149,11 @@ namespace EngineCore
 
     class IKeyController
     {
+        static void RemoveListener(IKeyController *instance, void *handle);
+
     public:
         using ListenerCallbackType = function<bool(const ControlAction &action)>; // return true if the action needs to be blocked from going to any subsequent listeners
-        using ListenerHandle = TListenerHandle<IKeyController, ui32>;
+        using ListenerHandle = TListenerHandle<IKeyController, ui32, RemoveListener>;
 
         struct KeyInfo
         {
@@ -166,13 +168,13 @@ namespace EngineCore
             }
         };
 
-        using AllKeyStates = array<KeyInfo, (size_t)vkeyt::_size>;
+        using AllKeyStates = array<KeyInfo, (size_t)KeyCode::_size>;
 
         virtual ~IKeyController() = default;
         virtual void Dispatch(const ControlAction &action) = 0;
         virtual void Dispatch(std::experimental::generator<ControlAction> enumerable) = 0;
         virtual void Update() = 0; // may be used for key repeating
-        [[nodiscard]] virtual KeyInfo GetKeyInfo(vkeyt key, DeviceType device = DeviceType::MouseKeyboard) const = 0; // always default for Touch
+        [[nodiscard]] virtual KeyInfo GetKeyInfo(KeyCode key, DeviceType device = DeviceType::MouseKeyboard) const = 0; // always default for Touch
         [[nodiscard]] virtual optional<i32Vector2> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const = 0; // always nullopt for Joystick
         [[nodiscard]] virtual const AllKeyStates &GetAllKeyStates(DeviceType device = DeviceType::MouseKeyboard) const = 0; // always default for Touch
         [[nodiscard]] virtual ListenerHandle OnControlAction(const ListenerCallbackType &callback, DeviceType deviceMask) = 0;
@@ -200,7 +202,7 @@ namespace EngineCore
         virtual void Dispatch(const ControlAction &action) override {}
         virtual void Dispatch(std::experimental::generator<ControlAction> enumerable) override {}
         virtual void Update() override {}
-        [[nodiscard]] virtual KeyInfo GetKeyInfo(vkeyt key, DeviceType device = DeviceType::MouseKeyboard) const override { return {}; }
+        [[nodiscard]] virtual KeyInfo GetKeyInfo(KeyCode key, DeviceType device = DeviceType::MouseKeyboard) const override { return {}; }
         [[nodiscard]] virtual optional<i32Vector2> GetPositionInfo(DeviceType device = DeviceType::MouseKeyboard) const override { return {}; }
         [[nodiscard]] virtual const AllKeyStates &GetAllKeyStates(DeviceType device = DeviceType::MouseKeyboard) const override { return _defaultKeyStates; }
         [[nodiscard]] virtual ListenerHandle OnControlAction(const ListenerCallbackType &callback, DeviceType deviceMask) override { return {}; }

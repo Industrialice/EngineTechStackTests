@@ -2,7 +2,7 @@
 
 namespace EngineCore
 {
-    enum class vkeyt : ui8
+    enum class KeyCode : ui8
     {
         Undefined,
         MButton0, MButton1, MButton2, MButton3, MButton4, MButton5, MButton6,
@@ -46,33 +46,33 @@ namespace EngineCore
         _size
     };
 
-    /*inline bool operator == (vkeyt vKey, char pKey) { return vKey == vkeyt(pKey); }
-    inline bool operator == (char pKey, vkeyt vKey) { return vKey == vkeyt(pKey); }
-    inline bool operator != (vkeyt vKey, char pKey) { return vKey != vkeyt(pKey); }
-    inline bool operator != (char pKey, vkeyt vKey) { return vKey != vkeyt(pKey); }
+    /*inline bool operator == (KeyCode vKey, char pKey) { return vKey == KeyCode(pKey); }
+    inline bool operator == (char pKey, KeyCode vKey) { return vKey == KeyCode(pKey); }
+    inline bool operator != (KeyCode vKey, char pKey) { return vKey != KeyCode(pKey); }
+    inline bool operator != (char pKey, KeyCode vKey) { return vKey != KeyCode(pKey); }
 
-    inline bool operator == (vkeyt vKey, ui8 pKey) { return vKey == vkeyt(pKey); }
-    inline bool operator == (ui8 pKey, vkeyt vKey) { return vKey == vkeyt(pKey); }
-    inline bool operator != (vkeyt vKey, ui8 pKey) { return vKey != vkeyt(pKey); }
-    inline bool operator != (ui8 pKey, vkeyt vKey) { return vKey != vkeyt(pKey); }*/
+    inline bool operator == (KeyCode vKey, ui8 pKey) { return vKey == KeyCode(pKey); }
+    inline bool operator == (ui8 pKey, KeyCode vKey) { return vKey == KeyCode(pKey); }
+    inline bool operator != (KeyCode vKey, ui8 pKey) { return vKey != KeyCode(pKey); }
+    inline bool operator != (ui8 pKey, KeyCode vKey) { return vKey != KeyCode(pKey); }*/
 
     namespace VirtualKeys
     {
-        bool IsLetter(vkeyt key);
-        bool IsDigit(vkeyt key);
-        bool IsNPadKey(vkeyt key);
-        bool IsNPadDigit(vkeyt key);
-        bool IsNPadArrow(vkeyt key);
-        bool IsMouseButton(vkeyt key);
-        bool IsArrowKey(vkeyt key);
-        bool IsFKey(vkeyt key);
-        bool IsShift(vkeyt key); // either LShift or RShift
-        bool IsControl(vkeyt key); // either LControl or RControl
-        bool IsAlt(vkeyt key); // either LAlt or RAlt
-        bool IsSystem(vkeyt key); // either LSystem or RSystem
-        bool IsEnter(vkeyt key); // either LEnter or REnter
-        bool IsDelete(vkeyt key); // either LDelete or RDelete
-        ui32 KeyNumber(vkeyt key); // accepts key names that end with a number, returns 0 in other cases, returns 1 for vkeyt::F1
-        char ToAlpha(vkeyt key, bool isUpperCase = true); // accepts A-Z keys, returns '\0' if key is not a letter
+        bool IsLetter(KeyCode key);
+        bool IsDigit(KeyCode key);
+        bool IsNPadKey(KeyCode key);
+        bool IsNPadDigit(KeyCode key);
+        bool IsNPadArrow(KeyCode key);
+        bool IsMouseButton(KeyCode key);
+        bool IsArrowKey(KeyCode key);
+        bool IsFKey(KeyCode key);
+        bool IsShift(KeyCode key); // either LShift or RShift
+        bool IsControl(KeyCode key); // either LControl or RControl
+        bool IsAlt(KeyCode key); // either LAlt or RAlt
+        bool IsSystem(KeyCode key); // either LSystem or RSystem
+        bool IsEnter(KeyCode key); // either LEnter or REnter
+        bool IsDelete(KeyCode key); // either LDelete or RDelete
+        ui32 KeyNumber(KeyCode key); // accepts key names that end with a number, returns 0 in other cases, returns 1 for KeyCode::F1
+        char ToAlpha(KeyCode key, bool isUpperCase = true); // accepts A-Z keys, returns '\0' if key is not a letter
     }
 }

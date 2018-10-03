@@ -2,20 +2,22 @@
 
 namespace EngineCore
 {
-    template <typename OwnerType, typename IdType> class TListenerHandle
+    // make sure that RemoveListener is thread safe if you have listeners in different threads
+    template <typename OwnerType, typename IdType, auto RemoveListener> class TListenerHandle
     {
         IdType _id{};
         weak_ptr<OwnerType> _owner{};
 
     public:
+        using ownerType = OwnerType;
+        using idType = IdType;
+
         ~TListenerHandle()
         {
             const auto &strongOwner = _owner.lock();
             if (strongOwner != nullptr)
             {
-                // it's bad to have this method name hardcoded, but if you use a template parameter, you will have problems defining such method itself
-                // make sure that RemoveListener is thread safe if you have listeners in different threads
-                strongOwner->RemoveListener(*this);
+                RemoveListener(strongOwner.get(), this);
             }
         }
 
@@ -32,7 +34,7 @@ namespace EngineCore
             source._owner = nullptr;
         }
 
-        TListenerHandle &operator = (TListenerHandle &&source)
+        TListenerHandle &operator = (TListenerHandle &&source) noexcept
         {
             _owner = move(source._owner);
             _id = source._id;
@@ -65,7 +67,7 @@ namespace EngineCore
         }
     };
 
-    // there's also possible implementation which would patch relevant addresses
+    // there's also a possible implementation which would patch relevant addresses
     // no reason to add it now, but it might be useful in the future because it
     // removes necessity to have special shared object
 }

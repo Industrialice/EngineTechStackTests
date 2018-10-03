@@ -143,7 +143,9 @@ auto KeyController::OnControlAction(const ListenerCallbackType &callback, Device
 
 void KeyController::RemoveListener(ListenerHandle &handle)
 {
-    if (handle.Owner().expired())
+    weak_ptr<ListenerHandle::ownerType> currentOwner{};
+    handle.Owner().swap(currentOwner);
+    if (currentOwner.expired())
     {
         return;
     }
@@ -168,11 +170,9 @@ void KeyController::RemoveListener(ListenerHandle &handle)
     {
         _listeners.erase(_listeners.begin() + index);
     }
-
-    handle.Owner().reset();
 }
 
-auto KeyController::GetKeyInfo(vkeyt key, DeviceType device) const -> KeyInfo
+auto KeyController::GetKeyInfo(KeyCode key, DeviceType device) const -> KeyInfo
 {
     ASSUME(Funcs::IndexOfMostSignificantNonZeroBit(device._value) == Funcs::IndexOfLeastSignificantNonZeroBit(device._value));
     ui32 value = device._value;

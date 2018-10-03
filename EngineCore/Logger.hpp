@@ -6,38 +6,40 @@ namespace EngineCore
 {
     ENUM_COMBINABLE(LogLevel, ui32,
         _None = 0,
-        Error = Funcs::BitPos(0),
-        Info = Funcs::BitPos(1),
+        Info = Funcs::BitPos(0),
+        Error = Funcs::BitPos(1),
         Warning = Funcs::BitPos(2),
         Critical = Funcs::BitPos(3),
         Debug = Funcs::BitPos(4),
-        ImportantInfo = Funcs::BitPos(5),
+        Attention = Funcs::BitPos(5),
         Other = Funcs::BitPos(6),
         _All = ui32_max);
 
     class Logger
     {
+        struct LoggerLocation;
+        static void RemoveListener(LoggerLocation *instance, void *handle);
+
         struct LoggerLocation
         {
             Logger *logger;
 
-            using ListenerHandle = TListenerHandle<LoggerLocation, ui32>;
+            using ListenerHandle = TListenerHandle<LoggerLocation, ui32, RemoveListener>;
 
-            LoggerLocation(Logger *logger) : logger(logger) {}
-            void RemoveListener(ListenerHandle &handle);
+            LoggerLocation(Logger &logger) : logger(&logger) {}
         };
 
     public:
-        // note that if you have listeners in different threads,
-        // moving or destroying logger will be a race condition
-        Logger();
-        Logger(Logger &&source);
-        Logger &operator = (Logger &&source);
-
         using ListenerCallbackType = function<void(LogLevel, string_view)>;
         using ListenerHandle = LoggerLocation::ListenerHandle;
 
-        NOINLINE void Message(LogLevel level, const char *format, ...); // printf-family function is going to be used to convert the message into a string
+        // note that if you have listeners in different threads,
+        // moving or destroying the logger will be a race condition
+        Logger();
+        Logger(Logger &&source) noexcept;
+        Logger &operator = (Logger &&source) noexcept;
+
+        NOINLINE void Message(LogLevel level, const char *format, ...); // printf-family function will be used to convert the message into a string
         ListenerHandle OnMessage(const ListenerCallbackType &listener, LogLevel levelMask = LogLevel::_All);
         void RemoveListener(ListenerHandle &handle);
         void IsEnabled(bool isEnabled);
@@ -55,12 +57,12 @@ namespace EngineCore
 
         static constexpr uiw logBufferSize = 65536;
 
-        std::mutex _mutex{};
         vector<MessageListener> _listeners{};
-        ui32 _currentId = 0;
         std::atomic<bool> _isEnabled{true};
         std::atomic<bool> _isThreadSafe{false};
-        char _logBuffer[logBufferSize];
+        ui32 _currentId = 0;
         shared_ptr<LoggerLocation> _loggerLocation{};
+        std::mutex _mutex{};
+        char _logBuffer[logBufferSize];
     };
 }

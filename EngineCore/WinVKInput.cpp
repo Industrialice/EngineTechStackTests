@@ -5,7 +5,7 @@ using namespace EngineCore;
 
 namespace EngineCore
 {
-    auto GetPlatformMapping() -> const array<vkeyt, 256> &; // from WinVirtualKeysMapping.cpp
+    auto GetPlatformMapping() -> const array<KeyCode, 256> &; // from WinVirtualKeysMapping.cpp
 }
 
 void VKInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -40,7 +40,7 @@ void VKInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, UINT msg, WPARAM
 			return;
 		}
 
-		vkeyt key = GetPlatformMapping()[wParam];
+		KeyCode key = GetPlatformMapping()[wParam];
 
         controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, msg == WM_KEYDOWN ? ControlAction::Key::KeyState::Pressed : ControlAction::Key::KeyState::Released});
 	}
