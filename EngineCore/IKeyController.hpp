@@ -155,7 +155,7 @@ namespace EngineCore
 
     public:
         using ListenerCallbackType = function<bool(const ControlAction &action)>; // return true if the action needs to be blocked from going to any subsequent listeners
-        using ListenerHandle = TListenerHandle<IKeyController, ui32, RemoveListener>;
+        using ListenerHandle = TListenerHandle<IKeyController, RemoveListener, ui32>;
 
         struct KeyInfo
         {

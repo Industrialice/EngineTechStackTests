@@ -27,7 +27,7 @@ namespace EngineCore
         {
             Logger *logger;
 
-            using ListenerHandle = TListenerHandle<LoggerLocation, ui32, RemoveListener>;
+            using ListenerHandle = TListenerHandle<LoggerLocation, RemoveListener, ui32>;
 
             LoggerLocation(Logger &logger) : logger(&logger) {}
         };
