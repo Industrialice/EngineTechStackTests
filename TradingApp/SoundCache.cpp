@@ -22,7 +22,7 @@ class SoundCacheImpl : public SoundCache
         }
         else
         {
-            auto f = File(pnn, FileOpenMode::OpenExisting, FileProcMode::Read);
+            auto f = File(pnn, FileOpenMode::OpenExisting, FileProcModes::Read);
             if (!f.IsOpened())
             {
                 SENDLOG(Error, "Failed to open audio file " PTHSTR "\n", pnn.PlatformPath().data());

@@ -59,7 +59,7 @@ namespace EngineCore
 
 #ifdef DEBUG
     // this snprintf will trigger compiler warnings if incorrect args were passed in
-    #define SENDLOG(level, ...) snprintf(nullptr, 0, __VA_ARGS__); EngineCore::Application::GetLogger().Message(EngineCore::LogLevel:: level, __VA_ARGS__)
+    #define SENDLOG(level, ...) snprintf(nullptr, 0, __VA_ARGS__); EngineCore::Application::GetLogger().Message(EngineCore::LogLevels:: level, __VA_ARGS__)
 #else
-    #define SENDLOG(level, ...) EngineCore::Application::GetLogger().Message(EngineCore::LogLevel:: level, __VA_ARGS__)
+    #define SENDLOG(level, ...) EngineCore::Application::GetLogger().Message(EngineCore::LogLevels:: level, __VA_ARGS__)
 #endif

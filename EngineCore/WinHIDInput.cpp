@@ -148,7 +148,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 
 		if (mouse.lLastX || mouse.lLastY)
 		{
-            controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseMove{{mouse.lLastX, mouse.lLastY}});
+            controlsQueue.Enqueue(DeviceTypes::MouseKeyboard, ControlAction::MouseMove{{mouse.lLastX, mouse.lLastY}});
 		}
 
 		if (mouse.usButtonFlags)
@@ -157,11 +157,11 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 			{
 				if (mouse.usButtonFlags & windowsUpKey)
 				{
-                    controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyState::Released});
+                    controlsQueue.Enqueue(DeviceTypes::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyState::Released});
 				}
 				else if (mouse.usButtonFlags & windowsDownKey)
 				{
-                    controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyState::Pressed});
+                    controlsQueue.Enqueue(DeviceTypes::MouseKeyboard, ControlAction::Key{key, ControlAction::Key::KeyState::Pressed});
 				}
 			};
 
@@ -174,7 +174,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 			if (mouse.usButtonFlags & RI_MOUSE_WHEEL)
 			{
 				//  TODO: some kind of normalization?
-                controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::MouseWheel{(SHORT)mouse.usButtonData / -WHEEL_DELTA});
+                controlsQueue.Enqueue(DeviceTypes::MouseKeyboard, ControlAction::MouseWheel{(SHORT)mouse.usButtonData / -WHEEL_DELTA});
 			}
 		}
 	}
@@ -238,6 +238,6 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
             }
         }
 
-        controlsQueue.Enqueue(DeviceType::MouseKeyboard, ControlAction::Key{key, isReleasing ? ControlAction::Key::KeyState::Released : ControlAction::Key::KeyState::Pressed});
+        controlsQueue.Enqueue(DeviceTypes::MouseKeyboard, ControlAction::Key{key, isReleasing ? ControlAction::Key::KeyState::Released : ControlAction::Key::KeyState::Pressed});
 	}
 }

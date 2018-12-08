@@ -34,7 +34,7 @@ Logger &Logger::operator = (Logger &&source) noexcept
     return *this;
 }
 
-void Logger::Message(LogLevel level, const char *format, ...)
+void Logger::Message(LogLevels::LogLevel level, const char *format, ...)
 {
     if (_isEnabled.load() == false)
     {
@@ -67,14 +67,14 @@ void Logger::Message(LogLevel level, const char *format, ...)
     for (auto it = _listeners.rbegin(); it != _listeners.rend(); ++it)
     {
         const auto &listener = *it;
-        if ((listener.levelMask + level) == listener.levelMask)
+        if (listener.levelMask.Contains(level))
         {
             listener.callback(level, string_view(_logBuffer, (size_t)printed));
         }
     }
 }
 
-auto Logger::OnMessage(const ListenerCallbackType &listener, LogLevel levelMask) -> ListenerHandle
+auto Logger::OnMessage(const ListenerCallbackType &listener, LogLevels::LogLevel levelMask) -> ListenerHandle
 {
     optional<std::scoped_lock<std::mutex>> scopeLock;
     if (_isThreadSafe.load())
@@ -82,7 +82,7 @@ auto Logger::OnMessage(const ListenerCallbackType &listener, LogLevel levelMask)
         scopeLock.emplace(_mutex);
     }
 
-    if (levelMask == LogLevel::_None) // not an error, but probably an unexpected case
+    if (levelMask == LogLevels::_None) // not an error, but probably an unexpected case
     {
         SOFTBREAK;
         return {};

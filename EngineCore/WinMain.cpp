@@ -32,8 +32,8 @@ static optional<HWND> CreateSystemWindow(bool isFullscreen, const string &title,
 static LRESULT WINAPI MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 static void MessageLoop();
 static void ShutdownApp();
-static void LogRecipient(LogLevel logLevel, string_view nullTerminatedText);
-static void FileLogRecipient(File &file, LogLevel logLevel, string_view nullTerminatedText);
+static void LogRecipient(LogLevels::LogLevel logLevel, string_view nullTerminatedText);
+static void FileLogRecipient(File &file, LogLevels::LogLevel logLevel, string_view nullTerminatedText);
 static bool CreateApplicationSubsystems();
 
 namespace
@@ -163,7 +163,7 @@ static MyCoroutineReturn<bool> ListenKeys(const ControlAction &action)
 
 int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-    StdLib::Initialization::PlatformAbstractionInitialize({});
+    StdLib::Initialization::Initialize({});
 
 	Application::Create();
 
@@ -178,7 +178,7 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
         });
     Application::SetKeyController(recordingController);
 
-    LogFile = File(FilePath::FromChar("log.txt"), FileOpenMode::CreateAlways, FileProcMode::Write);
+    LogFile = File(FilePath::FromChar("log.txt"), FileOpenMode::CreateAlways, FileProcModes::Write);
 	if (LogFile.IsOpened())
 	{
 		FileLogListener = Application::GetLogger().OnMessage(std::bind(FileLogRecipient, std::ref(LogFile), std::placeholders::_1, std::placeholders::_2));
@@ -261,7 +261,7 @@ bool CreateApplicationSubsystems()
 		return coroutine->get();
 	};
 
-    KeysListener = Application::GetKeyController().OnControlAction(listenerLambda, DeviceType::_AllDevices);
+    KeysListener = Application::GetKeyController().OnControlAction(listenerLambda, DeviceTypes::_AllDevices);
 
     auto oglRenderer = OGLRenderer::OpenGLRenderer::New(appWindow.fullscreen, TextureDataFormat::R8G8B8X8, 24, 8, {GetDC(*systemWindow)});
 	if (oglRenderer == nullptr)
@@ -552,26 +552,26 @@ LRESULT WINAPI MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
-static const char *LogLevelToTag(LogLevel logLevel)
+static const char *LogLevelToTag(LogLevels::LogLevel logLevel)
 {
-	switch (logLevel._value)
+	switch (logLevel.AsInteger())
 	{
-	case LogLevel::Critical:
+	case LogLevels::Critical.AsInteger():
 		return "[crt] ";
-	case LogLevel::Debug:
+	case LogLevels::Debug.AsInteger():
 		return "[dbg] ";
-	case LogLevel::Error:
+	case LogLevels::Error.AsInteger():
 		return "[err] ";
-	case LogLevel::Attention:
+	case LogLevels::Attention.AsInteger():
 		return "[imp] ";
-	case LogLevel::Info:
+	case LogLevels::Info.AsInteger():
 		return "[inf] ";
-	case LogLevel::Other:
+	case LogLevels::Other.AsInteger():
 		return "[oth] ";
-	case LogLevel::Warning:
+	case LogLevels::Warning.AsInteger():
 		return "[wrn] ";
-    case LogLevel::_None:
-    case LogLevel::_All:
+    case LogLevels::_None.AsInteger():
+    case LogLevels::_All.AsInteger():
         HARDBREAK;
         return "";
 	}
@@ -580,41 +580,41 @@ static const char *LogLevelToTag(LogLevel logLevel)
 	return nullptr;
 }
 
-void LogRecipient(LogLevel logLevel, string_view nullTerminatedText)
+void LogRecipient(LogLevels::LogLevel logLevel, string_view nullTerminatedText)
 {
-    if (logLevel == LogLevel::Critical || logLevel == LogLevel::Debug || logLevel == LogLevel::Error) // TODO: cancel breaking
+    if (logLevel == LogLevels::Critical || logLevel == LogLevels::Debug || logLevel == LogLevels::Error) // TODO: cancel breaking
     {
         SOFTBREAK;
     }
 
-	if (logLevel == LogLevel::Critical/* || logLevel == LogLevel::Debug || logLevel == LogLevel::Error*/)
+	if (logLevel == LogLevels::Critical/* || logLevel == LogLevel::Debug || logLevel == LogLevel::Error*/)
 	{
 		const char *tag = nullptr;
-		switch (logLevel._value) // fill out all the cases just in case
+		switch (logLevel.AsInteger()) // fill out all the cases just in case
 		{
-		case LogLevel::Critical:
+		case LogLevels::Critical.AsInteger():
 			tag = "CRITICAL";
 			break;
-		case LogLevel::Debug:
+		case LogLevels::Debug.AsInteger():
 			tag = "DEBUG";
 			break;
-		case LogLevel::Error:
+		case LogLevels::Error.AsInteger():
 			tag = "ERROR";
 			break;
-		case LogLevel::Attention:
+		case LogLevels::Attention.AsInteger():
 			tag = "IMPORTANT INFO";
 			break;
-		case LogLevel::Info:
+		case LogLevels::Info.AsInteger():
 			tag = "INFO";
 			break;
-		case LogLevel::Other:
+		case LogLevels::Other.AsInteger():
 			tag = "OTHER";
 			break;
-		case LogLevel::Warning:
+		case LogLevels::Warning.AsInteger():
 			tag = "WARNING";
 			break;
-        case LogLevel::_None:
-        case LogLevel::_All:
+        case LogLevels::_None.AsInteger():
+        case LogLevels::_All.AsInteger():
             HARDBREAK;
             return;
 		}
@@ -627,7 +627,7 @@ void LogRecipient(LogLevel logLevel, string_view nullTerminatedText)
 	OutputDebugStringA(nullTerminatedText.data());
 }
 
-void FileLogRecipient(File &file, LogLevel logLevel, string_view nullTerminatedText)
+void FileLogRecipient(File &file, LogLevels::LogLevel logLevel, string_view nullTerminatedText)
 {
 	const char *tag = LogLevelToTag(logLevel);
     file.Write(tag, (ui32)strlen(tag));

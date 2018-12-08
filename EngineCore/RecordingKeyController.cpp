@@ -44,22 +44,22 @@ void RecordingKeyController::Update()
     return _nextController->Update();
 }
 
-auto RecordingKeyController::GetKeyInfo(KeyCode key, DeviceType device) const -> KeyInfo
+auto RecordingKeyController::GetKeyInfo(KeyCode key, DeviceTypes::DeviceType device) const -> KeyInfo
 {
     return _nextController->GetKeyInfo(key, device);
 }
 
-auto RecordingKeyController::GetPositionInfo(DeviceType device) const -> optional<i32Vector2>
+auto RecordingKeyController::GetPositionInfo(DeviceTypes::DeviceType device) const -> optional<i32Vector2>
 {
     return _nextController->GetPositionInfo(device);
 }
 
-auto RecordingKeyController::GetAllKeyStates(DeviceType device) const -> const AllKeyStates &
+auto RecordingKeyController::GetAllKeyStates(DeviceTypes::DeviceType device) const -> const AllKeyStates &
 {
     return _nextController->GetAllKeyStates(device);
 }
 
-auto RecordingKeyController::OnControlAction(const ListenerCallbackType &callback, DeviceType deviceMask) -> ListenerHandle
+auto RecordingKeyController::OnControlAction(const ListenerCallbackType &callback, DeviceTypes::DeviceType deviceMask) -> ListenerHandle
 {
     return _nextController->OnControlAction(callback, deviceMask);
 }
