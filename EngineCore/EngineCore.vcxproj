@@ -126,7 +126,6 @@
     <ClCompile Include="VirtualKeys.cpp" />
     <ClCompile Include="WinHIDInput.cpp" />
     <ClCompile Include="KeyController.cpp" />
-    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="BasicHeader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -156,7 +155,6 @@
     <ClInclude Include="WinAPI.hpp" />
     <ClInclude Include="WinHIDInput.hpp" />
     <ClInclude Include="KeyController.hpp" />
-    <ClInclude Include="Logger.hpp" />
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="RendererArray.hpp" />
