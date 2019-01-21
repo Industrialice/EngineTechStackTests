@@ -3,8 +3,8 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>C:\Users\Colgate\Documents\Visual Studio 2017\Projects\StdLib2018\Core\;C:\Users\Colgate\Documents\Visual Studio 2017\Projects\StdLib2018\PlatformAbstraction\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)$(Configuration)_$(PlatformShortName)\;C:\Users\Colgate\Documents\Visual Studio 2017\Projects\StdLib2018\$(Configuration)_$(Platform)\;C:\Users\Colgate\Documents\Visual Studio 2017\Projects\TradingApp\External\XAudio2\bin\Win64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VisualStudioDir)\Projects\StdLib2018\Core\;$(VisualStudioDir)\Projects\StdLib2018\PlatformAbstraction\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)$(Configuration)_$(PlatformShortName)\;$(VisualStudioDir)\Projects\StdLib2018\$(Configuration)_$(Platform)\;$(VisualStudioDir)\Projects\TradingApp\External\XAudio2\bin\Win64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)_$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)$(Configuration)_$(Platform)\Intermediate$(ProjectName)\</IntDir>
   </PropertyGroup>
@@ -19,7 +19,7 @@
       <TreatSpecificWarningsAsErrors>4715;4716;4172;4099;4263;4264;4266;4553;4018;4287;4062;4717;4240;4293;4800;4477;4474;4002;4129;4201;4238;4239;4251;4273;4390;4456;4457;4458;4459;4473;4474;4522;4552;4554;4700;4706;4927;4063;4310;</TreatSpecificWarningsAsErrors>
       <DisableSpecificWarnings>4577;4505;</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
-      <PreprocessorDefinitions>STDLIB_ENABLE_FILE_STATS;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENABLE_FILE_STATS;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
