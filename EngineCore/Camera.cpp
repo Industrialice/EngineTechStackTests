@@ -281,7 +281,7 @@ const Matrix4x4 &Camera::ProjectionMatrix() const
     switch (_projType)
     {
     case ProjectionTypet::Perspective:
-        _projMatrix = Matrix4x4::CreatePerspectiveProjection(DegToRad(_horFOVDeg), (f32)width / (f32)height, _nearPlane, _farPlane);
+        _projMatrix = Matrix4x4::CreatePerspectiveProjection(DegToRad(_horFOVDeg), (f32)width / (f32)height, _nearPlane, _farPlane, ProjectionTarget::D3DAndMetal); // TODO: use OGL convention
         break;
     case ProjectionTypet::Orthogonal:
         NOIMPL;

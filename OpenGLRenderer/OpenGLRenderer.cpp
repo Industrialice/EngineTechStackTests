@@ -679,7 +679,7 @@ public:
                 matrix = *modelMatrix;
             }
 
-            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data());
+            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
         }
         
         auto viewMatrixSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_ViewMatrix"; });
@@ -694,7 +694,7 @@ public:
                 matrix = *viewMatrix;
             }
 
-            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data());
+            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
         }
 
         auto projectionSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_ProjectionMatrix"; });
@@ -709,7 +709,7 @@ public:
                 matrix = *projMatrix;
             }
 
-            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data());
+            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
         }
 
         auto viewProjectionSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_ViewProjectionMatrix"; });
@@ -724,7 +724,7 @@ public:
                 matrix = *viewMatrix * *projMatrix;
             }
 
-            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data());
+            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
         }
 
         auto cameraPositionSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_CameraPosition"; });
@@ -739,7 +739,7 @@ public:
                 position = *cameraPos;
             }
 
-            ((ShaderBackendData::SetUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, position.Data());
+            ((ShaderBackendData::SetUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, position.Data().data());
         }
 
         return true;
