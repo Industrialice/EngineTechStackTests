@@ -1,5 +1,6 @@
 #include "BasicHeader.hpp"
 #include "RecordingKeyController.hpp"
+#include <AssignListenerId.hpp>
 
 using namespace EngineCore;
 

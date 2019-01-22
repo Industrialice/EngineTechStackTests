@@ -39,8 +39,8 @@ static bool CreateApplicationSubsystems();
 namespace
 {
     IKeyController::ListenerHandle KeysListener{};
-    Logger::ListenerHandle LogListener{};
-    Logger::ListenerHandle FileLogListener{};
+    StdLib::Logger<void, false>::ListenerHandle LogListener{};
+    StdLib::Logger<void, false>::ListenerHandle FileLogListener{};
     File LogFile{};
     vector<ControlAction> AllReceivedControlActions{};
     IKeyController::ListenerHandle ControlActionRecordingListener{};

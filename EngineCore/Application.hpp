@@ -1,5 +1,10 @@
 #pragma once
 
+namespace StdLib
+{
+    template <typename MetaType, bool IsThreadSafe> class Logger;
+}
+
 namespace EngineCore
 {
 	class IKeyController;
@@ -40,7 +45,7 @@ namespace EngineCore
 		void SetMainWindow(const AppWindow &window);
 		Renderer &GetRenderer();
         void SetRenderer(const shared_ptr<Renderer> &renderer);
-		Logger &GetLogger();
+		StdLib::Logger<void, false> &GetLogger();
 		const shared_ptr<Camera> &GetMainCamera();
         EngineTime GetEngineTime();
 
@@ -59,7 +64,7 @@ namespace EngineCore
 
 #ifdef DEBUG
     // this snprintf will trigger compiler warnings if incorrect args were passed in
-    #define SENDLOG(level, ...) snprintf(nullptr, 0, __VA_ARGS__); EngineCore::Application::GetLogger().Message(EngineCore::LogLevels:: level, __VA_ARGS__)
+    #define SENDLOG(level, ...) snprintf(nullptr, 0, __VA_ARGS__); EngineCore::Application::GetLogger().Message(StdLib::LogLevels:: level, __VA_ARGS__)
 #else
-    #define SENDLOG(level, ...) EngineCore::Application::GetLogger().Message(EngineCore::LogLevels:: level, __VA_ARGS__)
+    #define SENDLOG(level, ...) EngineCore::Application::GetLogger().Message(StdLib::LogLevels:: level, __VA_ARGS__)
 #endif

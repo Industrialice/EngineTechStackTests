@@ -1,7 +1,7 @@
 #include "BasicHeader.hpp"
 #include "Application.hpp"
 #include "Renderer.hpp"
-#include "Logger.hpp"
+#include <Logger.hpp>
 #include "Camera.hpp"
 #include "ShadersManager.hpp"
 
@@ -14,7 +14,7 @@ using namespace EngineCore;
 
 struct ApplicationData
 {
-    Logger logger{};
+    StdLib::Logger<void, false> logger{};
     shared_ptr<IKeyController> keyController{};
     AppWindow mainWindow{};
     shared_ptr<Renderer> renderer{};
@@ -101,7 +101,7 @@ void Application::SetRenderer(const shared_ptr<Renderer> &renderer)
     Instance->renderer = renderer;
 }
 
-auto Application::GetLogger() -> Logger &
+auto Application::GetLogger() -> StdLib::Logger<void, false> &
 {
     return Instance->logger;
 }
