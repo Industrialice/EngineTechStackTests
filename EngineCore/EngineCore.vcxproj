@@ -149,7 +149,6 @@
     <ClInclude Include="BasicHeader.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="IKeyController.hpp" />
-    <ClInclude Include="ListenerHandle.hpp" />
     <ClInclude Include="RecordingKeyController.hpp" />
     <ClInclude Include="WinAPI.hpp" />
     <ClInclude Include="WinHIDInput.hpp" />
