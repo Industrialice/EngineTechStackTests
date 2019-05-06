@@ -123,7 +123,6 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="IKeyController.cpp" />
     <ClCompile Include="RecordingKeyController.cpp" />
-    <ClCompile Include="VirtualKeys.cpp" />
     <ClCompile Include="WinHIDInput.cpp" />
     <ClCompile Include="KeyController.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -168,7 +167,6 @@
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="TextureSampler.hpp" />
     <ClInclude Include="VertexLayout.hpp" />
-    <ClInclude Include="VirtualKeys.hpp" />
     <ClInclude Include="WinVKInput.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

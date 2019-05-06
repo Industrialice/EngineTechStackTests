@@ -270,7 +270,7 @@ void AddAudioToNewCollisions()
         {
             continue;
         }
-        f32 delta = (currentMoment - audio.startedAt).ToSeconds();
+        f32 delta = (currentMoment - audio.startedAt).ToSec();
         if (delta - 0.05f >= AudioEngine->AudioLength(audio.audio))
         {
             AudioEngine->RemoveAudio(audio.audio);

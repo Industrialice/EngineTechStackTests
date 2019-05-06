@@ -335,13 +335,13 @@ void MessageLoop()
 
             auto currentMemont = TimeMoment::Now();
 
-            TimeDifference64 durationSinceStart = (currentMemont - firstUpdate).As64();
+            TimeDifference durationSinceStart = currentMemont - firstUpdate;
             TimeDifference durationSinceLastUpdate = currentMemont - lastUpdate;
 
             EngineTime engineTime = Application::GetEngineTime();
-            engineTime.secondsSinceStart = durationSinceStart.ToSeconds() * engineTime.timeScale;
-            engineTime.secondSinceLastFrame = durationSinceLastUpdate.ToSeconds() * engineTime.timeScale;
-            engineTime.unscaledSecondSinceLastFrame = durationSinceLastUpdate.ToSeconds();
+            engineTime.secondsSinceStart = durationSinceStart.ToSec_f64() * engineTime.timeScale;
+            engineTime.secondSinceLastFrame = durationSinceLastUpdate.ToSec() * engineTime.timeScale;
+            engineTime.unscaledSecondSinceLastFrame = durationSinceLastUpdate.ToSec();
 
             lastUpdate = currentMemont;
 
@@ -494,7 +494,7 @@ LRESULT WINAPI MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	WindowData *windowData = nullptr;
 	if (hwnd == Application::GetMainWindow().hwnd)
 	{
-		windowData = (WindowData *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);;
+		windowData = (WindowData *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
 		if (windowData == nullptr || windowData->hwnd != hwnd)
 		{
 			SOFTBREAK;

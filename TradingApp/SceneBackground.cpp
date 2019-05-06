@@ -148,7 +148,7 @@ shared_ptr<Texture> CreateCellTexture(bool isUseThinStrips)
 
     TimeDifference delta = TimeMoment::Now() - funcStart;
 
-    SENDLOG(Info, "Texture generation with isUseThinStrips %s took %fs\n", isUseThinStrips ? "true" : "false", delta.ToSeconds());
+    SENDLOG(Info, "Texture generation with isUseThinStrips %s took %fs\n", isUseThinStrips ? "true" : "false", delta.ToSec());
 
     return texture;
 }

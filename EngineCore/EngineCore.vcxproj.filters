@@ -65,9 +65,6 @@
     <ClCompile Include="BasicHeader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VirtualKeys.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="RecordingKeyController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -113,9 +110,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TextureSampler.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VirtualKeys.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RendererPipelineState.hpp">
