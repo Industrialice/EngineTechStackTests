@@ -23,14 +23,14 @@ class SoundCacheImpl : public SoundCache
         else
         {
             auto f = File(pnn, FileOpenMode::OpenExisting, FileProcModes::Read);
-            if (!f.IsOpened())
+            if (!f.IsOpen())
             {
                 SENDLOG(Error, "Failed to open audio file " PTHSTR "\n", pnn.PlatformPath().data());
                 return {};
             }
 
             auto mappedFile = MemoryMappedFile(f);
-            if (!mappedFile.IsOpened())
+            if (!mappedFile.IsOpen())
             {
                 SENDLOG(Error, "Failed to map audio file " PTHSTR "\n", pnn.PlatformPath().data());
                 return {};
@@ -44,7 +44,7 @@ class SoundCacheImpl : public SoundCache
             }
 
             mappedFile = MemoryMappedFile(f, parsedFile->dataStartOffset, parsedFile->riffWaveHeader.chunkDataSize);
-            ASSUME(mappedFile.IsOpened() && mappedFile.Size() == parsedFile->riffWaveHeader.chunkDataSize);
+            ASSUME(mappedFile.IsOpen() && mappedFile.Size() == parsedFile->riffWaveHeader.chunkDataSize);
 
             mapping = make_shared<MemoryMappedFile>(move(mappedFile));
 

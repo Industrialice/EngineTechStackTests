@@ -127,7 +127,7 @@ void Scene::Draw(const Camera &camera)
 
 void DrawPyramid(const Camera &camera)
 {
-    auto timeSinceStart = Application::GetEngineTime().secondsSinceStart;
+    f32 timeSinceStart = (f32)Application::GetEngineTime().secondsSinceStart;
 
     f32 randValue = rand() / (f32)RAND_MAX;
 

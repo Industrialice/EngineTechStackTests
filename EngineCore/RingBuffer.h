@@ -3,8 +3,7 @@
 // a simple implementation only for POD types
 template <typename T, uiw MaxElements> class RingBuffer
 {
-    // TODO: is is_trivially_copyable_v correct?
-    static_assert(std::is_trivially_copyable_v<T>, "only trivial types are allowed for this implementation");
+    static_assert(std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>, "only trivial types are allowed for this implementation");
 
 	static constexpr bool isOverflowWrapped = MaxElements == 256 || MaxElements == 65536;
 	using indexType = 

@@ -133,7 +133,7 @@ bool OpenGLRendererProxy::CheckShaderBackendData(const Shader &shader)
             oglUniforms.reset(new ShaderBackendData::OGLUniform[uniformsCount]);
         }
 
-        for (auto uniformIndex = 0; uniformIndex < uniformsCount; ++uniformIndex)
+        for (uiw uniformIndex = 0; uniformIndex < uniformsCount; ++uniformIndex)
         {
             const auto &uniform = uniforms[uniformIndex];
 
@@ -188,7 +188,7 @@ bool OpenGLRendererProxy::CheckShaderBackendData(const Shader &shader)
         backendData.attributeLocations.reset(new GLint[attributesCount]);
     }
 
-    for (auto attributeIndex = 0; attributeIndex < attributesCount; ++attributeIndex)
+    for (uiw attributeIndex = 0; attributeIndex < attributesCount; ++attributeIndex)
     {
         const auto &attribute = shader.InputAttributes()[attributeIndex];
         GLint location = glGetAttribLocation(program, attribute.c_str());

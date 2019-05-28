@@ -150,7 +150,7 @@ void KeyController::RemoveListener(ListenerHandle &handle)
         return;
     }
 
-    ASSUME(Funcs::AreSharedPointersEqual(handle.Owner(), shared_from_this()));
+    ASSUME(Funcs::AreSharedPointersEqual(currentOwner, shared_from_this()));
 
     uiw index = 0;
     for (; ; ++index)

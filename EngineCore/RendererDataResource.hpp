@@ -36,7 +36,7 @@ namespace EngineCore
 
         RendererArrayData(initializer_list<T> values) : _data(new ui8[values.size() * sizeof(T)], [](void *p) {delete[] p; }), _sizeInBytes(ui32(values.size() * sizeof(T)))
         {
-            memcpy(_data.get(), values.begin(), sizeof(T) * values.size());
+            MemOps::Copy((T *)_data.get(), values.begin(), values.size());
         }
 
         RendererArrayData(BufferOwnedData data, ui32 numberOfElements) : _data(move(data)), _sizeInBytes(numberOfElements * sizeof(T))
@@ -44,7 +44,7 @@ namespace EngineCore
 
         RendererArrayData(const T *data, ui32 numberOfElements) : _data(new ui8[numberOfElements * sizeof(T)], [](void *p) {delete[] p; }), _sizeInBytes(numberOfElements * sizeof(T))
         {
-            memcpy(_data.get(), data, numberOfElements * sizeof(T));
+            MemOps::Copy((T *)_data.get(), data, numberOfElements);
         }
 
         ui32 NumberOfElements() const { return _sizeInBytes / (ui32)sizeof(T); }

@@ -179,7 +179,7 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     Application::SetKeyController(recordingController);
 
     LogFile = File(FilePath::FromChar("log.txt"), FileOpenMode::CreateAlways, FileProcModes::Write);
-	if (LogFile.IsOpened())
+	if (LogFile.IsOpen())
 	{
 		FileLogListener = Application::GetLogger().OnMessage(std::bind(FileLogRecipient, std::ref(LogFile), std::placeholders::_1, std::placeholders::_2));
 	}
@@ -277,7 +277,7 @@ bool CreateApplicationSubsystems()
 
     auto renderTarget = RenderTarget::New();
 	Application::GetMainCamera()->RenderTarget(renderTarget);
-    Application::GetMainCamera()->Position(Vector3(0, 5, -10));
+    Application::GetMainCamera()->Position(Vector3(0, 25, -25));
 
     if (SceneToDraw::Create() == false)
 	{

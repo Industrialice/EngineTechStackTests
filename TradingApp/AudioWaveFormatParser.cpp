@@ -20,7 +20,7 @@ auto TradingApp::ParseWaveFormatHeader(const ui8 *sourceBufferData, ui32 sourceB
     ui32 currentChunkDataSize = 0;
 
     // first get the RIFF chunk to make sure we have the correct file type
-    memcpy(&output.riffWaveHeader, &sourceBufferData[currByte], sizeof(output.riffWaveHeader));
+    MemOps::Copy((ui8 *)&output.riffWaveHeader, &sourceBufferData[currByte], sizeof(output.riffWaveHeader));
 
     currByte += sizeof(output.riffWaveHeader);
 
@@ -43,7 +43,7 @@ auto TradingApp::ParseWaveFormatHeader(const ui8 *sourceBufferData, ui32 sourceB
     {
         // Read the next chunk header
         ChunkHeader chunkHeader;
-        memcpy(&chunkHeader, &sourceBufferData[currByte], sizeof(ChunkHeader));
+        MemOps::Copy((ui8 *)&chunkHeader, &sourceBufferData[currByte], sizeof(ChunkHeader));
 
         // Offset the byte index byt he sizeof chunk header
         currByte += sizeof(ChunkHeader);
@@ -55,7 +55,7 @@ auto TradingApp::ParseWaveFormatHeader(const ui8 *sourceBufferData, ui32 sourceB
         {
             output.fmtChunkHeader = chunkHeader;
 
-            memcpy(&output.fmtChunk, &sourceBufferData[currByte], sizeof(FormatChunk));
+			MemOps::Copy((ui8 *)&output.fmtChunk, &sourceBufferData[currByte], sizeof(FormatChunk));
 
             currByte += sizeof(FormatChunk);
 
@@ -67,7 +67,7 @@ auto TradingApp::ParseWaveFormatHeader(const ui8 *sourceBufferData, ui32 sourceB
         case ChunkIdfact:
         {
             output.factChunkHeader = chunkHeader;
-            memcpy(&output.factChunk, &sourceBufferData[currByte], sizeof(FactChunk));
+			MemOps::Copy((ui8 *)&output.factChunk, &sourceBufferData[currByte], sizeof(FactChunk));
 
             currByte += sizeof(FactChunk);
 
@@ -93,7 +93,7 @@ auto TradingApp::ParseWaveFormatHeader(const ui8 *sourceBufferData, ui32 sourceB
 
             ui32 sampleChunkSize = sizeof(SampleChunk) - sizeof(SampleLoop)* StreamLoopinfoMax;
 
-            memcpy(&output.sampleChunk, &sourceBufferData[currByte], sampleChunkSize);
+			MemOps::Copy((ui8 *)&output.sampleChunk, &sourceBufferData[currByte], sampleChunkSize);
 
             currByte += sampleChunkSize;
 
@@ -102,12 +102,12 @@ auto TradingApp::ParseWaveFormatHeader(const ui8 *sourceBufferData, ui32 sourceB
             if (output.sampleChunk.sampleLoops <= StreamLoopinfoMax)
             {
                 readSize = sizeof(SampleLoop)* output.sampleChunk.sampleLoops;
-                memcpy(&output.sampleChunk.sampleLoop, &sourceBufferData[currByte], readSize);
+				MemOps::Copy((ui8 *)&output.sampleChunk.sampleLoop, &sourceBufferData[currByte], readSize);
             }
             else
             {
                 readSize = sizeof(SampleLoop)* StreamLoopinfoMax;
-                memcpy(&output.sampleChunk.sampleLoop, &sourceBufferData[currByte], readSize);
+				MemOps::Copy((ui8 *)&output.sampleChunk.sampleLoop, &sourceBufferData[currByte], readSize);
             }
 
             currByte += readSize;

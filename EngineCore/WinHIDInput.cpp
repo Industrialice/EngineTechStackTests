@@ -130,7 +130,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
 	{
 		return;
 	}
-	assert(dataSize == sizeof(data));
+    ASSUME(dataSize == sizeof(data));
 
 	if (data.header.dwType == RIM_TYPEMOUSE)
 	{
@@ -228,7 +228,7 @@ void HIDInput::Dispatch(ControlsQueue &controlsQueue, HWND hwnd, WPARAM wParam, 
                 }
                 else
                 {
-                    assert(key == KeyCode::LDelete);
+                    ASSUME(key == KeyCode::LDelete);
 
                     if (hasE0Flag == false) // swapped
                     {

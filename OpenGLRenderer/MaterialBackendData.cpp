@@ -73,7 +73,7 @@ bool OpenGLRendererProxy::CheckMaterialBackendData(const Material &material)
             assert(shaderUniform.elementHeight == 1);
             if (matUniform == nullopt)
             {
-                memset(uniformsMemory, 0, shaderUniform.elementWidth * shaderUniform.elementsCount * sizeof(i32));
+                MemOps::Set(uniformsMemory, 0, shaderUniform.elementWidth * shaderUniform.elementsCount * sizeof(i32));
             }
             else
             {
@@ -101,33 +101,33 @@ bool OpenGLRendererProxy::CheckMaterialBackendData(const Material &material)
             {
                 auto f32Array = std::get_if<unique_ptr<f32[]>>(&*matUniform);
                 assert(f32Array);
-                memcpy(uniformsMemory, f32Array->get(), shaderUniform.elementWidth * shaderUniform.elementHeight * shaderUniform.elementsCount * sizeof(f32));
+                MemOps::Copy((f32 *)uniformsMemory, f32Array->get(), shaderUniform.elementWidth * shaderUniform.elementHeight * shaderUniform.elementsCount);
             }
             break;
         case Shader::Uniform::Type::I32:
             assert(shaderUniform.elementHeight == 1);
             if (matUniform == nullopt)
             {
-                memset(uniformsMemory, 0, shaderUniform.elementWidth * shaderUniform.elementsCount * sizeof(i32));
+                MemOps::Set((i32 *)uniformsMemory, 0, shaderUniform.elementWidth * shaderUniform.elementsCount);
             }
             else
             {
                 auto i32Array = std::get_if<unique_ptr<i32[]>>(&*matUniform);
                 assert(i32Array);
-                memcpy(uniformsMemory, i32Array->get(), shaderUniform.elementWidth * shaderUniform.elementsCount * sizeof(i32));
+                MemOps::Copy((i32 *)uniformsMemory, i32Array->get(), shaderUniform.elementWidth * shaderUniform.elementsCount);
             }
             break;
         case Shader::Uniform::Type::UI32:
             assert(shaderUniform.elementHeight == 1);
             if (matUniform == nullopt)
             {
-                memset(uniformsMemory, 0, shaderUniform.elementWidth * shaderUniform.elementsCount * sizeof(ui32));
+                MemOps::Set((ui32 *)uniformsMemory, 0, shaderUniform.elementWidth * shaderUniform.elementsCount);
             }
             else
             {
                 auto ui32Array = std::get_if<unique_ptr<ui32[]>>(&*matUniform);
                 assert(ui32Array);
-                memcpy(uniformsMemory, ui32Array->get(), shaderUniform.elementWidth * shaderUniform.elementsCount * sizeof(ui32));
+                MemOps::Copy((ui32 *)uniformsMemory, ui32Array->get(), shaderUniform.elementWidth * shaderUniform.elementsCount);
             }
             break;
         case Shader::Uniform::Type::Texture:
@@ -136,7 +136,7 @@ bool OpenGLRendererProxy::CheckMaterialBackendData(const Material &material)
             if (matUniform == nullopt)
             {
                 MaterialBackendData::TextureUniform texSampler{};
-                memcpy(uniformsMemory, &texSampler, sizeof(texSampler));
+                MemOps::Copy((MaterialBackendData::TextureUniform *)uniformsMemory, &texSampler, 1);
             }
             else
             {
@@ -153,7 +153,7 @@ bool OpenGLRendererProxy::CheckMaterialBackendData(const Material &material)
                 CheckTextureSamplerBackendData(*sampler);
                 MaterialBackendData::TextureUniform textureUniform{RendererBackendData<TextureBackendData>(*uniform->first), RendererBackendData<TextureSamplerBackendData>(*sampler)};
                 assert(textureUniform.textureBackendData && textureUniform.textureSamplerBackendData); // TODO: handle failed update, use default textures
-                memcpy(uniformsMemory, &textureUniform, sizeof(textureUniform));
+                MemOps::Copy((MaterialBackendData::TextureUniform *)uniformsMemory, &textureUniform, 1);
             }
             break;
         }

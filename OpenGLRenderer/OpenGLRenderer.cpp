@@ -154,7 +154,7 @@ public:
         }
         else
         {
-            memcpy(arrayData.data.get() + offsetInBytes, data.get(), sizeInBytes);
+            MemOps::Copy(arrayData.data.get() + offsetInBytes, data.get(), sizeInBytes);
         }
 
         HasGLErrors();
@@ -637,7 +637,7 @@ public:
             case Shader::Uniform::Type::Texture:
             {
                 MaterialBackendData::TextureUniform textureUniform;
-                memcpy(&textureUniform, uniformsMemory, sizeof(textureUniform));
+                MemOps::Copy(&textureUniform, (MaterialBackendData::TextureUniform *)uniformsMemory, 1);
                 if (textureUniform.textureBackendData == nullptr || textureUniform.textureSamplerBackendData == nullptr)
                 {
                     if (textureUniform.textureBackendData == nullptr)

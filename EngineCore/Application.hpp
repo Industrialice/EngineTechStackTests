@@ -18,7 +18,7 @@ namespace EngineCore
 	struct AppWindow
 	{
 		#ifdef WINPLATFORM
-		HWND hwnd = 0;
+			HWND hwnd = 0;
 		#endif
 
 		i32 width = 0, height = 0;
@@ -54,10 +54,10 @@ namespace EngineCore
 		template <typename Resource, typename = enable_if_t<std::is_same_v<Resource, Shader>>> shared_ptr<Shader> LoadResource(string_view name) { return LoadResourceShader(name); }
 
 		#ifdef WINPLATFORM
-		HIDInput *GetHIDInput();
-		void SetHIDInput(unique_ptr<HIDInput> hid);
-		VKInput *GetVKInput();
-		void SetVKInput(unique_ptr<VKInput> input);
+			HIDInput *GetHIDInput();
+			void SetHIDInput(unique_ptr<HIDInput> hid);
+			VKInput *GetVKInput();
+			void SetVKInput(unique_ptr<VKInput> input);
 		#endif
 	};
 }

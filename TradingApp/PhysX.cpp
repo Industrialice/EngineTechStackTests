@@ -1,6 +1,5 @@
 #include "PreHeader.hpp"
 #include "PhysX.hpp"
-#include <PxPhysicsAPI.h>
 #include <Application.hpp>
 #include <Logger.hpp>
 #include <MathFunctions.hpp>
@@ -328,6 +327,8 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
     static constexpr f32 wakeCounter = 0.2f;
 
     PxShape *defaultCubeShape = Physics->createShape(PxBoxGeometry(0.5f, 0.5f, 0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
+	defaultCubeShape->setContactOffset(contactOffset);
+	defaultCubeShape->setRestOffset(restOffset);
 
     PhysXCubeDatas.resize(cubes.size());
     for (uiw index = 0, size = cubes.size(); index < size; ++index)
@@ -351,10 +352,10 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
         else
         {
             data.shape = data.actor->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
+			data.shape->setContactOffset(contactOffset);
+			data.shape->setRestOffset(restOffset);
         }
 
-        data.shape->setContactOffset(contactOffset);
-        data.shape->setRestOffset(restOffset);
         PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
 
         data.actor->userData = &data;
@@ -371,6 +372,8 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
     }
 
     PxShape *defaultSphereShape = Physics->createShape(PxSphereGeometry(0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
+	defaultSphereShape->setContactOffset(contactOffset);
+	defaultSphereShape->setRestOffset(restOffset);
 
     PhysXSphereDatas.resize(spheres.size());
     for (uiw index = 0, size = spheres.size(); index < size; ++index)
@@ -392,10 +395,10 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
         else
         {
             data.shape = data.actor->createShape(PxSphereGeometry(halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
+			data.shape->setContactOffset(contactOffset);
+			data.shape->setRestOffset(restOffset);
         }
 
-        data.shape->setContactOffset(contactOffset);
-        data.shape->setRestOffset(restOffset);
         PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
 
         data.actor->userData = &data;
