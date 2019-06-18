@@ -5,6 +5,8 @@
 #include <MathFunctions.hpp>
 #include <Renderer.hpp>
 
+//#define ENABLE_CONTACT_NOTIFICATIONS
+
 #ifdef _WIN64
 	#pragma comment(lib, "PhysXFoundation_64.lib")
 	#pragma comment(lib, "PhysXCooking_64.lib")
@@ -148,7 +150,10 @@ bool PhysX::Create()
 
     auto filterShader = [](PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void *constantBlock, PxU32 constantBlockSize) -> PxFilterFlags
     {
-        pairFlags = PxPairFlag::eCONTACT_DEFAULT | PxPairFlag::eNOTIFY_TOUCH_FOUND | PxPairFlag::eNOTIFY_TOUCH_LOST | PxPairFlag::eNOTIFY_CONTACT_POINTS;
+		pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+		#ifdef ENABLE_CONTACT_NOTIFICATIONS
+			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND | PxPairFlag::eNOTIFY_TOUCH_LOST | PxPairFlag::eNOTIFY_CONTACT_POINTS;
+		#endif
         return PxFilterFlag::eDEFAULT;
     };
     
@@ -431,14 +436,14 @@ bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhase
         PxU32 foundLostPairsCapacity;	//!< Capacity of found and lost buffers allocated in GPU global memory. This is used for the found/lost pair reports in the BP. */
 
         PxgDynamicsMemoryConfig mc;
-        mc.constraintBufferCapacity *= 4;
-        mc.contactBufferCapacity *= 4;
-        mc.tempBufferCapacity *= 4;
-        mc.contactStreamSize *= 4;
-        mc.patchStreamSize *= 4;
+        mc.constraintBufferCapacity *= 2;
+        mc.contactBufferCapacity *= 2;
+        mc.tempBufferCapacity *= 2;
+        mc.contactStreamSize *= 2;
+        mc.patchStreamSize *= 2;
         mc.forceStreamCapacity *= 4;
-        mc.heapCapacity *= 4;
-        mc.foundLostPairsCapacity *= 4;
+		mc.heapCapacity *= 2;
+        mc.foundLostPairsCapacity *= 2;
         desc.gpuDynamicsConfig = mc;
 
         HGLRC hg = wglGetCurrentContext();
@@ -514,7 +519,7 @@ void SimulationCallback::onTrigger(PxTriggerPair *pairs, PxU32 count)
 
 void SimulationCallback::onContact(const PxContactPairHeader &pairHeader, const PxContactPair *pairs, PxU32 numPairs)
 {
-    if (pairHeader.flags & (PxContactPairHeaderFlag::eREMOVED_ACTOR_0 | PxContactPairHeaderFlag::eREMOVED_ACTOR_1)) // From UE4, what is this???
+    if (pairHeader.flags & (PxContactPairHeaderFlag::eREMOVED_ACTOR_0 | PxContactPairHeaderFlag::eREMOVED_ACTOR_1))
     {
         return;
     }
@@ -585,7 +590,9 @@ void SimulationCallback::onContact(const PxContactPairHeader &pairHeader, const 
                     ++actor0data.contactsCount;
                     ++actor1data.contactsCount;
 
-                    NewContactInfos.push_back({Vector3{contactPoint->position.x, contactPoint->position.y, contactPoint->position.z}, contactPoint->impulse.magnitude()});
+					#ifdef USE_XAUDIO
+						NewContactInfos.push_back({Vector3{contactPoint->position.x, contactPoint->position.y, contactPoint->position.z}, contactPoint->impulse.magnitude()});
+					#endif
                 }
             }
         }

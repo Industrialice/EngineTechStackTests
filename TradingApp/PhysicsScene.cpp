@@ -31,7 +31,7 @@ namespace
 	static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 10;
 
 	//static constexpr uiw TowerWidth = 10;
-    //static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 125; // 60 fps limit for GTX 970
+    //static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 135; // 60 fps limit for GTX 970, if the app hangs, increase PxgDynamicsMemoryConfig values
     static constexpr uiw CubesSmallCount = 6;
     static constexpr uiw CubesMediumCount = 100;
     vector<CubesInstanced::InstanceData> Cubes{};
