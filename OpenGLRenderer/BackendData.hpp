@@ -62,8 +62,8 @@ namespace OGLRenderer
 
 	struct ShaderBackendData : public RendererBackendDataBase
 	{
-        using SetUniformFunction = void(*)(GLint location, GLsizei count, const void *values);
-        using SetMatrixUniformFunction = void(*)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+        using SetUniformFunction = void(GLAPIENTRY  *)(GLint location, GLsizei count, const void *values);
+        using SetMatrixUniformFunction = void(GLAPIENTRY  *)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
         struct OGLUniform
         {

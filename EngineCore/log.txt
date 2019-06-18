@@ -1,32 +1,32 @@
 [inf] Log started
-[inf] Detected 15 HID devices
+[inf] Detected 16 HID devices
 [inf] HID device 0 name is \\?\HID#VID_046D&PID_C231#2&e9c483e&0&0000#{378de44c-56ef-11d1-bc8c-00a0c91405dd}, type is Mouse
 [inf] HID device 1 name is \\?\HID#VID_046D&PID_C232#2&6bacd57&0&0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd}, type is Keyboard
 [inf] HID device 2 name is \\?\HID#VID_046D&PID_C222&Col01#8&11e7a5ef&0&0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd}, type is Keyboard
 [inf] HID device 3 name is \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&00020a5c_PID&0001&Col03#9&25fab775&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
-[inf] HID device 4 name is \\?\HID#VID_046D&PID_C222&Col02#8&11e7a5ef&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
-[inf] HID device 5 name is \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&00020a5c_PID&0001&Col02#9&25fab775&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
+[inf] HID device 4 name is \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&00020a5c_PID&0001&Col02#9&25fab775&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
+[inf] HID device 5 name is \\?\HID#VID_046D&PID_C222&Col02#8&11e7a5ef&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
 [inf] HID device 6 name is \\?\HID#VID_046D&PID_C222&Col02#8&11e7a5ef&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
 [inf] HID device 7 name is \\?\HID#VID_046D&PID_C222&Col01#8&11e7a5ef&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
 [inf] HID device 8 name is \\?\HID#VID_046D&PID_C221&MI_01&Col02#9&1960bfb2&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
 [inf] HID device 9 name is \\?\HID#VID_046D&PID_C221&MI_01&Col01#9&1960bfb2&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
-[inf] HID device 10 name is \\?\Root#RDP_KBD#0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd}, type is Keyboard
-[inf] HID device 11 name is \\?\HID#VID_046D&PID_C221&MI_00#9&31244bf7&0&0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd}, type is Keyboard
-[inf] HID device 12 name is \\?\Root#RDP_MOU#0000#{378de44c-56ef-11d1-bc8c-00a0c91405dd}, type is Mouse
-[inf] HID device 13 name is \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&00020a5c_PID&0001&Col01#9&25fab775&0&0000#{378de44c-56ef-11d1-bc8c-00a0c91405dd}, type is Mouse
-[inf] HID device 14 name is \\?\ACPI#PNP0F03#4&32be0e18&0#{378de44c-56ef-11d1-bc8c-00a0c91405dd}, type is Mouse
+[inf] HID device 10 name is \\?\HID#HIDCLASS#1&4784345&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}, type is HID
+[inf] HID device 11 name is \\?\Root#RDP_KBD#0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd}, type is Keyboard
+[inf] HID device 12 name is \\?\HID#VID_046D&PID_C221&MI_00#9&31244bf7&0&0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd}, type is Keyboard
+[inf] HID device 13 name is \\?\Root#RDP_MOU#0000#{378de44c-56ef-11d1-bc8c-00a0c91405dd}, type is Mouse
+[inf] HID device 14 name is \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&00020a5c_PID&0001&Col01#9&25fab775&0&0000#{378de44c-56ef-11d1-bc8c-00a0c91405dd}, type is Mouse
+[inf] HID device 15 name is \\?\ACPI#PNP0F03#4&32be0e18&0#{378de44c-56ef-11d1-bc8c-00a0c91405dd}, type is Mouse
 [inf] HIDInput::Register's completed
 [inf] Using HID input
 [inf] OpenGLRenderer's created
-[inf] Texture generation with isUseThinStrips true took 0.751175s
-[inf] Texture generation with isUseThinStrips false took 0.418132s
+[inf] Texture generation with isUseThinStrips true took 0.510927s
+[inf] Texture generation with isUseThinStrips false took 0.262155s
 [inf] SceneBackground's created
 [inf] Application subsystems're created
 [inf] Compiled a new shader
 [inf] Compiled a new shader
 [inf] Compiled a new shader
 [inf] Compiled a new shader
-[inf] Destroyed XAudioEngine
 [inf] SceneBackground's been destroyed
 [inf] OpenGL Windows context's destroyed
 [inf] HIDInput::Unregister's completed

@@ -153,7 +153,7 @@ public:
 
         XAUDIO2_BUFFER audioDataBuffer{};
         audioDataBuffer.AudioBytes = (UINT32)audioDataStream.Size();
-        audioDataBuffer.pAudioData = audioDataStream.CMemory();
+        audioDataBuffer.pAudioData = (const BYTE *)audioDataStream.CMemory();
         audioDataBuffer.Flags = XAUDIO2_END_OF_STREAM;
         HRESULT hr = voice->SubmitSourceBuffer(&audioDataBuffer);
         if (FAILED(hr))

@@ -19,19 +19,26 @@ static void PlaceSparse();
 static void PlaceAsHugeCube();
 static void PlaceAsTallTower();
 static void PlaceHelicopter();
-static void AddTestAudio();
-static void AddAudioToNewCollisions();
+
+#ifdef USE_XAUDIO
+	static void AddTestAudio();
+	static void AddAudioToNewCollisions();
+#endif
 
 namespace
 {
     static constexpr uiw TowerWidth = 7;
+	static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 10;
 
-    static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 10;
+	//static constexpr uiw TowerWidth = 10;
+    //static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 125; // 60 fps limit for GTX 970
     static constexpr uiw CubesSmallCount = 6;
     static constexpr uiw CubesMediumCount = 100;
     vector<CubesInstanced::InstanceData> Cubes{};
     vector<SpheresInstanced::InstanceData> Spheres{};
-    unique_ptr<XAudioEngine> AudioEngine{};
+	#ifdef USE_XAUDIO
+		unique_ptr<XAudioEngine> AudioEngine{};
+	#endif
     unique_ptr<SoundCache> SoundCacheInstance = SoundCache::New();
 
     struct AudioSourceInRun
@@ -54,13 +61,15 @@ bool PhysicsScene::Create()
         return false;
     }
 
-    AudioEngine = XAudioEngine::New();
-    if (!AudioEngine)
-    {
-        return false;
-    }
+	#ifdef USE_XAUDIO
+		AudioEngine = XAudioEngine::New();
+		if (!AudioEngine)
+		{
+			return false;
+		}
 
-    //AddTestAudio();
+		//AddTestAudio();
+	#endif
 
     Restart();
 
@@ -69,7 +78,9 @@ bool PhysicsScene::Create()
 
 void PhysicsScene::Destroy()
 {
-    AudioEngine = {};
+	#ifdef USE_XAUDIO
+		AudioEngine = {};
+	#endif
     SceneBackground::Destroy();
     PhysX::Destroy();
 }
@@ -81,7 +92,9 @@ void PhysicsScene::Update()
     PhysX::Update();
     SceneBackground::Update();
 
-    AudioEngine->Update();
+	#ifdef USE_XAUDIO
+		AudioEngine->Update();
+	#endif
 }
 
 void PhysicsScene::Restart()
@@ -103,12 +116,14 @@ void PhysicsScene::Draw(const Camera &camera)
 
     PhysX::Draw(camera);
 
-    XAudioEngine::PositioningInfo positioning;
-    positioning.orientFront = camera.ForwardAxis();
-    positioning.orientTop = camera.UpAxis();
-    positioning.position = camera.Position();
-    positioning.velocity = {};
-    AudioEngine->SetListenerPositioning(positioning);
+	#ifdef USE_XAUDIO
+		XAudioEngine::PositioningInfo positioning;
+		positioning.orientFront = camera.ForwardAxis();
+		positioning.orientTop = camera.UpAxis();
+		positioning.position = camera.Position();
+		positioning.velocity = {};
+		AudioEngine->SetListenerPositioning(positioning);
+	#endif
 }
 
 void PlaceSparse()
@@ -242,6 +257,7 @@ void PlaceHelicopter()
     }
 }
 
+#ifdef USE_XAUDIO
 void AddTestAudio()
 {
     auto stream = SoundCacheInstance->GetAudioStream(FilePath::FromChar("../Resources/Audio/bullet_impact_concrete.wav"));
@@ -352,3 +368,4 @@ void AddAudioToNewCollisions()
         CollisionAudioSources[addToIndex].startedAt = TimeMoment::Now();
     }
 }
+#endif

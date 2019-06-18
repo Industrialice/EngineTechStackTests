@@ -24,6 +24,8 @@ namespace
     std::unordered_set<shared_ptr<EngineCore::Shader>, Hasher, Comparer> LoadedShaders;
 }
 
+#define SHADER_VERSION "#version 400 \n"
+
 auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_ptr<Shader>
 {
     // TODO: fuck, that'd be slow
@@ -40,9 +42,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
 
     if (name == "Color") // TODO: do something about it
     {
-        string_view vsCode = TOSTR(
-            #version 440 \n
-
+        string_view vsCode = SHADER_VERSION TOSTR(
             in int gl_VertexID;
 
             void main()
@@ -52,9 +52,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
             }
         );
 
-        string_view psCode = TOSTR(
-            #version 440 \n
-
+        string_view psCode = SHADER_VERSION TOSTR(
             layout(location = 0) out vec4 OutputColor;
 
             uniform vec4 Color;
@@ -76,9 +74,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
     }
     else if (name == "ColoredVertices")
     {
-        string_view vsCode = TOSTR(
-            #version 440 \n
-
+        string_view vsCode = SHADER_VERSION TOSTR(
             in int gl_VertexID;
             in vec4 position;
             in vec4 color;
@@ -92,9 +88,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
             }
         );
 
-        string_view psCode = TOSTR(
-            #version 440 \n
-
+        string_view psCode = SHADER_VERSION TOSTR(
             in vec4 procColor;
 
             layout(location = 0) out vec4 OutputColor;
@@ -120,9 +114,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
     }
     else if (name == "Colored3DVertices")
     {
-        string_view vsCode = TOSTR(
-            #version 440 \n
-
+        string_view vsCode = SHADER_VERSION TOSTR(
             in vec4 position;
             in vec4 color;
 
@@ -142,9 +134,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
             }
         );
 
-        string_view psCode = TOSTR(
-            #version 440 \n
-
+        string_view psCode = SHADER_VERSION TOSTR(
             in vec4 procColor;
 
             layout(location = 0) out vec4 OutputColor;
@@ -174,9 +164,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
     }
     else if (name == "Colored3DVerticesInstanced")
     {
-        string_view vsCode = TOSTR(
-            #version 440 \n
-
+        string_view vsCode = SHADER_VERSION TOSTR(
             in vec4 position;
             in vec4 color;
             in vec4 rotation;
@@ -222,9 +210,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
             }
         );
 
-        string_view psCode = TOSTR(
-            #version 440 \n
-
+        string_view psCode = SHADER_VERSION TOSTR(
             in vec4 procColor;
 
             layout(location = 0) out vec4 OutputColor;
@@ -248,9 +234,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
     }
     else if (name == "Background")
     {
-        string_view vsCode = TOSTR(
-            #version 440 \n
-
+        string_view vsCode = SHADER_VERSION TOSTR(
             in int gl_VertexID;
 
             out vec3 vertexCoord;
@@ -291,9 +275,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
             }
         );
 
-        string_view psCode = TOSTR(
-            #version 440 \n
-
+        string_view psCode = SHADER_VERSION TOSTR(
             in vec3 vertexCoord;
 
             layout(location = 0) out vec4 OutputColor;
@@ -351,9 +333,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
     }
     else if (name == "BackgroundTextured")
     {
-        string_view vsCode = TOSTR(
-            #version 440 \n
-
+        string_view vsCode = SHADER_VERSION TOSTR(
             in int gl_VertexID;
 
             out vec2 TexCoord;
@@ -398,9 +378,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
             }
         );
 
-        string_view psCode = TOSTR(
-            #version 440 \n
-
+        string_view psCode = SHADER_VERSION TOSTR(
             layout(location = 0) out vec4 OutputColor;
 
             uniform vec3 _CameraPosition;
@@ -458,9 +436,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
     }
     else if (name == "Line3D")
     {
-        string_view vsCode = TOSTR(
-            #version 440 \n
-
+        string_view vsCode = SHADER_VERSION TOSTR(
             in int gl_VertexID;
 
             in vec4 position;
@@ -484,9 +460,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
             }
         );
 
-        string_view psCode = TOSTR(
-            #version 440 \n
-
+        string_view psCode = SHADER_VERSION TOSTR(
             in vec2 procTexcoord;
 
             layout(location = 0) out vec4 OutputColor;
@@ -540,9 +514,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
     }
     else if (name == "OnlyDepthWrite")
     {
-        string_view vsCode = TOSTR(
-            #version 440 \n
-
+        string_view vsCode = SHADER_VERSION TOSTR(
             in vec4 position;
 
             uniform vec3 SidesScale;
@@ -559,9 +531,7 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
             }
         );
 
-        string_view psCode = TOSTR(
-            #version 440 \n
-
+        string_view psCode = SHADER_VERSION TOSTR(
             void main()
             {
             }

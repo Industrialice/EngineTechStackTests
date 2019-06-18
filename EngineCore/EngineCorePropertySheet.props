@@ -4,7 +4,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir)\OpenGLRenderer\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\External\glew-2.0.0\lib\Release\;$(SolutionDir)\External\PhysX\$(Platform)\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)\External\glew-2.0.0\lib\Release\;$(SolutionDir)\External\PhysX\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>

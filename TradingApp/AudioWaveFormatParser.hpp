@@ -106,5 +106,5 @@ namespace TradingApp
         }
     };
 
-    optional<WaveFormatInfo> ParseWaveFormatHeader(const ui8 *sourceBufferData, ui32 sourceBufferDataSize);
+    optional<WaveFormatInfo> ParseWaveFormatHeader(const std::byte *sourceBufferData, ui32 sourceBufferDataSize);
 }

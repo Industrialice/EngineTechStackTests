@@ -5,20 +5,20 @@
 #include <MathFunctions.hpp>
 #include <Renderer.hpp>
 
-#ifdef DEBUG
-    #pragma comment(lib, "PxFoundationDEBUG_x64.lib")
-    #pragma comment(lib, "PhysX3CookingDEBUG_x64.lib")
-    #pragma comment(lib, "PhysX3ExtensionsDEBUG.lib")
-    #pragma comment(lib, "PxPvdSDKDEBUG_x64.lib")
-    #pragma comment(lib, "PhysX3CommonDEBUG_x64.lib")
-    #pragma comment(lib, "PhysX3DEBUG_x64.lib")
+#ifdef _WIN64
+	#pragma comment(lib, "PhysXFoundation_64.lib")
+	#pragma comment(lib, "PhysXCooking_64.lib")
+	#pragma comment(lib, "PhysXExtensions_static_64.lib")
+	#pragma comment(lib, "PhysXPvdSDK_static_64.lib")
+	#pragma comment(lib, "PhysXCommon_64.lib")
+	#pragma comment(lib, "PhysX_64.lib")
 #else
-    #pragma comment(lib, "PxFoundation_x64.lib")
-    #pragma comment(lib, "PhysX3Cooking_x64.lib")
-    #pragma comment(lib, "PhysX3Extensions.lib")
-    #pragma comment(lib, "PxPvdSDK_x64.lib")
-    #pragma comment(lib, "PhysX3Common_x64.lib")
-    #pragma comment(lib, "PhysX3_x64.lib")
+	#pragma comment(lib, "PhysXFoundation_32.lib")
+	#pragma comment(lib, "PhysXCooking_32.lib")
+	#pragma comment(lib, "PhysXExtensions_static_32.lib")
+	#pragma comment(lib, "PhysXPvdSDK_static_32.lib")
+	#pragma comment(lib, "PhysXCommon_32.lib")
+	#pragma comment(lib, "PhysX_32.lib")
 #endif
 
 using namespace EngineCore;
@@ -95,7 +95,7 @@ bool PhysX::Create()
 {
     assert(!IsInitialized);
 
-    Foundation = PxCreateFoundation(PX_FOUNDATION_VERSION, DefaultAllocator, DefaultErrorCallback);
+    Foundation = PxCreateFoundation(PX_PHYSICS_VERSION, DefaultAllocator, DefaultErrorCallback);
     if (!Foundation)
     {
         SENDLOG(Error, "PhysX::Create -> PxCreateFoundation failed\n");
@@ -351,7 +351,8 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
         }
         else
         {
-            data.shape = data.actor->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
+			data.shape = Physics->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
+			data.actor->attachShape(*data.shape);
 			data.shape->setContactOffset(contactOffset);
 			data.shape->setRestOffset(restOffset);
         }
@@ -394,7 +395,8 @@ void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<Spher
         }
         else
         {
-            data.shape = data.actor->createShape(PxSphereGeometry(halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
+			data.shape = Physics->createShape(PxSphereGeometry(halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
+			data.actor->attachShape(*data.shape);
 			data.shape->setContactOffset(contactOffset);
 			data.shape->setRestOffset(restOffset);
         }
@@ -429,14 +431,14 @@ bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhase
         PxU32 foundLostPairsCapacity;	//!< Capacity of found and lost buffers allocated in GPU global memory. This is used for the found/lost pair reports in the BP. */
 
         PxgDynamicsMemoryConfig mc;
-        /*mc.constraintBufferCapacity *= 4;
+        mc.constraintBufferCapacity *= 4;
         mc.contactBufferCapacity *= 4;
         mc.tempBufferCapacity *= 4;
         mc.contactStreamSize *= 4;
         mc.patchStreamSize *= 4;
         mc.forceStreamCapacity *= 4;
         mc.heapCapacity *= 4;
-        mc.foundLostPairsCapacity *= 4;*/
+        mc.foundLostPairsCapacity *= 4;
         desc.gpuDynamicsConfig = mc;
 
         HGLRC hg = wglGetCurrentContext();
@@ -451,7 +453,7 @@ bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhase
             SENDLOG(Error, "PhysX::Create -> PxCreateCudaContextManager failed\n");
             return false;
         }
-        desc.gpuDispatcher = CudaContexManager->getGpuDispatcher();
+        desc.cudaContextManager = CudaContexManager;
     }
 
     switch (broadPhaseType)

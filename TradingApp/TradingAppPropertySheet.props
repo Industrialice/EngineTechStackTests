@@ -3,7 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir)\EngineCore\;$(PHYSX_SDK)/PhysX_3.4/Include;$(PHYSX_SDK)/PxShared/include;$(SolutionDir)\OpenGLRenderer\;$(SolutionDir)\External\XAudio2\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\EngineCore\;$(PHYSX_SDK)/physx/Include;$(PHYSX_SDK)/pxshared/include;$(SolutionDir)\OpenGLRenderer\;$(SolutionDir)\External\XAudio2\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\External\XAudio2\bin\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
@@ -15,6 +15,7 @@
     </ClCompile>
     <ClCompile>
       <PrecompiledHeaderFile>PreHeader.hpp</PrecompiledHeaderFile>
+      <PreprocessorDefinitions>_HAS_EXCEPTIONS=0;STDLIB_DISABLE_MEMOPS_DEPRECATION;STDLIB_ENABLE_FILE_STATS;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
