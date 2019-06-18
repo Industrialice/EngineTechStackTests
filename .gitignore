@@ -11,14 +11,10 @@
 *.userprefs
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
 Debug_x64/
-Debug/
+Debug_x86/
 Release_x64/
-Release/
+Release_x86/
 
 /x64
 /x86
@@ -219,5 +215,3 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
-/Debug_x86
-/Release_x86
