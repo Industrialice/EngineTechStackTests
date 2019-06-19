@@ -201,7 +201,7 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 bool CreateApplicationSubsystems()
 {
-    static constexpr bool isFullScreened = true;
+    static constexpr bool isFullScreened = false;
 
 	AppWindow appWindow;
 	appWindow.fullscreen = isFullScreened;
