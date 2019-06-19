@@ -142,7 +142,7 @@ bool PhysX::Create()
     sceneLimits.maxNbBodies = 10'000;
     sceneLimits.maxNbDynamicShapes = 10'000;
 
-    if (!SetSceneProcessing(sceneDesc, ProcessingOn::CPU, BroadPhaseType::SAP))
+    if (!SetSceneProcessing(sceneDesc, ProcessingOn::GPU, BroadPhaseType::GPU))
     {
         SENDLOG(Error, "PhysX::Create -> SetSceneProcessing failed\n");
         return false;
@@ -285,7 +285,7 @@ void PhysX::Draw(const Camera &camera)
             auto *lock = instancedObject->Lock(source.size());
             for (const auto &data : source)
             {
-                const auto &phyPos = data.actor->getGlobalPose();
+                const auto &phyPos = data.actor->getGlobalPoseWithoutActor();
 
                 lock->position = {phyPos.p.x, phyPos.p.y, phyPos.p.z};
                 lock->rotation = {phyPos.q.x, phyPos.q.y, phyPos.q.z, phyPos.q.w};
@@ -436,14 +436,14 @@ bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhase
         PxU32 foundLostPairsCapacity;	//!< Capacity of found and lost buffers allocated in GPU global memory. This is used for the found/lost pair reports in the BP. */
 
         PxgDynamicsMemoryConfig mc;
-        mc.constraintBufferCapacity *= 2;
-        mc.contactBufferCapacity *= 2;
-        mc.tempBufferCapacity *= 2;
-        mc.contactStreamSize *= 2;
-        mc.patchStreamSize *= 2;
-        mc.forceStreamCapacity *= 4;
-		mc.heapCapacity *= 2;
-        mc.foundLostPairsCapacity *= 2;
+        mc.constraintBufferCapacity *= 3;
+        mc.contactBufferCapacity *= 3;
+        mc.tempBufferCapacity *= 3;
+        mc.contactStreamSize *= 3;
+        mc.patchStreamSize *= 3;
+        mc.forceStreamCapacity *= 8;
+		mc.heapCapacity *= 3;
+        mc.foundLostPairsCapacity *= 3;
         desc.gpuDynamicsConfig = mc;
 
         HGLRC hg = wglGetCurrentContext();
