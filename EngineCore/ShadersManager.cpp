@@ -398,18 +398,18 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
 
                 if (dist < ThinVisibility100Distance)
                 {
-                    finalColor = texture2D(BackTextureThickThin, TexCoord);
+                    finalColor = texture(BackTextureThickThin, TexCoord);
                 }
                 else if (dist < ThinVisibility0Distance)
                 {
                     float delta = ThinVisibility0Distance - ThinVisibility100Distance;
                     dist -= ThinVisibility100Distance;
                     dist /= delta;
-                    finalColor = mix(texture2D(BackTextureThickThin, TexCoord), texture2D(BackTextureThick, TexCoord), dist);
+                    finalColor = mix(texture(BackTextureThickThin, TexCoord), texture(BackTextureThick, TexCoord), dist);
                 }
                 else
                 {
-                    finalColor = texture2D(BackTextureThick, TexCoord);
+                    finalColor = texture(BackTextureThick, TexCoord);
                 }
 
                 OutputColor = finalColor;

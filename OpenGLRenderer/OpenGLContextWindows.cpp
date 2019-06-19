@@ -36,7 +36,7 @@ class OpenGLContextWindowsImpl final : public OGLRenderer::OpenGLContextWindows
 public:
 	virtual ~OpenGLContextWindowsImpl()
 	{
-		wglMakeCurrent(_windowContext, nullptr);
+		wglMakeCurrent(nullptr, nullptr);
 
 		if (_oglContext != NULL)
 		{
@@ -192,9 +192,9 @@ public:
 		}
         
         // TODO: doesn't work
-        glEnable(GL_MULTISAMPLE);
-        glEnable(GL_MULTISAMPLE_ARB);
-        glEnable(GL_MULTISAMPLE_EXT);
+        //glEnable(GL_MULTISAMPLE);
+        //glEnable(GL_MULTISAMPLE_ARB);
+        //glEnable(GL_MULTISAMPLE_EXT);
 
 		_oglContext = hglrc;
 		_windowContext = windowContext;

@@ -28,7 +28,7 @@ static void PlaceHelicopter();
 namespace
 {
     static constexpr uiw TowerWidth = 7;
-	static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 10;
+	static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 20;
 
 	//static constexpr uiw TowerWidth = 10;
     //static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 135; // 60 fps limit for GTX 970, if the app hangs, increase PxgDynamicsMemoryConfig values

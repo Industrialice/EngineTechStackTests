@@ -201,7 +201,7 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 bool CreateApplicationSubsystems()
 {
-    static constexpr bool isFullScreened = false;
+    static constexpr bool isFullScreened = true;
 
 	AppWindow appWindow;
 	appWindow.fullscreen = isFullScreened;
@@ -212,8 +212,8 @@ bool CreateApplicationSubsystems()
 	appWindow.title = "EngineCore";
 	appWindow.hideBorders = isFullScreened;
 
-    if (appWindow.height <= 0) appWindow.height = GetSystemMetrics(SM_CYSCREEN);
-    if (appWindow.width <= 0) appWindow.width = GetSystemMetrics(SM_CXSCREEN);
+	if (appWindow.width <= 0) appWindow.width = 1280;
+    if (appWindow.height <= 0) appWindow.height = 800;
 
 	RECT windowRect{ appWindow.x, appWindow.y, appWindow.x + appWindow.width, appWindow.y + appWindow.height };
 
@@ -294,6 +294,14 @@ void ShutdownApp()
     SceneToDraw::Destroy();
 
 	auto mainWindow = Application::GetMainWindow();
+
+	if (mainWindow.fullscreen)
+	{
+		if (ChangeDisplaySettingsA(nullptr, 0) != DISP_CHANGE_SUCCESSFUL)
+		{
+			SENDLOG(Error, "Failed to exit fullscreen mode\n");
+		}
+	}
 
     Application::SetRenderer(nullptr);
 
