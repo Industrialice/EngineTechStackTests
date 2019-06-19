@@ -34,7 +34,7 @@ namespace EngineCore
             _AllDevices = MouseKeyboard.Combined(_AllTouches).Combined(_AllJoysticks);
     };
 
-    inline ui32 DeviceIndex(DeviceTypes::DeviceTypes::DeviceType device)
+    inline uiw DeviceIndex(DeviceTypes::DeviceTypes::DeviceType device)
     {
         ASSUME(Funcs::IndexOfMostSignificantNonZeroBit(device.AsInteger()) == Funcs::IndexOfLeastSignificantNonZeroBit(device.AsInteger()));
         if (device >= DeviceTypes::Touch0 && device <= DeviceTypes::Touch9)

@@ -274,7 +274,7 @@ public:
         {
             if (storedAudio.voice == handle)
             {
-                return storedAudio.data.Size() / (f32)storedAudio.format.nAvgBytesPerSec;
+                return storedAudio.data.Size() / static_cast<f32>(storedAudio.format.nAvgBytesPerSec);
             }
         }
         return 0;
@@ -290,9 +290,9 @@ public:
             {
                 XAUDIO2_VOICE_STATE state;
                 handle->GetState(&state);
-                uiw numTotalFrames = storedAudio.data.Size() / (storedAudio.format.nChannels * sizeof(ui16));
-                uiw playedFrames = (uiw)state.SamplesPlayed;
-                return (f32)numTotalFrames / (f32)playedFrames * 100.0f;
+                ui64 numTotalFrames = storedAudio.data.Size() / (storedAudio.format.nChannels * sizeof(ui16));
+                ui64 playedFrames = static_cast<uiw>(state.SamplesPlayed);
+                return static_cast<f32>(numTotalFrames) / static_cast<f32>(playedFrames) * 100.0f;
             }
         }
         return 0;

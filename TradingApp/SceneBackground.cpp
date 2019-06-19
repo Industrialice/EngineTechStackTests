@@ -223,7 +223,7 @@ void FillCellTextureLevel(ui32 levelSize, ui8 *memory, bool isUseThinStrips)
             auto backColor = backgroundColor;
             if (isUseThinStrips)
             {
-                backColor = getColor(fmod(x * 10 * textureSizeRev, 1), fmod(y * 10 * textureSizeRev, 1), backgroundColor, thinStripColor, thinStripSize, thinStripFalloff);
+                backColor = getColor(static_cast<f32>(fmod(x * 10 * textureSizeRev, 1)), static_cast<f32>(fmod(y * 10 * textureSizeRev, 1)), backgroundColor, thinStripColor, thinStripSize, thinStripFalloff);
             }
 
             auto finalColor = getColor(x * textureSizeRev, y * textureSizeRev, backColor, thickStripColor, thickStripSize, thickStripFalloff);

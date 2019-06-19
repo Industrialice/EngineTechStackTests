@@ -66,7 +66,7 @@ bool HIDInput::Register(HWND hwnd)
             break;
         }
 
-        SENDLOG(Info, "HID device %u name is %s, type is %s\n", index, name, deviceTypeName);
+        //SENDLOG(Info, "HID device %u name is %s, type is %s\n", index, name, deviceTypeName);
     }
 
 	array<RAWINPUTDEVICE, 2> hids;

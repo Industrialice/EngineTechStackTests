@@ -44,7 +44,7 @@ void KeyController::Dispatch(const ControlAction &action)
             {
                 return _mouseKeyboardKeyStates[0];
             }
-            ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(value.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Joystick0.AsInteger());
+			uiw index = Funcs::IndexOfMostSignificantNonZeroBit(value.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Joystick0.AsInteger());
             return _joystickKeyStates[index];
         };
 
@@ -72,12 +72,12 @@ void KeyController::Dispatch(const ControlAction &action)
     }
     else if (auto touchDownAction = std::get_if<ControlAction::TouchDown>(&cookedAction.action))
     {
-        ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Touch0.AsInteger());
+        uiw deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Touch0.AsInteger());
         _touchPositionInfos[deviceIndex] = touchDownAction->position;
     }
     else if (auto touchMoveAction = std::get_if<ControlAction::TouchMove>(&cookedAction.action))
     {
-        ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Touch0.AsInteger());
+		uiw deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Touch0.AsInteger());
         if (!_touchPositionInfos[deviceIndex])
         {
             SOFTBREAK;
@@ -87,7 +87,7 @@ void KeyController::Dispatch(const ControlAction &action)
     }
     else if (auto touchUpAction = std::get_if<ControlAction::TouchUp>(&cookedAction.action))
     {
-        ui32 deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Touch0.AsInteger());
+		uiw deviceIndex = Funcs::IndexOfMostSignificantNonZeroBit(value.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Touch0.AsInteger());
         if (!_touchPositionInfos[deviceIndex])
         {
             SOFTBREAK;
@@ -181,7 +181,7 @@ auto KeyController::GetKeyInfo(KeyCode key, DeviceTypes::DeviceType device) cons
     }
     if (device >= DeviceTypes::Joystick0 && device <= DeviceTypes::Joystick7)
     {
-        ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(device.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Joystick0.AsInteger());
+		uiw index = Funcs::IndexOfMostSignificantNonZeroBit(device.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Joystick0.AsInteger());
         return _joystickKeyStates[index][(ui32)key];
     }
     return {};
@@ -196,7 +196,7 @@ auto KeyController::GetPositionInfo(DeviceTypes::DeviceType device) const -> opt
     }
     if (device >= DeviceTypes::Touch0 && device <= DeviceTypes::Touch9)
     {
-        ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(device.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Touch0.AsInteger());
+		uiw index = Funcs::IndexOfMostSignificantNonZeroBit(device.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Touch0.AsInteger());
         return _touchPositionInfos[index];
     }
     return {};
@@ -211,7 +211,7 @@ auto KeyController::GetAllKeyStates(DeviceTypes::DeviceType device) const -> con
     }
     if (device >= DeviceTypes::Joystick0 && device <= DeviceTypes::Joystick7)
     {
-        ui32 index = Funcs::IndexOfMostSignificantNonZeroBit(device.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Joystick0.AsInteger());
+		uiw index = Funcs::IndexOfMostSignificantNonZeroBit(device.AsInteger()) - Funcs::IndexOfMostSignificantNonZeroBit(DeviceTypes::Joystick0.AsInteger());
         return _joystickKeyStates[index];
     }
     return _defaultKeyStates;

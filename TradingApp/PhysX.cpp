@@ -182,7 +182,7 @@ bool PhysX::Create()
     {
         PxBroadPhaseRegion bpregion;
         bpregion.bounds = bounds[i];
-        bpregion.userData = (void *)i;
+        bpregion.userData = reinterpret_cast<void *>(i);
         PhysXScene->addBroadPhaseRegion(bpregion);
     }
 
