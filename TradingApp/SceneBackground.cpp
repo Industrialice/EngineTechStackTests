@@ -28,53 +28,84 @@ namespace
 static shared_ptr<Texture> CreateCellTexture(bool isUseThinStrips);
 static void FillCellTextureLevel(ui32 levelSize, ui8 *memory, bool isUseThinStrips);
 
-bool SceneBackground::Create(bool isDepthWriteEnabled)
+bool SceneBackground::Create(bool isDepthWriteEnabled, bool isPlaneWithGrid)
 {
-    auto cellTextureThickThin = CreateCellTexture(true);
-    auto cellTextureThick = CreateCellTexture(false);
+	shared_ptr<Material> material;
+	shared_ptr<RendererPipelineState> pipelineState;
 
-    auto shader = Application::LoadResource<Shader>("BackgroundTextured");
-    if (shader == nullptr)
-    {
-        SENDLOG(Error, "SceneBackground failed to locate shader for background plane\n");
-        return false;
-    }
+	if (isPlaneWithGrid)
+	{
+		auto cellTextureThickThin = CreateCellTexture(true);
+		auto cellTextureThick = CreateCellTexture(false);
 
-    auto material = Material::New(shader);
+		auto shader = Application::LoadResource<Shader>("BackgroundTextured");
+		if (shader == nullptr)
+		{
+			SENDLOG(Error, "SceneBackground failed to locate shader for background plane\n");
+			return false;
+		}
 
-    if (false == material->UniformTexture("BackTextureThickThin", cellTextureThickThin))
-    {
-        SENDLOG(Error, "SceneBackground failed to set BackTextureThickThin texture\n");
-        return false;
-    }
-    if (false == material->UniformTexture("BackTextureThick", cellTextureThick))
-    {
-        SENDLOG(Error, "SceneBackground failed to set BackTextureThick texture\n");
-        return false;
-    }
-    if (false == material->UniformF32("PlaneSize", {1.0e+3f, 1.0e+3f}))
-    {
-        SENDLOG(Error, "SceneBackground failed to set uniform PlaneSize\n");
-        return false;
-    }
-    if (false == material->UniformF32("ThinVisibility100Distance", 10.0f))
-    {
-        SENDLOG(Error, "SceneBackground failed to set uniform ThinVisibility100Distance\n");
-        return false;
-    }
-    if (false == material->UniformF32("ThinVisibility0Distance", 15.0f))
-    {
-        SENDLOG(Error, "SceneBackground failed to set uniform ThinVisibility0Distance\n");
-        return false;
-    }
+		material = Material::New(shader);
 
-    auto pipelineState = RendererPipelineState::New(shader);
-    pipelineState->EnableDepthWrite(isDepthWriteEnabled);
-    pipelineState->PolygonCullMode(RendererPipelineState::PolygonCullModet::None);
-    pipelineState->DepthComparisonFunc(RendererPipelineState::DepthComparisonFunct::Always);
-    
-    BackgroundPlane.material = move(material);
-    BackgroundPlane.pipeline = move(pipelineState);
+		if (false == material->UniformTexture("BackTextureThickThin", cellTextureThickThin))
+		{
+			SENDLOG(Error, "SceneBackground failed to set BackTextureThickThin texture\n");
+			return false;
+		}
+		if (false == material->UniformTexture("BackTextureThick", cellTextureThick))
+		{
+			SENDLOG(Error, "SceneBackground failed to set BackTextureThick texture\n");
+			return false;
+		}
+		if (false == material->UniformF32("PlaneSize", { 1.0e+3f, 1.0e+3f }))
+		{
+			SENDLOG(Error, "SceneBackground failed to set uniform PlaneSize\n");
+			return false;
+		}
+		if (false == material->UniformF32("ThinVisibility100Distance", 10.0f))
+		{
+			SENDLOG(Error, "SceneBackground failed to set uniform ThinVisibility100Distance\n");
+			return false;
+		}
+		if (false == material->UniformF32("ThinVisibility0Distance", 15.0f))
+		{
+			SENDLOG(Error, "SceneBackground failed to set uniform ThinVisibility0Distance\n");
+			return false;
+		}
+
+		pipelineState = RendererPipelineState::New(shader);
+	}
+	else
+	{
+		auto shader = Application::LoadResource<Shader>("BackgroundColored");
+		if (shader == nullptr)
+		{
+			SENDLOG(Error, "SceneBackground failed to locate shader for background plane\n");
+			return false;
+		}
+
+		material = Material::New(shader);
+
+		if (false == material->UniformF32("PlaneSize", { 1.0e+3f, 1.0e+3f }))
+		{
+			SENDLOG(Error, "SceneBackground failed to set uniform PlaneSize\n");
+			return false;
+		}
+		if (false == material->UniformF32("Color", { 0.2f, 0, 0.4f, 1.0f }))
+		{
+			SENDLOG(Error, "SceneBackground failed to set uniform Color\n");
+			return false;
+		}
+
+		pipelineState = RendererPipelineState::New(shader);
+	}
+
+	pipelineState->EnableDepthWrite(isDepthWriteEnabled);
+	pipelineState->PolygonCullMode(RendererPipelineState::PolygonCullModet::None);
+	pipelineState->DepthComparisonFunc(RendererPipelineState::DepthComparisonFunct::Always);
+
+	BackgroundPlane.material = move(material);
+	BackgroundPlane.pipeline = move(pipelineState);
 
 	SENDLOG(Info, "SceneBackground's created\n");
 	return true;

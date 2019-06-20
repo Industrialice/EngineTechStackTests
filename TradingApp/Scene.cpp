@@ -30,7 +30,7 @@ namespace
 
 bool Scene::Create()
 {
-    if (SceneBackground::Create(false) == false)
+    if (SceneBackground::Create(false, false) == false)
     {
         SENDLOG(Critical, "Failed to create scene background\n");
         return false;

@@ -142,7 +142,7 @@ bool PhysX::Create()
     sceneLimits.maxNbBodies = 10'000;
     sceneLimits.maxNbDynamicShapes = 10'000;
 
-    if (!SetSceneProcessing(sceneDesc, ProcessingOn::GPU, BroadPhaseType::GPU))
+    if (!SetSceneProcessing(sceneDesc, ProcessingOn::CPU, BroadPhaseType::SAP))
     {
         SENDLOG(Error, "PhysX::Create -> SetSceneProcessing failed\n");
         return false;

@@ -9,7 +9,7 @@ namespace TradingApp
 {
 	namespace SceneBackground
 	{
-		bool Create(bool isDepthWriteEnabled);
+		bool Create(bool isDepthWriteEnabled, bool isPlaneWithGrid);
         void Destroy();
 		void Update();
 		void Draw(const Vector3 &rotation, const EngineCore::Camera &camera);

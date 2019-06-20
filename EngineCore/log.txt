@@ -1,10 +1,9 @@
 [inf] Log started
-[inf] Detected 16 HID devices
+[inf] Display mode has been changed to fullscreen
+[inf] Detected 9 HID devices
 [inf] HIDInput::Register's completed
 [inf] Using HID input
 [inf] OpenGLRenderer's created
-[inf] Texture generation with isUseThinStrips true took 0.069792s
-[inf] Texture generation with isUseThinStrips false took 0.037175s
 [inf] SceneBackground's created
 [inf] Application subsystems're created
 [inf] Compiled a new shader

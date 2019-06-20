@@ -434,6 +434,69 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
 
         return shader;
     }
+	else if (name == "BackgroundColored")
+	{
+		string_view vsCode = SHADER_VERSION TOSTR(
+			in int gl_VertexID;
+
+			uniform vec2 PlaneSize;
+
+			uniform mat4x3 _ModelMatrix;
+			uniform mat4x4 _ViewProjectionMatrix;
+
+			void main()
+			{
+				vec4 position;
+				if (gl_VertexID == 0 || gl_VertexID == 5) /* bottom left */
+				{
+					position = vec4(-PlaneSize.x, -PlaneSize.y, 0, 1);
+				}
+				else if (gl_VertexID == 1) /* top left */
+				{
+					position = vec4(-PlaneSize.x, PlaneSize.y, 0, 1);
+				}
+				else if (gl_VertexID == 2 || gl_VertexID == 4) /* top right */
+				{
+					position = vec4(PlaneSize.x, PlaneSize.y, 0, 1);
+				}
+				else /* if(gl_VertexID == 3) */ /* bottom right */
+				{
+					position = vec4(PlaneSize.x, -PlaneSize.y, 0, 1);
+				}
+
+				vec3 worldPos = _ModelMatrix * position;
+
+				vec4 screenPos = _ViewProjectionMatrix * vec4(worldPos, 1.0);
+
+				gl_Position = screenPos;
+			}
+		);
+
+		string_view psCode = SHADER_VERSION TOSTR(
+			layout(location = 0) out vec4 OutputColor;
+
+			uniform vec4 Color;
+
+			void main()
+			{
+				OutputColor = Color;
+			}
+		);
+
+		array<Shader::Uniform, 2> uniforms{
+			Shader::Uniform{"Color", 4, 1, 1, Shader::Uniform::Type::F32},
+			Shader::Uniform{"PlaneSize", 2, 1, 1, Shader::Uniform::Type::F32} };
+
+		array<Shader::Uniform, 2> systemUniforms{
+			Shader::Uniform{"_ModelMatrix", 3, 4, 1, Shader::Uniform::Type::F32},
+			Shader::Uniform{"_ViewProjectionMatrix", 4, 4, 1, Shader::Uniform::Type::F32} };
+
+		auto shader = Shader::New(name, vsCode, psCode, uniforms.data(), (ui32)uniforms.size(), nullptr, 0, systemUniforms.data(), (ui32)systemUniforms.size());
+
+		LoadedShaders.emplace(shader);
+
+		return shader;
+	}
     else if (name == "Line3D")
     {
         string_view vsCode = SHADER_VERSION TOSTR(
