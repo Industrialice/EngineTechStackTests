@@ -12,10 +12,19 @@ namespace TradingApp::PhysX
         f32 impulse;
     };
 
+	struct ObjectData
+	{
+		Quaternion rotation;
+		Vector3 position;
+		Vector3 impulse;
+		f32 size;
+	};
+
     bool Create();
     void Destroy();
     void Update();
     void Draw(const EngineCore::Camera &camera);
-    void SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<SpheresInstanced::InstanceData> &spheres);
+	void ClearObjects();
+    void AddObjects(vector<ObjectData> &cubes, vector<ObjectData> &spheres);
     pair<const ContactInfo *, uiw> GetNewContacts();
 }

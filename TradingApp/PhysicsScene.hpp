@@ -11,7 +11,7 @@ namespace TradingApp
     {
         bool Create();
         void Destroy();
-        void Update();
+        void Update(Vector3 mainCameraPosition, Vector3 mainCameraRotation);
         void Restart();
         void Draw(const EngineCore::Camera &camera);
     }

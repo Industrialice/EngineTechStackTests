@@ -201,21 +201,38 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 bool CreateApplicationSubsystems()
 {
-    static constexpr bool isFullScreened = true;
+    bool isFullScreened = true;
+
+	auto monitorsInfo = SystemInfo::MonitorsInfo();
 
 	AppWindow appWindow;
-	appWindow.fullscreen = isFullScreened;
-	appWindow.height = isFullScreened ? 0 : 1000;
-	appWindow.width = isFullScreened ? 0 : 1000;
-	appWindow.x = isFullScreened ? 0 : 1000;
-	appWindow.y = isFullScreened ? 0 : 1000;
 	appWindow.title = "EngineCore";
-	appWindow.hideBorders = isFullScreened;
 
-	if (appWindow.width <= 0) appWindow.width = 1280;
-    if (appWindow.height <= 0) appWindow.height = 800;
+	SystemInfo::MonitorInfo targetMonitor = monitorsInfo.front();
+	if (monitorsInfo.size() > 1)
+	{
+		//isFullScreened = false;
 
-	RECT windowRect{ appWindow.x, appWindow.y, appWindow.x + appWindow.width, appWindow.y + appWindow.height };
+		uiw index = 1;
+		while (targetMonitor.x && targetMonitor.y)
+		{
+			if (index == monitorsInfo.size())
+			{
+				SOFTBREAK;
+				break;
+			}
+			targetMonitor = monitorsInfo[index];
+		}
+	}
+
+	appWindow.fullscreen = isFullScreened;
+	appWindow.height = targetMonitor.height;
+	appWindow.width = targetMonitor.width;
+	appWindow.x = 0;
+	appWindow.y = 0;
+	appWindow.hideBorders = true;
+
+	RECT windowRect{appWindow.x, appWindow.y, appWindow.x + appWindow.width, appWindow.y + appWindow.height};
 
 	auto systemWindow = CreateSystemWindow(appWindow.fullscreen, appWindow.title, GetModuleHandleW(NULL), appWindow.hideBorders, windowRect);
 	if (systemWindow == nullopt)
@@ -341,6 +358,11 @@ void MessageLoop()
 				HARDBREAK;
 			}
 
+			if (auto window = Application::GetMainWindow(); window.fullscreen)
+			{
+				SetCursorPos(window.width / 2, window.height / 2);
+			}
+
             auto currentMemont = TimeMoment::Now();
 
             TimeDifference durationSinceStart = currentMemont - firstUpdate;
@@ -425,7 +447,7 @@ void MessageLoop()
             
             Application::GetRenderer().ClearCameraTargets(camera.get());
 
-            SceneToDraw::Update();
+            SceneToDraw::Update(camera->Position(), camera->Rotation());
             SceneToDraw::Draw(*camera);
 
             Application::GetRenderer().SwapBuffers();
@@ -477,6 +499,7 @@ optional<HWND> CreateSystemWindow(bool isFullscreen, const string &title, HINSTA
         {
             SENDLOG(Info, "Display mode has been changed to fullscreen\n");
             ShowCursor(FALSE);
+			SetCursorPos(width / 2, height / 2);
         }
     }
 

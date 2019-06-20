@@ -79,7 +79,7 @@ CubesInstanced::CubesInstanced(ui32 maxInstances)
     auto vertexArray = RendererVertexArray::New(move(vertexArrayData));
 
     auto indexes = unique_ptr<ui8[], function<void(void *)>>(new ui8[36], [](void *p) {delete[] p; });
-    for (ui32 index = 0; index < 6; ++index)
+    for (uiw index = 0; index < 6; ++index)
     {
         indexes[index * 6 + 0] = index * 4 + 0;
         indexes[index * 6 + 1] = index * 4 + 1;
@@ -122,6 +122,11 @@ CubesInstanced::CubesInstanced(ui32 maxInstances)
     _vertexInstanceArray = RendererVertexArray::New(RendererArrayData<InstanceData>(BufferOwnedData{new ui8[maxInstances * sizeof(InstanceData)], [](void *p) {delete[] p; }}, maxInstances), accessMode);
 }
 
+ui32 CubesInstanced::MaxInstances()
+{
+	return _vertexInstanceArray->NumberOfElements();
+}
+
 auto CubesInstanced::Lock(ui32 instancesCount) -> InstanceData *
 {
     return (InstanceData *)_vertexInstanceArray->LockDataRegion(instancesCount, 0, RendererDataResource::LockMode::Write);
@@ -134,6 +139,8 @@ void CubesInstanced::Unlock()
 
 void CubesInstanced::Draw(const Camera *camera, ui32 instancesCount)
 {
+	ASSUME(instancesCount <= MaxInstances());
+
     Application::GetRenderer().BindIndexArray(_indexArray);
     Application::GetRenderer().BindVertexArray(_vertexArray, 0);
     Application::GetRenderer().BindVertexArray(_vertexInstanceArray, 1);

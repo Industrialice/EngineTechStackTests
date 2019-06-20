@@ -30,6 +30,7 @@ namespace TradingApp
         };
 
         CubesInstanced(ui32 maxInstances);
+		ui32 MaxInstances();
         InstanceData *Lock(ui32 instancesCount);
         void Unlock();
         void Draw(const EngineCore::Camera *camera, ui32 instancesCount);

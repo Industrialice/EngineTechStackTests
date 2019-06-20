@@ -46,6 +46,13 @@ public:
 
 namespace
 {
+	static constexpr bool IsDefaultGPU = true;
+
+	static constexpr f32 ContactOffset = 0.0075f;
+	static constexpr f32 RestOffset = 0.0f;
+	static constexpr f32 SleepThreshold = 0.01f;
+	static constexpr f32 WakeCounter = 0.2f;
+
     PxDefaultAllocator DefaultAllocator{};
     PxDefaultErrorCallback DefaultErrorCallback{};
     PxFoundation *Foundation{};
@@ -55,18 +62,40 @@ namespace
     PxDefaultCpuDispatcher *CpuDispatcher{};
     PxScene *PhysXScene{};
     PxMaterial *PhysXMaterial{};
-    PxRigidStatic *GroundPlane{};
     PxCudaContextManager *CudaContexManager{};
+	PxShape *DefaultCubeShape{};
+	PxShape *DefaultSphereShape{};
 
     bool IsInitialized = false;
 
     struct PhysXActorData
     {
+		struct UserDataSource
+		{
+			enum class SourceId : ui32
+			{
+				Cube,
+				Sphere,
+				Plane
+			};
+
+			#ifdef _WIN64
+				SourceId source;
+				ui32 index;
+			#else
+				SourceId source : 8;
+				ui32 index : 24;
+			#endif
+		};
+		static_assert(sizeof(UserDataSource) == sizeof(void *));
+
         bool isWoke = true;
         ui32 contactsCount = 0;
         f32 size{};
-        PxRigidDynamic *actor{};
+		PxRigidActor *actor{};
         PxShape *shape{};
+
+		PhysXActorData() = default;
 
         ~PhysXActorData()
         {
@@ -78,9 +107,44 @@ namespace
                 actor->release();
             }
         }
+
+		PhysXActorData(PhysXActorData &&source) noexcept
+		{
+			ASSUME(this != &source);
+			isWoke = source.isWoke;
+			contactsCount = source.contactsCount;
+			size = source.size;
+			actor = source.actor;
+			source.actor = nullptr;
+			shape = source.shape;
+			source.shape = nullptr;
+		}
+
+		PhysXActorData &operator = (PhysXActorData &&source) noexcept
+		{
+			ASSUME(this != &source);
+			isWoke = source.isWoke;
+			contactsCount = source.contactsCount;
+			size = source.size;
+			actor = source.actor;
+			source.actor = nullptr;
+			shape = source.shape;
+			source.shape = nullptr;
+			return *this;
+		}
+
+		static PhysXActorData &FromUserData(PxActor &actor);
+
+		void WriteUserData(UserDataSource::SourceId source, ui32 index)
+		{
+			ASSUME(actor);
+			PhysXActorData::UserDataSource dataSource = {source, index};
+			MemOps::Copy(reinterpret_cast<PhysXActorData::UserDataSource *>(&actor->userData), &dataSource, 1);
+		}
     };
-    vector<PhysXActorData> PhysXCubeDatas{}, PhysXSphereDatas{};
-    PhysXActorData PhysXPlaneData{};
+
+	vector<PhysXActorData> PhysXCubeDatas{}, PhysXSphereDatas{};
+	PhysXActorData PhysXPlaneData{};
 
     unique_ptr<CubesInstanced> InstancedCubes{};
     unique_ptr<SpheresInstanced> InstancedSpheres{};
@@ -91,6 +155,23 @@ namespace
     SimulationCallback SimCallback{};
 
     vector<PhysX::ContactInfo> NewContactInfos{};
+}
+
+PhysXActorData &PhysXActorData::FromUserData(PxActor &actor)
+{
+	auto &data = *reinterpret_cast<UserDataSource *>(&actor.userData);
+	switch (data.source)
+	{
+		case UserDataSource::SourceId::Cube:
+			return PhysXCubeDatas[data.index];
+		case UserDataSource::SourceId::Sphere:
+			return PhysXSphereDatas[data.index];
+		case UserDataSource::SourceId::Plane:
+			return PhysXPlaneData;
+	}
+
+	UNREACHABLE;
+	return PhysXPlaneData;
 }
 
 bool PhysX::Create()
@@ -142,7 +223,7 @@ bool PhysX::Create()
     sceneLimits.maxNbBodies = 10'000;
     sceneLimits.maxNbDynamicShapes = 10'000;
 
-    if (!SetSceneProcessing(sceneDesc, ProcessingOn::CPU, BroadPhaseType::SAP))
+    if (!SetSceneProcessing(sceneDesc, IsDefaultGPU ? ProcessingOn::GPU : ProcessingOn::CPU, IsDefaultGPU ? BroadPhaseType::GPU : BroadPhaseType::SAP))
     {
         SENDLOG(Error, "PhysX::Create -> SetSceneProcessing failed\n");
         return false;
@@ -196,9 +277,17 @@ bool PhysX::Create()
 
     PhysXMaterial = Physics->createMaterial(0.75f, 0.5f, 0.25f);
 
-    GroundPlane = PxCreatePlane(*Physics, PxPlane(0, 1, 0, 1), *PhysXMaterial);
-    PhysXScene->addActor(*GroundPlane);
-    GroundPlane->userData = &PhysXPlaneData;
+	PhysXPlaneData.actor = PxCreatePlane(*Physics, PxPlane(0, 1, 0, 1), *PhysXMaterial);
+    PhysXScene->addActor(*PhysXPlaneData.actor);
+	PhysXPlaneData.WriteUserData(PhysXActorData::UserDataSource::SourceId::Plane, 0);
+
+	DefaultCubeShape = Physics->createShape(PxBoxGeometry(0.5f, 0.5f, 0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
+	DefaultCubeShape->setContactOffset(ContactOffset);
+	DefaultCubeShape->setRestOffset(RestOffset);
+
+	DefaultSphereShape = Physics->createShape(PxSphereGeometry(0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
+	DefaultSphereShape->setContactOffset(ContactOffset);
+	DefaultSphereShape->setRestOffset(RestOffset);
 
     IsInitialized = true;
 
@@ -207,15 +296,20 @@ bool PhysX::Create()
 
 void PhysX::Destroy()
 {
-    PhysXPlaneData = {};
-    PhysXCubeDatas = {};
-    PhysXSphereDatas = {};
+	PhysXPlaneData = {};
+	std::exchange(PhysXCubeDatas, {});
+    std::exchange(PhysXSphereDatas, {});
 
-    if (GroundPlane)
-    {
-        GroundPlane->release();
-        GroundPlane = nullptr;
-    }
+	if (DefaultCubeShape)
+	{
+		DefaultCubeShape->release();
+		DefaultCubeShape = nullptr;
+	}
+	if (DefaultSphereShape)
+	{
+		DefaultSphereShape->release();
+		DefaultSphereShape = nullptr;
+	}
     if (PhysXMaterial)
     {
         PhysXMaterial->release();
@@ -310,111 +404,104 @@ void PhysX::Draw(const Camera &camera)
     PhysXScene->fetchResults(true);
 }
 
-void PhysX::SetObjects(vector<CubesInstanced::InstanceData> &cubes, vector<SpheresInstanced::InstanceData> &spheres)
+void PhysX::ClearObjects()
+{
+	if (!IsInitialized)
+	{
+		return;
+	}
+
+	NewContactInfos.clear();
+	PhysXCubeDatas.clear();
+	PhysXSphereDatas.clear();
+}
+
+void PhysX::AddObjects(vector<ObjectData> &cubes, vector<ObjectData> &spheres)
 {
     if (!IsInitialized)
     {
         return;
     }
 
-    NewContactInfos.clear();
-    PhysXCubeDatas.clear();
-    PhysXSphereDatas.clear();
-
-    if (!InstancedCubes)
+	for (auto &object : cubes)
     {
-        InstancedCubes = make_unique<CubesInstanced>(cubes.size());
-    }
-
-    static constexpr f32 contactOffset = 0.0075f;
-    static constexpr f32 restOffset = 0.0f;
-    static constexpr f32 sleepThreshold = 0.01f;
-    static constexpr f32 wakeCounter = 0.2f;
-
-    PxShape *defaultCubeShape = Physics->createShape(PxBoxGeometry(0.5f, 0.5f, 0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
-	defaultCubeShape->setContactOffset(contactOffset);
-	defaultCubeShape->setRestOffset(restOffset);
-
-    PhysXCubeDatas.resize(cubes.size());
-    for (uiw index = 0, size = cubes.size(); index < size; ++index)
-    {
-        auto &data = PhysXCubeDatas[index];
-        auto &object = cubes[index];
+		PhysXCubeDatas.emplace_back();
+        auto &data = PhysXCubeDatas.back();
 
         auto position = object.position;
         auto rotation = object.rotation;
         auto halfSize = object.size * 0.5f;
 
         data.size = object.size;
-        data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
-        data.actor->setSleepThreshold(sleepThreshold);
-        data.actor->setWakeCounter(wakeCounter);
+		PxRigidDynamic *actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
+		data.actor = actor;
+        actor->setSleepThreshold(SleepThreshold);
+        actor->setWakeCounter(WakeCounter);
         if (Distance(0.5f, halfSize) < DefaultF32Epsilon)
         {
-            data.actor->attachShape(*defaultCubeShape);
-            data.shape = defaultCubeShape;
+            data.actor->attachShape(*DefaultCubeShape);
+            data.shape = DefaultCubeShape;
         }
         else
         {
 			data.shape = Physics->createShape(PxBoxGeometry(halfSize, halfSize, halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
-			data.actor->attachShape(*data.shape);
-			data.shape->setContactOffset(contactOffset);
-			data.shape->setRestOffset(restOffset);
+			actor->attachShape(*data.shape);
+			data.shape->setContactOffset(ContactOffset);
+			data.shape->setRestOffset(RestOffset);
         }
 
-        PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
+        PxRigidBodyExt::updateMassAndInertia(*actor, 1.0f);
 
-        data.actor->userData = &data;
-        data.actor->setActorFlag(PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
+		data.WriteUserData(PhysXActorData::UserDataSource::SourceId::Cube, &object - &cubes.front());
+        actor->setActorFlag(PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
         PhysXScene->addActor(*data.actor);
-        data.actor->wakeUp();
+        //actor->wakeUp();
+		actor->addForce(PxVec3(object.impulse.x, object.impulse.y, object.impulse.z));
     }
 
-    defaultCubeShape->release();
+	if (!InstancedCubes || InstancedCubes->MaxInstances() < PhysXCubeDatas.size())
+	{
+		InstancedCubes = make_unique<CubesInstanced>(PhysXCubeDatas.size() * 2);
+	}
 
-    if (!InstancedSpheres)
+	for (auto &object : spheres)
     {
-        InstancedSpheres = make_unique<SpheresInstanced>(10, 7, spheres.size());
-    }
-
-    PxShape *defaultSphereShape = Physics->createShape(PxSphereGeometry(0.5f), *PhysXMaterial, false, PxShapeFlag::eSIMULATION_SHAPE);
-	defaultSphereShape->setContactOffset(contactOffset);
-	defaultSphereShape->setRestOffset(restOffset);
-
-    PhysXSphereDatas.resize(spheres.size());
-    for (uiw index = 0, size = spheres.size(); index < size; ++index)
-    {
-        auto &data = PhysXSphereDatas[index];
-        auto &object = spheres[index];
+		PhysXSphereDatas.emplace_back();
+		auto &data = PhysXSphereDatas.back();
 
         auto position = object.position;
         auto rotation = object.rotation;
         auto halfSize = object.size * 0.5f;
 
         data.size = object.size;
-        data.actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
+		PxRigidDynamic *actor = Physics->createRigidDynamic(PxTransform(position.x, position.y, position.z, PxQuat{rotation.x, rotation.y, rotation.z, rotation.w}));
+		data.actor = actor;
         if (Distance(0.5f, halfSize) < DefaultF32Epsilon)
         {
-            data.actor->attachShape(*defaultSphereShape);
-            data.shape = defaultSphereShape;
+            data.actor->attachShape(*DefaultSphereShape);
+            data.shape = DefaultSphereShape;
         }
         else
         {
 			data.shape = Physics->createShape(PxSphereGeometry(halfSize), *PhysXMaterial, PxShapeFlag::eSIMULATION_SHAPE);
 			data.actor->attachShape(*data.shape);
-			data.shape->setContactOffset(contactOffset);
-			data.shape->setRestOffset(restOffset);
+			data.shape->setContactOffset(ContactOffset);
+			data.shape->setRestOffset(RestOffset);
         }
 
-        PxRigidBodyExt::updateMassAndInertia(*data.actor, 1.0f);
+        PxRigidBodyExt::updateMassAndInertia(*actor, 1.0f);
 
-        data.actor->userData = &data;
-        data.actor->setActorFlag(PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
+		data.WriteUserData(PhysXActorData::UserDataSource::SourceId::Sphere, &object - &spheres.front());
+        actor->setActorFlag(PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
         PhysXScene->addActor(*data.actor);
-        data.actor->wakeUp();
+        //actor->wakeUp();
+		actor->addForce(PxVec3(object.impulse.x, object.impulse.y, object.impulse.z));
     }
 
-    defaultSphereShape->release();
+	if (!InstancedSpheres || InstancedSpheres->MaxInstances() < PhysXSphereDatas.size())
+	{
+		InstancedSpheres = make_unique<SpheresInstanced>(10, 7, PhysXSphereDatas.size() * 2);
+	}
 }
 
 auto PhysX::GetNewContacts() -> pair<const ContactInfo *, uiw>
@@ -424,7 +511,7 @@ auto PhysX::GetNewContacts() -> pair<const ContactInfo *, uiw>
 
 bool SetSceneProcessing(PxSceneDesc &desc, ProcessingOn processingOn, BroadPhaseType broadPhaseType)
 {
-    if (processingOn == ProcessingOn::GPU || broadPhaseType == BroadPhaseType::GPU)
+    if (processingOn == ProcessingOn::CPU || broadPhaseType == BroadPhaseType::SAP)
     {
         /*PxU32 constraintBufferCapacity;	//!< Capacity of constraint buffer allocated in GPU global memory
         PxU32 contactBufferCapacity;	//!< Capacity of contact buffer allocated in GPU global memory
@@ -499,7 +586,7 @@ void SimulationCallback::onWake(PxActor **actors, PxU32 count)
     for (PxU32 index = 0; index < count; ++index)
     {
         PxActor *actor = actors[index];
-        PhysXActorData &data = *(PhysXActorData *)actor->userData;
+        PhysXActorData &data = PhysXActorData::FromUserData(*actor);
         data.isWoke = true;
     }
 }
@@ -509,7 +596,7 @@ void SimulationCallback::onSleep(PxActor **actors, PxU32 count)
     for (PxU32 index = 0; index < count; ++index)
     {
         PxActor *actor = actors[index];
-        PhysXActorData &data = *(PhysXActorData *)actor->userData;
+		PhysXActorData &data = PhysXActorData::FromUserData(*actor);
         data.isWoke = false;
     }
 }
@@ -527,8 +614,8 @@ void SimulationCallback::onContact(const PxContactPairHeader &pairHeader, const 
     PxRigidActor *actor0 = pairHeader.actors[0];
     PxRigidActor *actor1 = pairHeader.actors[1];
 
-    auto &actor0data = *(PhysXActorData *)actor0->userData;
-    auto &actor1data = *(PhysXActorData *)actor1->userData;
+    auto &actor0data = PhysXActorData::FromUserData(*actor0);
+    auto &actor1data = PhysXActorData::FromUserData(*actor1);
 
     auto getNextContactPairPoint = [](const PxContactPair &pair, PxContactStreamIterator &iter, uiw &count) -> optional<PxContactPairPoint>
     {

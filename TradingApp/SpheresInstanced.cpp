@@ -123,6 +123,11 @@ SpheresInstanced::SpheresInstanced(ui32 slices, ui32 layerCuts, ui32 maxInstance
     _vertexInstanceArray = RendererVertexArray::New(RendererArrayData<InstanceData>(BufferOwnedData{new ui8[maxInstances * sizeof(InstanceData)], [](void *p) {delete[] p; }}, maxInstances), accessMode);
 }
 
+ui32 SpheresInstanced::MaxInstances()
+{
+	return _vertexInstanceArray->NumberOfElements();
+}
+
 auto SpheresInstanced::Lock(ui32 instancesCount) -> InstanceData *
 {
     return (InstanceData *)_vertexInstanceArray->LockDataRegion(instancesCount, 0, RendererDataResource::LockMode::Write);
@@ -135,7 +140,9 @@ void SpheresInstanced::Unlock()
 
 void SpheresInstanced::Draw(const Camera *camera, ui32 instancesCount)
 {
-    Application::GetRenderer().BindIndexArray(_indexArray);
+	ASSUME(instancesCount <= MaxInstances());
+
+	Application::GetRenderer().BindIndexArray(_indexArray);
     Application::GetRenderer().BindVertexArray(_vertexArray, 0);
     Application::GetRenderer().BindVertexArray(_vertexInstanceArray, 1);
 

@@ -11,14 +11,17 @@
 #include "XAudio2.hpp"
 #include <Camera.hpp>
 #include "SoundCache.hpp"
+#include <IKeyController.hpp>
 
 using namespace EngineCore;
 using namespace TradingApp;
 
 static void PlaceSparse();
 static void PlaceAsHugeCube();
-static void PlaceAsTallTower();
+static void PlaceAsTallTower(bool isShallow);
 static void PlaceHelicopter();
+
+static void ProcessControls(Vector3 mainCameraPosition, Vector3 mainCameraRotation);
 
 #ifdef USE_XAUDIO
 	static void AddTestAudio();
@@ -27,15 +30,15 @@ static void PlaceHelicopter();
 
 namespace
 {
-    static constexpr uiw TowerWidth = 7;
-	static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 35;
+    static constexpr uiw TowerWidth = 20;
+	static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 5;
 
 	//static constexpr uiw TowerWidth = 10;
     //static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 135; // 60 fps limit for GTX 970, if the app hangs, increase PxgDynamicsMemoryConfig values
     static constexpr uiw CubesSmallCount = 6;
     static constexpr uiw CubesMediumCount = 100;
-    vector<CubesInstanced::InstanceData> Cubes{};
-    vector<SpheresInstanced::InstanceData> Spheres{};
+    vector<PhysX::ObjectData> Cubes{};
+    vector<PhysX::ObjectData> Spheres{};
 	#ifdef USE_XAUDIO
 		unique_ptr<XAudioEngine> AudioEngine{};
 	#endif
@@ -56,7 +59,7 @@ bool PhysicsScene::Create()
         return false;
     }
 
-    if (!SceneBackground::Create(false, false))
+    if (!SceneBackground::Create(true))
     {
         return false;
     }
@@ -85,9 +88,11 @@ void PhysicsScene::Destroy()
     PhysX::Destroy();
 }
 
-void PhysicsScene::Update()
+void PhysicsScene::Update(Vector3 mainCameraPosition, Vector3 mainCameraRotation)
 {
     //AddAudioToNewCollisions();
+
+	ProcessControls(mainCameraPosition, mainCameraRotation);
 
     PhysX::Update();
     SceneBackground::Update();
@@ -104,10 +109,11 @@ void PhysicsScene::Restart()
 
     //PlaceSparse();
     //PlaceAsHugeCube();
-    PlaceAsTallTower();
+    PlaceAsTallTower(true);
     //PlaceHelicopter();
 
-    PhysX::SetObjects(Cubes, Spheres);
+	PhysX::ClearObjects();
+    PhysX::AddObjects(Cubes, Spheres);
 }
 
 void PhysicsScene::Draw(const Camera &camera)
@@ -135,7 +141,7 @@ void PlaceSparse()
         for (uiw z = 0; z < CubesMediumCount; ++z)
         {
             Vector3 pos{x * 2.0f, 0.5f + (rand() / (f32)RAND_MAX) * 5.0f, z * 2.0f};
-            Cubes[x * CubesMediumCount + z] = CubesInstanced::InstanceData{{}, pos, 1.0f};
+			Cubes[x * CubesMediumCount + z] = PhysX::ObjectData{{}, pos, {}, 1.0f};
         }
     }
 }
@@ -160,17 +166,17 @@ void PlaceAsHugeCube()
             for (uiw z = 0; z < CubesSmallCount; ++z)
             {
                 Vector3 pos{xInitial + x, yInitial + y, zInitial + z};
-                Cubes[computeIndex(x, y, z)] = CubesInstanced::InstanceData{{}, pos, 1.0f};
+				Cubes[computeIndex(x, y, z)] = PhysX::ObjectData{{}, pos, {}, 1.0f};
             }
         }
     }
 }
 
-void PlaceAsTallTower()
+void PlaceAsTallTower(bool isShallow)
 {
     assert(CubesCounts % (TowerWidth * TowerWidth) == 0);
 
-    Cubes.resize(CubesCounts);
+	Cubes.clear();
 
     f32 y = -0.5f;
 
@@ -180,8 +186,15 @@ void PlaceAsTallTower()
         {
             for (ui32 z = 0; z < TowerWidth; ++z)
             {
-                ui32 indexOffset = x * TowerWidth + z;
-                Cubes[index * (TowerWidth * TowerWidth) + indexOffset] = CubesInstanced::InstanceData{{}, {(f32)x, y, (f32)z}, 1.0f};
+				if (isShallow)
+				{
+					if (x != 0 && x != (TowerWidth - 1) && z != 0 && z != (TowerWidth - 1))
+					{
+						continue;
+					}
+				}
+
+				Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, (f32)z}, {}, 1.0f});
             }
         }
 
@@ -190,14 +203,14 @@ void PlaceAsTallTower()
 
     for (ui32 x = 0; x < TowerWidth; ++x)
     {
-        Cubes.push_back(CubesInstanced::InstanceData{{}, {(f32)x, y, 0.0f}, 1.0f});
-        Cubes.push_back(CubesInstanced::InstanceData{{}, {(f32)x, y, (f32)(TowerWidth - 1)}, 1.0f});
+		Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, 0.0f}, {}, 1.0f});
+		Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, (f32)(TowerWidth - 1)}, {}, 1.0f});
     }
 
     for (ui32 z = 1; z < TowerWidth - 1; ++z)
     {
-        Cubes.push_back(CubesInstanced::InstanceData{{}, {0.0f, y, (f32)z}, 1.0f});
-        Cubes.push_back(CubesInstanced::InstanceData{{}, {(f32)(TowerWidth - 1), y, (f32)z}, 1.0f});
+		Cubes.push_back(PhysX::ObjectData{{}, {0.0f, y, (f32)z}, {}, 1.0f});
+		Cubes.push_back(PhysX::ObjectData{{}, {(f32)(TowerWidth - 1), y, (f32)z}, {}, 1.0f});
     }
 
     /*Spheres.resize(1);
@@ -249,12 +262,33 @@ void PlaceHelicopter()
             for (ui32 z = 0; z < TowerWidth; ++z)
             {
                 ui32 indexOffset = x * TowerWidth + z;
-                Cubes[index * (TowerWidth * TowerWidth) + indexOffset] = CubesInstanced::InstanceData{{}, {(f32)x, y, (f32)z}, 1.0f};
+				Cubes[index * (TowerWidth * TowerWidth) + indexOffset] = PhysX::ObjectData{{}, {(f32)x, y, (f32)z}, {}, 1.0f};
             }
         }
 
         y += 1.0f;
     }
+}
+
+void ProcessControls(Vector3 mainCameraPosition, Vector3 mainCameraRotation)
+{
+	auto &keyController = Application::GetKeyController();
+
+	if (keyController.GetKeyInfo(KeyCode::MButton0).IsPressed() == false)
+	{
+		return;
+	}
+
+	Cubes.clear();
+	Spheres.clear();
+
+	auto rotMatrix = Matrix3x3::CreateRS(mainCameraRotation);
+	Vector3 objectDirection = Vector3(0, 0, 1) * rotMatrix;
+	Vector3 objectPosition = mainCameraPosition + objectDirection * 2;
+
+	Cubes.push_back(PhysX::ObjectData{{}, objectPosition, objectDirection * 25, 1.0f});
+
+	PhysX::AddObjects(Cubes, Spheres);
 }
 
 #ifdef USE_XAUDIO
