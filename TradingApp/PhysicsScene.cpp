@@ -16,9 +16,25 @@
 using namespace EngineCore;
 using namespace TradingApp;
 
+struct BuildingShapes
+{
+	static constexpr struct BuildingShape : EnumCombinable<BuildingShape, ui32>
+	{} LeftBorder = BuildingShape::Create(1 << 0),
+		RightBorder = BuildingShape::Create(1 << 1),
+		TopBorder = BuildingShape::Create(1 << 2),
+		BottomBorder = BuildingShape::Create(1 << 3),
+		Diagonal = BuildingShape::Create(1 << 4),
+		ReverseDiagonal = BuildingShape::Create(1 << 5),
+		Swastika = BuildingShape::Create(1 << 6),
+		SwastikaInternal = BuildingShape::Create(1 << 7),
+		Fill = BuildingShape::Create(1 << 8),
+		UpperFloor = BuildingShape::Create(1 << 9),
+		Borders = LeftBorder.Combined(RightBorder).Combined(TopBorder).Combined(BottomBorder);
+};
+
 static void PlaceSparse();
 static void PlaceAsHugeCube();
-static void PlaceAsTallTower(bool isShallow);
+static void PlaceAsTallTower(BuildingShapes::BuildingShape shape);
 static void PlaceHelicopter();
 
 static void ProcessControls(Vector3 mainCameraPosition, Vector3 mainCameraRotation);
@@ -35,8 +51,18 @@ namespace
 
 	//static constexpr uiw TowerWidth = 10;
 	//static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 135; // 60 fps limit for GTX 970, if the app hangs, increase PxgDynamicsMemoryConfig values
+
 	static constexpr uiw CubesSmallCount = 6;
 	static constexpr uiw CubesMediumCount = 100;
+
+	//static constexpr BuildingShapes::BuildingShape TowerShape = 
+	//	BuildingShapes::LeftBorder.
+	//	Combined(BuildingShapes::RightBorder).
+	//	Combined(BuildingShapes::TopBorder).
+	//	Combined(BuildingShapes::BottomBorder).
+	//	Combined(BuildingShapes::Swastika);
+	static constexpr BuildingShapes::BuildingShape TowerShape = BuildingShapes::SwastikaInternal.Combined(BuildingShapes::Borders);
+
 	vector<PhysX::ObjectData> Cubes{};
 	vector<PhysX::ObjectData> Spheres{};
 #ifdef USE_XAUDIO
@@ -114,7 +140,7 @@ void PhysicsScene::Restart()
 
 	//PlaceSparse();
 	//PlaceAsHugeCube();
-	PlaceAsTallTower(true);
+	PlaceAsTallTower(TowerShape);
 	//PlaceHelicopter();
 
 	PhysX::ClearObjects();
@@ -177,11 +203,112 @@ void PlaceAsHugeCube()
 	}
 }
 
-void PlaceAsTallTower(bool isShallow)
+void PlaceAsTallTower(BuildingShapes::BuildingShape shape)
 {
 	assert(CubesCounts % (TowerWidth * TowerWidth) == 0);
 
 	Cubes.clear();
+
+	auto checkShape = [shape](ui32 x, ui32 z)
+	{
+		if (shape.Contains(BuildingShapes::LeftBorder))
+		{
+			if (x == 0)
+			{
+				return true;
+			}
+		}
+		if (shape.Contains(BuildingShapes::RightBorder))
+		{
+			if (x == TowerWidth - 1)
+			{
+				return true;
+			}
+		}
+		if (shape.Contains(BuildingShapes::TopBorder))
+		{
+			if (z == 0)
+			{
+				return true;
+			}
+		}
+		if (shape.Contains(BuildingShapes::BottomBorder))
+		{
+			if (z == TowerWidth - 1)
+			{
+				return true;
+			}
+		}
+		if (shape.Contains(BuildingShapes::Diagonal))
+		{
+			if (x == z)
+			{
+				return true;
+			}
+		}
+		if (shape.Contains(BuildingShapes::ReverseDiagonal))
+		{
+			if (TowerWidth - 1 - x == z)
+			{
+				return true;
+			}
+		}
+		if (shape.Contains(BuildingShapes::Swastika))
+		{
+			if (x == TowerWidth / 2 || z == TowerWidth / 2)
+			{
+				return true;
+			}
+			if (z == 0 && x < TowerWidth / 2)
+			{
+				return true;
+			}
+			if (x == 0 && z > TowerWidth / 2)
+			{
+				return true;
+			}
+			if (x == TowerWidth - 1 && z < TowerWidth / 2)
+			{
+				return true;
+			}
+			if (z == TowerWidth - 1 && x > TowerWidth / 2)
+			{
+				return true;
+			}
+		}
+		if (shape.Contains(BuildingShapes::SwastikaInternal))
+		{
+			auto towerWidth = TowerWidth - 1;
+			if (x > 0 && z > 0 && x < towerWidth && z < towerWidth)
+			{
+				if (x == towerWidth / 2 || z == towerWidth / 2)
+				{
+					return true;
+				}
+				if (z == 1 && x < towerWidth / 2)
+				{
+					return true;
+				}
+				if (x == 1 && z > towerWidth / 2)
+				{
+					return true;
+				}
+				if (x == towerWidth - 1 && z < towerWidth / 2)
+				{
+					return true;
+				}
+				if (z == towerWidth - 1 && x > towerWidth / 2)
+				{
+					return true;
+				}
+			}
+		}
+		if (shape.Contains(BuildingShapes::Fill))
+		{
+			return true;
+		}
+		return false;
+	};
 
 	f32 y = -0.5f;
 
@@ -191,31 +318,29 @@ void PlaceAsTallTower(bool isShallow)
 		{
 			for (ui32 z = 0; z < TowerWidth; ++z)
 			{
-				if (isShallow)
+				if (checkShape(x, z))
 				{
-					if (x != 0 && x != (TowerWidth - 1) && z != 0 && z != (TowerWidth - 1))
-					{
-						continue;
-					}
+					Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, (f32)z}, {}, {}, 1.0f});
 				}
-
-				Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, (f32)z}, {}, {}, 1.0f});
 			}
 		}
 
 		y += 1.0f;
 	}
 
-	for (ui32 x = 0; x < TowerWidth; ++x)
+	if (shape.Contains(BuildingShapes::UpperFloor))
 	{
-		Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, 0.0f}, {}, {}, 1.0f});
-		Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, (f32)(TowerWidth - 1)}, {}, {}, 1.0f});
-	}
+		for (ui32 x = 0; x < TowerWidth; ++x)
+		{
+			Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, 0.0f}, {}, {}, 1.0f});
+			Cubes.push_back(PhysX::ObjectData{{}, {(f32)x, y, (f32)(TowerWidth - 1)}, {}, {}, 1.0f});
+		}
 
-	for (ui32 z = 1; z < TowerWidth - 1; ++z)
-	{
-		Cubes.push_back(PhysX::ObjectData{{}, {0.0f, y, (f32)z}, {}, {}, 1.0f});
-		Cubes.push_back(PhysX::ObjectData{{}, {(f32)(TowerWidth - 1), y, (f32)z}, {}, {}, 1.0f});
+		for (ui32 z = 1; z < TowerWidth - 1; ++z)
+		{
+			Cubes.push_back(PhysX::ObjectData{{}, {0.0f, y, (f32)z}, {}, {}, 1.0f});
+			Cubes.push_back(PhysX::ObjectData{{}, {(f32)(TowerWidth - 1), y, (f32)z}, {}, {}, 1.0f});
+		}
 	}
 
 	/*Spheres.resize(1);
