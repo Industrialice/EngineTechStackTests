@@ -17,6 +17,7 @@ namespace TradingApp::PhysX
 		Quaternion rotation;
 		Vector3 position;
 		Vector3 impulse;
+		Vector3 torque;
 		f32 size;
 	};
 

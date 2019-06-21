@@ -19,7 +19,7 @@ namespace EngineCore::Application
 {
 	void Create();
 	void Destroy();
-    void SetEngineTime(EngineTime time);
+	void SetEngineTime(EngineTime time);
 }
 
 struct WindowData
@@ -38,15 +38,15 @@ static bool CreateApplicationSubsystems();
 
 namespace
 {
-    IKeyController::ListenerHandle KeysListener{};
-    StdLib::Logger<void, false>::ListenerHandle LogListener{};
-    StdLib::Logger<void, false>::ListenerHandle FileLogListener{};
-    File LogFile{};
-    vector<ControlAction> AllReceivedControlActions{};
-    IKeyController::ListenerHandle ControlActionRecordingListener{};
+	IKeyController::ListenerHandle KeysListener{};
+	StdLib::Logger<void, false>::ListenerHandle LogListener{};
+	StdLib::Logger<void, false>::ListenerHandle FileLogListener{};
+	File LogFile{};
+	vector<ControlAction> AllReceivedControlActions{};
+	IKeyController::ListenerHandle ControlActionRecordingListener{};
 
-    ui32 SceneRestartedCounter{};
-    ui32 UpTimeDeltaCounter{}, DownTimeDeltaCounter{};
+	ui32 SceneRestartedCounter{};
+	ui32 UpTimeDeltaCounter{}, DownTimeDeltaCounter{};
 }
 
 template <typename _Ty> struct MyCoroutineReturn
@@ -72,7 +72,7 @@ template <typename _Ty> struct MyCoroutineReturn
 
 		void yield_value(_Ty const &value)
 		{
-            _value = value;
+			_value = value;
 		}
 	};
 
@@ -134,20 +134,20 @@ static MyCoroutineReturn<bool> ListenKeys(const ControlAction &action)
 		}
 		else if (auto mouseMove = std::get_if<ControlAction::MouseMove>(&action.action))
 		{
-            if (mouseMove->delta.y)
-            {
-                Application::GetMainCamera()->RotateAroundRightAxis(mouseMove->delta.y * 0.001f);
-            }
-            if (mouseMove->delta.x)
-            {
-                Application::GetMainCamera()->RotateAroundUpAxis(mouseMove->delta.x * 0.001f);
-            }
+			if (mouseMove->delta.y)
+			{
+				Application::GetMainCamera()->RotateAroundRightAxis(mouseMove->delta.y * 0.001f);
+			}
+			if (mouseMove->delta.x)
+			{
+				Application::GetMainCamera()->RotateAroundUpAxis(mouseMove->delta.x * 0.001f);
+			}
 
 			//SENDLOG(Info, "%i mouse move action %i %i\n", number, mouseMove->deltaX, mouseMove->deltaY);
 		}
 		else if (auto mouseWheel = std::get_if<ControlAction::MouseWheel>(&action.action))
 		{
-            Application::GetMainCamera()->MoveAlongUpAxis(-mouseWheel->delta * 0.5f);
+			Application::GetMainCamera()->MoveAlongUpAxis(-mouseWheel->delta * 0.5f);
 			//SENDLOG(Info, "%i mouse wheel action %i\n", number, mouseWheel->delta);
 		}
 		else
@@ -163,22 +163,22 @@ static MyCoroutineReturn<bool> ListenKeys(const ControlAction &action)
 
 int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-    StdLib::Initialization::Initialize({});
+	StdLib::Initialization::Initialize({});
 
 	Application::Create();
 
-    LogListener = Application::GetLogger().OnMessage(LogRecipient);
+	LogListener = Application::GetLogger().OnMessage(LogRecipient);
 
-    auto recordingController = RecordingKeyController::New(KeyController::New());
-    ControlActionRecordingListener = recordingController->OnRecordingControlAction(
-        [](const ControlAction &action) -> bool
-        {
-            AllReceivedControlActions.push_back(action);
-            return false;
-        });
-    Application::SetKeyController(recordingController);
+	auto recordingController = RecordingKeyController::New(KeyController::New());
+	ControlActionRecordingListener = recordingController->OnRecordingControlAction(
+		[](const ControlAction &action) -> bool
+		{
+			AllReceivedControlActions.push_back(action);
+			return false;
+		});
+	Application::SetKeyController(recordingController);
 
-    LogFile = File(FilePath::FromChar("log.txt"), FileOpenMode::CreateAlways, FileProcModes::Write);
+	LogFile = File(FilePath::FromChar("log.txt"), FileOpenMode::CreateAlways, FileProcModes::Write);
 	if (LogFile.IsOpen())
 	{
 		FileLogListener = Application::GetLogger().OnMessage(std::bind(FileLogRecipient, std::ref(LogFile), std::placeholders::_1, std::placeholders::_2));
@@ -201,14 +201,14 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 bool CreateApplicationSubsystems()
 {
-    bool isFullScreened = true;
+	bool isFullScreened = true;
 
 	auto monitorsInfo = SystemInfo::MonitorsInfo();
 
 	AppWindow appWindow;
 	appWindow.title = "EngineCore";
 
-	SystemInfo::MonitorInfo targetMonitor = monitorsInfo.front();
+	SystemInfo::MonitorInfo targetMonitor = monitorsInfo[0];
 	if (monitorsInfo.size() > 1)
 	{
 		//isFullScreened = false;
@@ -228,9 +228,9 @@ bool CreateApplicationSubsystems()
 	appWindow.fullscreen = isFullScreened;
 	appWindow.height = targetMonitor.height;
 	appWindow.width = targetMonitor.width;
-	appWindow.x = 0;
-	appWindow.y = 0;
-	appWindow.hideBorders = true;
+	appWindow.x = targetMonitor.x;
+	appWindow.y = targetMonitor.y;
+	appWindow.hideBorders = false;
 
 	RECT windowRect{appWindow.x, appWindow.y, appWindow.x + appWindow.width, appWindow.y + appWindow.height};
 
@@ -251,12 +251,12 @@ bool CreateApplicationSubsystems()
 
 	static WindowData windowData;
 	windowData.hwnd = *systemWindow;
-	SetWindowLongPtrA(*systemWindow, GWLP_USERDATA, (LONG_PTR)&windowData);
+	SetWindowLongPtrA(*systemWindow, GWLP_USERDATA, (LONG_PTR)& windowData);
 
 	auto hid = make_unique<HIDInput>();
 	if (hid->Register(appWindow.hwnd) == true)
 	{
-        SENDLOG(Info, "Using HID input\n");
+		SENDLOG(Info, "Using HID input\n");
 		Application::SetHIDInput(move(hid));
 	}
 	else
@@ -278,25 +278,25 @@ bool CreateApplicationSubsystems()
 		return coroutine->get();
 	};
 
-    KeysListener = Application::GetKeyController().OnControlAction(listenerLambda, DeviceTypes::_AllDevices);
+	KeysListener = Application::GetKeyController().OnControlAction(listenerLambda, DeviceTypes::_AllDevices);
 
-    auto oglRenderer = OGLRenderer::OpenGLRenderer::New(appWindow.fullscreen, TextureDataFormat::R8G8B8X8, 24, 8, {GetDC(*systemWindow)});
+	auto oglRenderer = OGLRenderer::OpenGLRenderer::New(appWindow.fullscreen, TextureDataFormat::R8G8B8X8, 24, 8, {GetDC(*systemWindow)});
 	if (oglRenderer == nullptr)
 	{
 		SENDLOG(Critical, "Failed to initialize OpenGL\n");
 		return false;
 	}
-    Application::SetRenderer(oglRenderer);
+	Application::SetRenderer(oglRenderer);
 
-    EngineTime engineTime;
-    //engineTime.timeScale = 0.5f;
-    Application::SetEngineTime(engineTime);
+	EngineTime engineTime;
+	//engineTime.timeScale = 0.5f;
+	Application::SetEngineTime(engineTime);
 
-    auto renderTarget = RenderTarget::New();
+	auto renderTarget = RenderTarget::New();
 	Application::GetMainCamera()->RenderTarget(renderTarget);
-    Application::GetMainCamera()->Position(Vector3(0, 25, -25));
+	Application::GetMainCamera()->Position(Vector3(0, 25, -25));
 
-    if (SceneToDraw::Create() == false)
+	if (SceneToDraw::Create() == false)
 	{
 		SENDLOG(Critical, "Failed to create the scene\n");
 		return false;
@@ -308,7 +308,7 @@ bool CreateApplicationSubsystems()
 
 void ShutdownApp()
 {
-    SceneToDraw::Destroy();
+	SceneToDraw::Destroy();
 
 	auto mainWindow = Application::GetMainWindow();
 
@@ -320,7 +320,7 @@ void ShutdownApp()
 		}
 	}
 
-    Application::SetRenderer(nullptr);
+	Application::SetRenderer(nullptr);
 
 	if (mainWindow.hwnd != NULL)
 	{
@@ -335,8 +335,8 @@ void ShutdownApp()
 void MessageLoop()
 {
 	MSG o_msg;
-    auto lastUpdate = TimeMoment::Now();
-    auto firstUpdate = TimeMoment::Now();
+	auto lastUpdate = TimeMoment::Now();
+	auto firstUpdate = TimeMoment::Now();
 
 	do
 	{
@@ -363,96 +363,96 @@ void MessageLoop()
 				SetCursorPos(window.width / 2, window.height / 2);
 			}
 
-            auto currentMemont = TimeMoment::Now();
+			auto currentMemont = TimeMoment::Now();
 
-            TimeDifference durationSinceStart = currentMemont - firstUpdate;
-            TimeDifference durationSinceLastUpdate = currentMemont - lastUpdate;
+			TimeDifference durationSinceStart = currentMemont - firstUpdate;
+			TimeDifference durationSinceLastUpdate = currentMemont - lastUpdate;
 
-            EngineTime engineTime = Application::GetEngineTime();
-            engineTime.secondsSinceStart = durationSinceStart.ToSec_f64() * engineTime.timeScale;
-            engineTime.secondSinceLastFrame = durationSinceLastUpdate.ToSec() * engineTime.timeScale;
-            engineTime.unscaledSecondSinceLastFrame = durationSinceLastUpdate.ToSec();
+			EngineTime engineTime = Application::GetEngineTime();
+			engineTime.secondsSinceStart = durationSinceStart.ToSec_f64() * engineTime.timeScale;
+			engineTime.secondSinceLastFrame = durationSinceLastUpdate.ToSec() * engineTime.timeScale;
+			engineTime.unscaledSecondSinceLastFrame = durationSinceLastUpdate.ToSec();
 
-            lastUpdate = currentMemont;
+			lastUpdate = currentMemont;
 
-            Application::SetEngineTime(engineTime);
+			Application::SetEngineTime(engineTime);
 
-            Application::GetRenderer().BeginFrame();
+			Application::GetRenderer().BeginFrame();
 
 			const auto &camera = Application::GetMainCamera();
 			camera->ClearColorRGBA(array<f32, 4>{0, 0, 0, 1});
-            camera->ClearDepthValue(1.0f);
+			camera->ClearDepthValue(1.0f);
 
-            const auto &keyController = Application::GetKeyController();
+			const auto &keyController = Application::GetKeyController();
 
-            float camMovementScale = engineTime.unscaledSecondSinceLastFrame * 5;
-            if (keyController.GetKeyInfo(KeyCode::LShift).IsPressed())
-            {
-                camMovementScale *= 3;
-            }
-            if (keyController.GetKeyInfo(KeyCode::LControl).IsPressed())
-            {
-                camMovementScale *= 0.33f;
-            }
+			float camMovementScale = engineTime.unscaledSecondSinceLastFrame * 5;
+			if (keyController.GetKeyInfo(KeyCode::LShift).IsPressed())
+			{
+				camMovementScale *= 3;
+			}
+			if (keyController.GetKeyInfo(KeyCode::LControl).IsPressed())
+			{
+				camMovementScale *= 0.33f;
+			}
 
-            if (keyController.GetKeyInfo(KeyCode::S).IsPressed())
-            {
-                camera->MoveAlongForwardAxis(-camMovementScale);
-            }
-            if (keyController.GetKeyInfo(KeyCode::W).IsPressed())
-            {
-                camera->MoveAlongForwardAxis(camMovementScale);
-            }
-            if (keyController.GetKeyInfo(KeyCode::A).IsPressed())
-            {
-                camera->MoveAlongRightAxis(-camMovementScale);
-            }
-            if (keyController.GetKeyInfo(KeyCode::D).IsPressed())
-            {
-                camera->MoveAlongRightAxis(camMovementScale);
-            }
-            if (keyController.GetKeyInfo(KeyCode::R).IsPressed())
-            {
-                camera->MoveAlongUpAxis(camMovementScale);
-            }
-            if (keyController.GetKeyInfo(KeyCode::F).IsPressed())
-            {
-                camera->MoveAlongUpAxis(-camMovementScale);
-            }
+			if (keyController.GetKeyInfo(KeyCode::S).IsPressed())
+			{
+				camera->MoveAlongForwardAxis(-camMovementScale);
+			}
+			if (keyController.GetKeyInfo(KeyCode::W).IsPressed())
+			{
+				camera->MoveAlongForwardAxis(camMovementScale);
+			}
+			if (keyController.GetKeyInfo(KeyCode::A).IsPressed())
+			{
+				camera->MoveAlongRightAxis(-camMovementScale);
+			}
+			if (keyController.GetKeyInfo(KeyCode::D).IsPressed())
+			{
+				camera->MoveAlongRightAxis(camMovementScale);
+			}
+			if (keyController.GetKeyInfo(KeyCode::R).IsPressed())
+			{
+				camera->MoveAlongUpAxis(camMovementScale);
+			}
+			if (keyController.GetKeyInfo(KeyCode::F).IsPressed())
+			{
+				camera->MoveAlongUpAxis(-camMovementScale);
+			}
 
-            if (keyController.GetKeyInfo(KeyCode::LAlt).IsPressed())
-            {
-                while (UpTimeDeltaCounter != keyController.GetKeyInfo(KeyCode::UpArrow).timesKeyStateChanged)
-                {
-                    SENDLOG(Info, "SENT\n");
-                    ++UpTimeDeltaCounter;
-                    engineTime.timeScale += 0.05f;
-                    Application::SetEngineTime(engineTime);
-                }
-                while (DownTimeDeltaCounter != keyController.GetKeyInfo(KeyCode::DownArrow).timesKeyStateChanged)
-                {
-                    SENDLOG(Info, "SENT\n");
-                    ++DownTimeDeltaCounter;
-                    engineTime.timeScale -= 0.05f;
-                    engineTime.timeScale = std::max(engineTime.timeScale, 0.1f);
-                    Application::SetEngineTime(engineTime);
-                }
-            }
+			if (keyController.GetKeyInfo(KeyCode::LAlt).IsPressed())
+			{
+				while (UpTimeDeltaCounter != keyController.GetKeyInfo(KeyCode::UpArrow).timesKeyStateChanged)
+				{
+					SENDLOG(Info, "SENT\n");
+					++UpTimeDeltaCounter;
+					engineTime.timeScale += 0.05f;
+					Application::SetEngineTime(engineTime);
+				}
+				while (DownTimeDeltaCounter != keyController.GetKeyInfo(KeyCode::DownArrow).timesKeyStateChanged)
+				{
+					SENDLOG(Info, "SENT\n");
+					++DownTimeDeltaCounter;
+					engineTime.timeScale -= 0.05f;
+					engineTime.timeScale = std::max(engineTime.timeScale, 0.1f);
+					Application::SetEngineTime(engineTime);
+				}
+			}
 
-            if (ui32 newCounter = keyController.GetKeyInfo(KeyCode::Space).timesKeyStateChanged; newCounter != SceneRestartedCounter)
-            {
-                SceneRestartedCounter = newCounter;
-                SceneToDraw::Restart();
-            }
-            
-            Application::GetRenderer().ClearCameraTargets(camera.get());
+			if (ui32 newCounter = keyController.GetKeyInfo(KeyCode::Space).timesKeyStateChanged; newCounter != SceneRestartedCounter)
+			{
+				SceneRestartedCounter = newCounter;
+				SceneToDraw::Restart();
+			}
 
-            SceneToDraw::Update(camera->Position(), camera->Rotation());
-            SceneToDraw::Draw(*camera);
+			Application::GetRenderer().ClearCameraTargets(camera.get());
 
-            Application::GetRenderer().SwapBuffers();
+			SceneToDraw::Update(camera->Position(), camera->Rotation());
+			SceneToDraw::Draw(*camera);
 
-            Application::GetRenderer().EndFrame();
+			Application::GetRenderer().SwapBuffers();
+
+			Application::GetRenderer().EndFrame();
 		}
 	} while (o_msg.message != WM_QUIT);
 }
@@ -479,29 +479,29 @@ optional<HWND> CreateSystemWindow(bool isFullscreen, const string &title, HINSTA
 		return nullopt;
 	}
 
-    ui32 width = dimensions.right - dimensions.left;
-    ui32 height = dimensions.bottom - dimensions.top;
+	ui32 width = dimensions.right - dimensions.left;
+	ui32 height = dimensions.bottom - dimensions.top;
 
-    if (isFullscreen)
-    {
-        DEVMODE dmScreenSettings = {};
-        dmScreenSettings.dmSize = sizeof(dmScreenSettings);
-        dmScreenSettings.dmPelsWidth = width;
-        dmScreenSettings.dmPelsHeight = height;
-        dmScreenSettings.dmBitsPerPel = 32;
-        dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+	if (isFullscreen)
+	{
+		DEVMODE dmScreenSettings = {};
+		dmScreenSettings.dmSize = sizeof(dmScreenSettings);
+		dmScreenSettings.dmPelsWidth = width;
+		dmScreenSettings.dmPelsHeight = height;
+		dmScreenSettings.dmBitsPerPel = 32;
+		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
-        if (ChangeDisplaySettingsA(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
-        {
-            SENDLOG(Error, "Failed to set fullscreen mode\n");
-        }
-        else
-        {
-            SENDLOG(Info, "Display mode has been changed to fullscreen\n");
-            ShowCursor(FALSE);
+		if (ChangeDisplaySettingsA(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+		{
+			SENDLOG(Error, "Failed to set fullscreen mode\n");
+		}
+		else
+		{
+			SENDLOG(Info, "Display mode has been changed to fullscreen\n");
+			ShowCursor(FALSE);
 			SetCursorPos(width / 2, height / 2);
-        }
-    }
+		}
+	}
 
 	DWORD style = isFullscreen || hideBorders ? WS_POPUP : WS_SYSMENU;
 
@@ -535,49 +535,49 @@ LRESULT WINAPI MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	switch (msg)
 	{
-	case WM_INPUT:
-		if (windowData != nullptr && Application::GetHIDInput() != nullptr)
+		case WM_INPUT:
+			if (windowData != nullptr && Application::GetHIDInput() != nullptr)
+			{
+				Application::GetHIDInput()->Dispatch(windowData->controlsQueue, hwnd, wParam, lParam);
+				return 0;
+			}
+			break;
+		case WM_SETCURSOR:
+		case WM_MOUSEMOVE:
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+			if (windowData != nullptr && Application::GetVKInput() != nullptr)
+			{
+				Application::GetVKInput()->Dispatch(windowData->controlsQueue, hwnd, msg, wParam, lParam);
+				return 0;
+			}
+			break;
+		case WM_ACTIVATE:
+			//  switching window's active state
+			break;
+		case WM_SIZE:
 		{
-			Application::GetHIDInput()->Dispatch(windowData->controlsQueue, hwnd, wParam, lParam);
-			return 0;
-		}
-		break;
-	case WM_SETCURSOR:
-	case WM_MOUSEMOVE:
-	case WM_KEYDOWN:
-    case WM_KEYUP:
-		if (windowData != nullptr && Application::GetVKInput() != nullptr)
-		{
-			Application::GetVKInput()->Dispatch(windowData->controlsQueue, hwnd, msg, wParam, lParam);
-			return 0;
-		}
-		break;
-	case WM_ACTIVATE:
-		//  switching window's active state
-		break;
-	case WM_SIZE:
-	{
-		//window->width = LOWORD( lParam );
-		//window->height = HIWORD( lParam );
-	} break;
-	// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
-	case WM_ENTERSIZEMOVE:
-		break;
-		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
-	case WM_EXITSIZEMOVE:
-		break;
-		// WM_DESTROY is sent when the window is being destroyed.
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
-		// somebody has asked our window to close
-	case WM_CLOSE:
-		break;
-		// Catch this message so to prevent the window from becoming too small.
-	case WM_GETMINMAXINFO:
-		//((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
-		//((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200; 
-		break;
+			//window->width = LOWORD( lParam );
+			//window->height = HIWORD( lParam );
+		} break;
+		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
+		case WM_ENTERSIZEMOVE:
+			break;
+			// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
+		case WM_EXITSIZEMOVE:
+			break;
+			// WM_DESTROY is sent when the window is being destroyed.
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
+			// somebody has asked our window to close
+		case WM_CLOSE:
+			break;
+			// Catch this message so to prevent the window from becoming too small.
+		case WM_GETMINMAXINFO:
+			//((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
+			//((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200; 
+			break;
 	}
 
 	return DefWindowProcA(hwnd, msg, wParam, lParam);
@@ -587,24 +587,24 @@ static const char *LogLevelToTag(LogLevels::LogLevel logLevel)
 {
 	switch (logLevel.AsInteger())
 	{
-	case LogLevels::Critical.AsInteger():
-		return "[crt] ";
-	case LogLevels::Debug.AsInteger():
-		return "[dbg] ";
-	case LogLevels::Error.AsInteger():
-		return "[err] ";
-	case LogLevels::Attention.AsInteger():
-		return "[imp] ";
-	case LogLevels::Info.AsInteger():
-		return "[inf] ";
-	case LogLevels::Other.AsInteger():
-		return "[oth] ";
-	case LogLevels::Warning.AsInteger():
-		return "[wrn] ";
-    case LogLevels::_None.AsInteger():
-    case LogLevels::_All.AsInteger():
-        HARDBREAK;
-        return "";
+		case LogLevels::Critical.AsInteger():
+			return "[crt] ";
+		case LogLevels::Debug.AsInteger():
+			return "[dbg] ";
+		case LogLevels::Error.AsInteger():
+			return "[err] ";
+		case LogLevels::Attention.AsInteger():
+			return "[imp] ";
+		case LogLevels::Info.AsInteger():
+			return "[inf] ";
+		case LogLevels::Other.AsInteger():
+			return "[oth] ";
+		case LogLevels::Warning.AsInteger():
+			return "[wrn] ";
+		case LogLevels::_None.AsInteger():
+		case LogLevels::_All.AsInteger():
+			HARDBREAK;
+			return "";
 	}
 
 	UNREACHABLE;
@@ -613,41 +613,41 @@ static const char *LogLevelToTag(LogLevels::LogLevel logLevel)
 
 void LogRecipient(LogLevels::LogLevel logLevel, string_view nullTerminatedText)
 {
-    if (logLevel == LogLevels::Critical || logLevel == LogLevels::Debug || logLevel == LogLevels::Error) // TODO: cancel breaking
-    {
-        SOFTBREAK;
-    }
+	if (logLevel == LogLevels::Critical || logLevel == LogLevels::Debug || logLevel == LogLevels::Error) // TODO: cancel breaking
+	{
+		SOFTBREAK;
+	}
 
 	if (logLevel == LogLevels::Critical/* || logLevel == LogLevel::Debug || logLevel == LogLevel::Error*/)
 	{
 		const char *tag = nullptr;
 		switch (logLevel.AsInteger()) // fill out all the cases just in case
 		{
-		case LogLevels::Critical.AsInteger():
-			tag = "CRITICAL";
-			break;
-		case LogLevels::Debug.AsInteger():
-			tag = "DEBUG";
-			break;
-		case LogLevels::Error.AsInteger():
-			tag = "ERROR";
-			break;
-		case LogLevels::Attention.AsInteger():
-			tag = "IMPORTANT INFO";
-			break;
-		case LogLevels::Info.AsInteger():
-			tag = "INFO";
-			break;
-		case LogLevels::Other.AsInteger():
-			tag = "OTHER";
-			break;
-		case LogLevels::Warning.AsInteger():
-			tag = "WARNING";
-			break;
-        case LogLevels::_None.AsInteger():
-        case LogLevels::_All.AsInteger():
-            HARDBREAK;
-            return;
+			case LogLevels::Critical.AsInteger():
+				tag = "CRITICAL";
+				break;
+			case LogLevels::Debug.AsInteger():
+				tag = "DEBUG";
+				break;
+			case LogLevels::Error.AsInteger():
+				tag = "ERROR";
+				break;
+			case LogLevels::Attention.AsInteger():
+				tag = "IMPORTANT INFO";
+				break;
+			case LogLevels::Info.AsInteger():
+				tag = "INFO";
+				break;
+			case LogLevels::Other.AsInteger():
+				tag = "OTHER";
+				break;
+			case LogLevels::Warning.AsInteger():
+				tag = "WARNING";
+				break;
+			case LogLevels::_None.AsInteger():
+			case LogLevels::_All.AsInteger():
+				HARDBREAK;
+				return;
 		}
 
 		MessageBoxA(0, nullTerminatedText.data(), tag, 0);
@@ -661,6 +661,6 @@ void LogRecipient(LogLevels::LogLevel logLevel, string_view nullTerminatedText)
 void FileLogRecipient(File &file, LogLevels::LogLevel logLevel, string_view nullTerminatedText)
 {
 	const char *tag = LogLevelToTag(logLevel);
-    file.Write(tag, (ui32)strlen(tag));
-    file.Write(nullTerminatedText.data(), (ui32)nullTerminatedText.size());
+	file.Write(tag, (ui32)strlen(tag));
+	file.Write(nullTerminatedText.data(), (ui32)nullTerminatedText.size());
 }

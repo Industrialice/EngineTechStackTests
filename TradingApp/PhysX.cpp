@@ -457,6 +457,7 @@ void PhysX::AddObjects(vector<ObjectData> &cubes, vector<ObjectData> &spheres)
         PhysXScene->addActor(*data.actor);
         //actor->wakeUp();
 		actor->addForce(PxVec3(object.impulse.x, object.impulse.y, object.impulse.z));
+		actor->addTorque(PxVec3(object.torque.x, object.torque.y, object.torque.z));
     }
 
 	if (!InstancedCubes || InstancedCubes->MaxInstances() < PhysXCubeDatas.size())
