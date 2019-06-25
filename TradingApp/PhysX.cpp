@@ -245,6 +245,7 @@ bool PhysX::Create()
     sceneDesc.simulationEventCallback = &SimCallback;
     sceneDesc.limits = sceneLimits;
     sceneDesc.flags |= PxSceneFlag::eENABLE_PCM;
+	//sceneDesc.flags |= PxSceneFlag::eENABLE_STABILIZATION;
     sceneDesc.dynamicTreeRebuildRateHint = 100;
     PhysXScene = Physics->createScene(sceneDesc);
     if (!PhysXScene)
@@ -362,6 +363,7 @@ void PhysX::Update()
 
     NewContactInfos.clear();
 
+	PhysXScene->fetchResults(true);
     PhysXScene->simulate(Application::GetEngineTime().secondSinceLastFrame, nullptr, SimulationMemory.get(), SimulationMemorySize);
 }
 
@@ -400,8 +402,6 @@ void PhysX::Draw(const Camera &camera)
 
     genericDraw(camera, PhysXCubeDatas, InstancedCubes.get());
     genericDraw(camera, PhysXSphereDatas, InstancedSpheres.get());
-
-    PhysXScene->fetchResults(true);
 }
 
 void PhysX::ClearObjects()
@@ -462,7 +462,7 @@ void PhysX::AddObjects(vector<ObjectData> &cubes, vector<ObjectData> &spheres)
 
 	if (!InstancedCubes || InstancedCubes->MaxInstances() < PhysXCubeDatas.size())
 	{
-		InstancedCubes = make_unique<CubesInstanced>(PhysXCubeDatas.size() * 2);
+		InstancedCubes = make_unique<CubesInstanced>(PhysXCubeDatas.size() * 2, true);
 	}
 
 	for (auto &object : spheres)

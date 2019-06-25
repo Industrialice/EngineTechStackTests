@@ -102,7 +102,7 @@ bool SceneBackground::Create(bool isDepthWriteEnabled, bool isPlaneWithGrid)
 
 	pipelineState->EnableDepthWrite(isDepthWriteEnabled);
 	pipelineState->PolygonCullMode(RendererPipelineState::PolygonCullModet::None);
-	pipelineState->DepthComparisonFunc(RendererPipelineState::DepthComparisonFunct::Always);
+	pipelineState->DepthComparisonFunc(RendererPipelineState::DepthComparisonFunct::LessEqual);
 
 	BackgroundPlane.material = move(material);
 	BackgroundPlane.pipeline = move(pipelineState);

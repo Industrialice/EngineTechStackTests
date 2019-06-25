@@ -294,7 +294,7 @@ bool CreateApplicationSubsystems()
 
 	auto renderTarget = RenderTarget::New();
 	Application::GetMainCamera()->RenderTarget(renderTarget);
-	Application::GetMainCamera()->Position(Vector3(0, 25, -25));
+	Application::GetMainCamera()->Position(Vector3(5, 50, -75));
 
 	if (SceneToDraw::Create() == false)
 	{

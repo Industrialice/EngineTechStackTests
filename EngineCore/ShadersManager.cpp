@@ -28,7 +28,6 @@ namespace
 
 auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_ptr<Shader>
 {
-    // TODO: fuck, that'd be slow
     auto searchResult = std::find_if(LoadedShaders.begin(), LoadedShaders.end(),
         [name](const shared_ptr<EngineCore::Shader> &value)
     {
@@ -227,6 +226,173 @@ auto EngineCore::ShadersManager::FindShaderByName(string_view name) -> shared_pt
         array<string_view, 4> inputAttributes{"position", "color", "rotation", "wpos_scale"};
 
         auto shader = Shader::New(name, vsCode, psCode, nullptr, 0, inputAttributes.data(), (ui32)inputAttributes.size(), systemUniforms.data(), (ui32)systemUniforms.size());
+
+        LoadedShaders.emplace(shader);
+
+        return shader;
+    }
+    else if (name == "Colored3DVerticesProceduralInstanced")
+    {
+        string_view vsCode = SHADER_VERSION TOSTR(
+			in int gl_VertexID;
+
+            in vec4 rotation;
+            in vec4 wpos_scale;
+
+            out vec4 procColor;
+
+			uniform float Transparency;
+
+			uniform vec3 _CameraPosition;
+            uniform mat4x4 _ViewProjectionMatrix;
+
+			vec3 RotateByQuaternion(vec3 vector, vec4 rotation)
+			{
+				vec3 u = rotation.xyz;
+				vec3 v = vector;
+				float w = rotation.w;
+				vec3 uv = cross(u, v);
+				vec3 uuv = cross(u, uv);
+				return v + ((uv * w) + uuv) * 2.0;
+			}
+
+			const vec3 positions[18] = vec3[18]
+			(
+				vec3(-0.5, -0.5, 0), // 0
+				vec3(-0.5, 0.5, 0), // 1
+				vec3(0.5, 0.5, 0), // 2
+				vec3(0.5, -0.5, 0), // 3
+				vec3(-0.5, -0.5, 0), // 4
+				vec3(0.5, 0.5, 0), // 5
+				vec3(0, -0.5, 0.5), // 6
+				vec3(0, 0.5, 0.5), // 7
+				vec3(0, 0.5, -0.5), // 8
+				vec3(0, -0.5, -0.5), // 9
+				vec3(0, -0.5, 0.5), // 10
+				vec3(0, 0.5, -0.5), // 11
+				vec3(-0.5, 0, -0.5), // 12
+				vec3(-0.5, 0, 0.5), // 13
+				vec3(0.5, 0, 0.5), // 14
+				vec3(0.5, 0, -0.5), // 15
+				vec3(-0.5, 0, -0.5), // 16
+				vec3(0.5, 0, 0.5) // 17
+			);
+
+            void main()
+            {
+				vec3 position = positions[gl_VertexID];
+				vec4 color;
+
+				if (gl_VertexID < 6) // front/back surface
+				{
+					vec3 faceVector = vec3(0, 0, -1);
+					vec3 rotated = RotateByQuaternion(faceVector, rotation);
+					vec3 posToTest = wpos_scale.xyz;
+					posToTest.z += 0.5;
+					vec3 toCamera = _CameraPosition - posToTest;
+					bool isFrontVisible = dot(toCamera, rotated) > 0;
+					
+					if (isFrontVisible)
+					{
+						color = vec4(0, 0, 1, 1);
+						position.z = -0.5;
+					}
+					else
+					{
+						color = vec4(1, 1, 1, 1);
+						position.z = 0.5;
+					}
+				}
+				else if (gl_VertexID < 12) // left/right surface
+				{
+					vec3 faceVector = vec3(-1, 0, 0);
+					vec3 rotated = RotateByQuaternion(faceVector, rotation);
+					vec3 posToTest = wpos_scale.xyz;
+					posToTest.x += 0.5;
+					vec3 toCamera = _CameraPosition - posToTest;
+					bool isLeftVisible = dot(toCamera, rotated) > 0;
+
+					if (isLeftVisible)
+					{
+						color = vec4(1, 0, 1, 1);
+						position.x = -0.5;
+					}
+					else
+					{
+						color = vec4(1, 1, 0, 1);
+						position.x = 0.5;
+					}
+				}
+				else // top/bottom surface
+				{
+					vec3 faceVector = vec3(0, 1, 0);
+					vec3 rotated = RotateByQuaternion(faceVector, rotation);
+					vec3 posToTest = wpos_scale.xyz;
+					posToTest.y += 0.5;
+					vec3 toCamera = _CameraPosition - posToTest;
+					bool isTopVisible = dot(toCamera, rotated) > 0;
+
+					if (isTopVisible)
+					{
+						color = vec4(0, 1, 1, 1);
+						position.y = 0.5;
+					}
+					else
+					{
+						color = vec4(1, 0, 0, 1);
+						position.y = -0.5;
+					}
+				}
+
+				color.a = Transparency;
+                vec4 outColor = color;
+
+                float scale = wpos_scale.w;
+                uint scaleInt = floatBitsToUint(scale);
+                if ((scaleInt & 0x80000000) != 0)
+                {
+                    float gray = color.r * 0.299 + color.g * 0.587 + color.b * 0.114;
+                    outColor = vec4(gray, gray, gray, color.a);
+                }
+                if ((scaleInt & 0x1) != 0)
+                {
+                    outColor.rgb -= vec3(0.1, 0.3, 0.5);
+                }
+
+                scale = abs(scale);
+
+				vec3 rotatedPos = RotateByQuaternion(position, rotation);
+                vec3 scaledPos = rotatedPos + scale;
+                vec3 worldPos = scaledPos + wpos_scale.xyz;
+
+                vec4 screenPos = _ViewProjectionMatrix * vec4(worldPos, 1.0);
+
+                gl_Position = screenPos;
+                procColor = outColor;
+            }
+        );
+
+        string_view psCode = SHADER_VERSION TOSTR(
+            in vec4 procColor;
+
+            layout(location = 0) out vec4 OutputColor;
+
+            void main()
+            {
+                OutputColor = procColor;
+            }
+        );
+
+		array<Shader::Uniform, 1> uniforms{
+			Shader::Uniform{"Transparency", 1, 1, 1, Shader::Uniform::Type::F32}};
+        
+        array<Shader::Uniform, 2> systemUniforms{
+			Shader::Uniform{"_CameraPosition", 3, 1, 1, Shader::Uniform::Type::F32},
+            Shader::Uniform{"_ViewProjectionMatrix", 4, 4, 1, Shader::Uniform::Type::F32}};
+
+        array<string_view, 2> inputAttributes{"rotation", "wpos_scale"};
+
+        auto shader = Shader::New(name, vsCode, psCode, uniforms.data(), (ui32)uniforms.size(), inputAttributes.data(), (ui32)inputAttributes.size(), systemUniforms.data(), (ui32)systemUniforms.size());
 
         LoadedShaders.emplace(shader);
 

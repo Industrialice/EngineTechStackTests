@@ -26,9 +26,11 @@ struct BuildingShapes
 		Diagonal = BuildingShape::Create(1 << 4),
 		ReverseDiagonal = BuildingShape::Create(1 << 5),
 		Swastika = BuildingShape::Create(1 << 6),
-		SwastikaInternal = BuildingShape::Create(1 << 7),
-		Fill = BuildingShape::Create(1 << 8),
-		UpperFloor = BuildingShape::Create(1 << 9),
+		SwastikaFlipped = BuildingShape::Create(1 << 7),
+		SwastikaInternal = BuildingShape::Create(1 << 8),
+		SwastikaInternalFlipped = BuildingShape::Create(1 << 9),
+		Fill = BuildingShape::Create(1 << 10),
+		UpperFloor = BuildingShape::Create(1 << 11),
 		Borders = LeftBorder.Combined(RightBorder).Combined(TopBorder).Combined(BottomBorder);
 };
 
@@ -46,11 +48,8 @@ static void AddAudioToNewCollisions();
 
 namespace
 {
-	static constexpr uiw TowerWidth = 20;
-	static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 9;
-
-	//static constexpr uiw TowerWidth = 10;
-	//static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 135; // 60 fps limit for GTX 970, if the app hangs, increase PxgDynamicsMemoryConfig values
+	static constexpr uiw TowerWidth = 25;
+	static constexpr uiw CubesCounts = (TowerWidth * TowerWidth) * 40; // 60 fps limit for GTX 970, if the app hangs, increase PxgDynamicsMemoryConfig values
 
 	static constexpr uiw CubesSmallCount = 6;
 	static constexpr uiw CubesMediumCount = 100;
@@ -61,7 +60,9 @@ namespace
 	//	Combined(BuildingShapes::TopBorder).
 	//	Combined(BuildingShapes::BottomBorder).
 	//	Combined(BuildingShapes::Swastika);
-	static constexpr BuildingShapes::BuildingShape TowerShape = BuildingShapes::SwastikaInternal.Combined(BuildingShapes::Borders);
+	//static constexpr BuildingShapes::BuildingShape TowerShape = BuildingShapes::SwastikaInternal.Combined(BuildingShapes::Borders).Combined(BuildingShapes::SwastikaInternalFlipped);
+	//static constexpr BuildingShapes::BuildingShape TowerShape = BuildingShapes::SwastikaInternal.Combined(BuildingShapes::Swastika).Combined(BuildingShapes::SwastikaInternalFlipped).Combined(BuildingShapes::SwastikaFlipped);
+	static constexpr BuildingShapes::BuildingShape TowerShape = BuildingShapes::Borders;
 
 	vector<PhysX::ObjectData> Cubes{};
 	vector<PhysX::ObjectData> Spheres{};
@@ -77,20 +78,18 @@ namespace
 	};
 	AudioSourceInRun CollisionAudioSources[16]{};
 
-	TimeDifference SpawnTimeout{};
+	TimeDifference SpawnTimeout{0.1_s};
 	TimeMoment LastSpawnedTime = TimeMoment::Earliest();
 }
 
 bool PhysicsScene::Create()
 {
-	SpawnTimeout = 0.1_s;
-
 	if (!PhysX::Create())
 	{
 		return false;
 	}
 
-	if (!SceneBackground::Create(true, true))
+	if (!SceneBackground::Create(false, true))
 	{
 		return false;
 	}
@@ -149,9 +148,9 @@ void PhysicsScene::Restart()
 
 void PhysicsScene::Draw(const Camera &camera)
 {
-	SceneBackground::Draw({MathPi<f32>() * 0.5f, 0, 0}, camera);
-
 	PhysX::Draw(camera);
+
+	SceneBackground::Draw({MathPi<f32>() * 0.5f, 0, 0}, camera);
 
 #ifdef USE_XAUDIO
 	XAudioEngine::PositioningInfo positioning;
@@ -211,6 +210,31 @@ void PlaceAsTallTower(BuildingShapes::BuildingShape shape)
 
 	auto checkShape = [shape](ui32 x, ui32 z)
 	{
+		auto swastika = [](ui32 x, ui32 z, ui32 towerWidth)
+		{
+			if (x == towerWidth / 2 || z == towerWidth / 2)
+			{
+				return true;
+			}
+			if (z == 0 && x < towerWidth / 2)
+			{
+				return true;
+			}
+			if (x == 0 && z > towerWidth / 2)
+			{
+				return true;
+			}
+			if (x == towerWidth - 1 && z < towerWidth / 2)
+			{
+				return true;
+			}
+			if (z == towerWidth - 1 && x > towerWidth / 2)
+			{
+				return true;
+			}
+			return false;
+		};
+
 		if (shape.Contains(BuildingShapes::LeftBorder))
 		{
 			if (x == 0)
@@ -255,49 +279,33 @@ void PlaceAsTallTower(BuildingShapes::BuildingShape shape)
 		}
 		if (shape.Contains(BuildingShapes::Swastika))
 		{
-			if (x == TowerWidth / 2 || z == TowerWidth / 2)
+			if (swastika(x, z, TowerWidth))
 			{
 				return true;
 			}
-			if (z == 0 && x < TowerWidth / 2)
-			{
-				return true;
-			}
-			if (x == 0 && z > TowerWidth / 2)
-			{
-				return true;
-			}
-			if (x == TowerWidth - 1 && z < TowerWidth / 2)
-			{
-				return true;
-			}
-			if (z == TowerWidth - 1 && x > TowerWidth / 2)
+		}
+		if (shape.Contains(BuildingShapes::SwastikaFlipped))
+		{
+			if (swastika(z, x, TowerWidth))
 			{
 				return true;
 			}
 		}
 		if (shape.Contains(BuildingShapes::SwastikaInternal))
 		{
-			auto towerWidth = TowerWidth - 1;
-			if (x > 0 && z > 0 && x < towerWidth && z < towerWidth)
+			if (x > 0 && z > 0 && x < (TowerWidth - 1) && z < (TowerWidth - 1))
 			{
-				if (x == towerWidth / 2 || z == towerWidth / 2)
+				if (swastika(x - 1, z - 1, TowerWidth - 2))
 				{
 					return true;
 				}
-				if (z == 1 && x < towerWidth / 2)
-				{
-					return true;
-				}
-				if (x == 1 && z > towerWidth / 2)
-				{
-					return true;
-				}
-				if (x == towerWidth - 1 && z < towerWidth / 2)
-				{
-					return true;
-				}
-				if (z == towerWidth - 1 && x > towerWidth / 2)
+			}
+		}
+		if (shape.Contains(BuildingShapes::SwastikaInternalFlipped))
+		{
+			if (x > 0 && z > 0 && x < (TowerWidth - 1) && z < (TowerWidth - 1))
+			{
+				if (swastika(z - 1, x - 1, TowerWidth - 2))
 				{
 					return true;
 				}

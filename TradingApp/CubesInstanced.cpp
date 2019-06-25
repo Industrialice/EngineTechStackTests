@@ -11,111 +11,150 @@
 using namespace EngineCore;
 using namespace TradingApp;
 
-CubesInstanced::CubesInstanced(ui32 maxInstances)
+CubesInstanced::CubesInstanced(ui32 maxInstances, bool isProceduralGeometry)
 {
-    auto shader = Application::LoadResource<Shader>("Colored3DVerticesInstanced");
-    if (shader == nullptr)
-    {
-        SENDLOG(Error, "Cube failed to load shader Colored3DVerticesInstanced\n");
-        return;
-    }
+	constexpr f32 transparency = 0.5f;
+	constexpr bool isBlendEnabled = false;
 
-    auto material = Material::New(shader);
+	if (isProceduralGeometry)
+	{
+		auto shader = Application::LoadResource<Shader>("Colored3DVerticesProceduralInstanced");
+		if (shader == nullptr)
+		{
+			SENDLOG(Error, "Cube failed to load shader Colored3DVerticesProceduralInstanced\n");
+			return;
+		}
 
-    struct Vertex
-    {
-        Vector3 position;
-        Vector4 color;
-    };
+		auto material = Material::New(shader);
 
-    static constexpr f32 transparency = 0.5f;
+		if (material->UniformF32("Transparency", transparency) == false)
+		{
+			SENDLOG(Error, "Failed to set shader uniform Transparency");
+		}
 
-    Vector4 frontColor{0, 0, 1, transparency};
-    Vector4 upColor{0, 1, 1, transparency};
-    Vector4 backColor{1, 1, 1, transparency};
-    Vector4 downColor{1, 0, 0, transparency};
-    Vector4 leftColor{1, 0, 1, transparency};
-    Vector4 rightColor{1, 1, 0, transparency};
+		VertexLayout vertexLayout
+		{
+			{"rotation", VertexLayout::Attribute::Formatt::R32G32B32A32F, 0, {}, 1},
+			{"wpos_scale", VertexLayout::Attribute::Formatt::R32G32B32A32F, 0, {}, 1},
+		};
 
-    RendererArrayData<Vertex> vertexArrayData
-    {
-        // front
-        {{-0.5f, -0.5f, -0.5f}, frontColor},
-        {{-0.5f, 0.5f, -0.5f}, frontColor},
-        {{0.5f, -0.5f, -0.5f}, frontColor},
-        {{0.5f, 0.5f, -0.5f}, frontColor},
+		auto pipelineState = RendererPipelineState::New(shader);
+		RendererPipelineState::BlendSettingst blend;
+		blend.isEnabled = isBlendEnabled;
+		blend.colorCombineMode = RendererPipelineState::BlendCombineModet::Add;
+		pipelineState->BlendSettings(blend);
+		pipelineState->VertexDataLayout(vertexLayout);
+		pipelineState->EnableDepthWrite(true);
+		pipelineState->PolygonCullMode(RendererPipelineState::PolygonCullModet::None);
+		//pipelineState->PolygonFillMode(RendererPipelineState::PolygonFillModet::Wireframe);
 
-        // up
-        {{-0.5f, 0.5f, -0.5f}, upColor},
-        {{-0.5f, 0.5f, 0.5f}, upColor},
-        {{0.5f, 0.5f, -0.5f}, upColor},
-        {{0.5f, 0.5f, 0.5f}, upColor},
+		_material = move(material);
+		_pipelineState = move(pipelineState);
+	}
+	else
+	{
+		auto shader = Application::LoadResource<Shader>("Colored3DVerticesInstanced");
+		if (shader == nullptr)
+		{
+			SENDLOG(Error, "Cube failed to load shader Colored3DVerticesInstanced\n");
+			return;
+		}
 
-        // back
-        {{0.5f, -0.5f, 0.5f}, backColor},
-        {{0.5f, 0.5f, 0.5f}, backColor},
-        {{-0.5f, -0.5f, 0.5f}, backColor},
-        {{-0.5f, 0.5f, 0.5f}, backColor},
+		auto material = Material::New(shader);
 
-        // down
-        {{-0.5f, -0.5f, 0.5f}, downColor},
-        {{-0.5f, -0.5f, -0.5f}, downColor},
-        {{0.5f, -0.5f, 0.5f}, downColor},
-        {{0.5f, -0.5f, -0.5f}, downColor},
+		struct Vertex
+		{
+			Vector3 position;
+			Vector4 color;
+		};
 
-        // left
-        {{-0.5f, -0.5f, 0.5f}, leftColor},
-        {{-0.5f, 0.5f, 0.5f}, leftColor},
-        {{-0.5f, -0.5f, -0.5f}, leftColor},
-        {{-0.5f, 0.5f, -0.5f}, leftColor},
+		Vector4 frontColor{0, 0, 1, transparency};
+		Vector4 upColor{0, 1, 1, transparency};
+		Vector4 backColor{1, 1, 1, transparency};
+		Vector4 downColor{1, 0, 0, transparency};
+		Vector4 leftColor{1, 0, 1, transparency};
+		Vector4 rightColor{1, 1, 0, transparency};
 
-        // right
-        {{0.5f, -0.5f, -0.5f}, rightColor},
-        {{0.5f, 0.5f, -0.5f}, rightColor},
-        {{0.5f, -0.5f, 0.5f}, rightColor},
-        {{0.5f, 0.5f, 0.5f}, rightColor},
-    };
+		RendererArrayData<Vertex> vertexArrayData
+		{
+			// front
+			{{-0.5f, -0.5f, -0.5f}, frontColor},
+			{{-0.5f, 0.5f, -0.5f}, frontColor},
+			{{0.5f, -0.5f, -0.5f}, frontColor},
+			{{0.5f, 0.5f, -0.5f}, frontColor},
 
-    auto vertexArray = RendererVertexArray::New(move(vertexArrayData));
+			// up
+			{{-0.5f, 0.5f, -0.5f}, upColor},
+			{{-0.5f, 0.5f, 0.5f}, upColor},
+			{{0.5f, 0.5f, -0.5f}, upColor},
+			{{0.5f, 0.5f, 0.5f}, upColor},
 
-    auto indexes = unique_ptr<ui8[], function<void(void *)>>(new ui8[36], [](void *p) {delete[] p; });
-    for (uiw index = 0; index < 6; ++index)
-    {
-        indexes[index * 6 + 0] = index * 4 + 0;
-        indexes[index * 6 + 1] = index * 4 + 1;
-        indexes[index * 6 + 2] = index * 4 + 3;
+			// back
+			{{0.5f, -0.5f, 0.5f}, backColor},
+			{{0.5f, 0.5f, 0.5f}, backColor},
+			{{-0.5f, -0.5f, 0.5f}, backColor},
+			{{-0.5f, 0.5f, 0.5f}, backColor},
 
-        indexes[index * 6 + 3] = index * 4 + 2;
-        indexes[index * 6 + 4] = index * 4 + 0;
-        indexes[index * 6 + 5] = index * 4 + 3;
-    }
+			// down
+			{{-0.5f, -0.5f, 0.5f}, downColor},
+			{{-0.5f, -0.5f, -0.5f}, downColor},
+			{{0.5f, -0.5f, 0.5f}, downColor},
+			{{0.5f, -0.5f, -0.5f}, downColor},
 
-    RendererArrayData<ui8> indexData(move(indexes), 36);
+			// left
+			{{-0.5f, -0.5f, 0.5f}, leftColor},
+			{{-0.5f, 0.5f, 0.5f}, leftColor},
+			{{-0.5f, -0.5f, -0.5f}, leftColor},
+			{{-0.5f, 0.5f, -0.5f}, leftColor},
 
-    auto indexArray = RendererIndexArray::New(move(indexData));
+			// right
+			{{0.5f, -0.5f, -0.5f}, rightColor},
+			{{0.5f, 0.5f, -0.5f}, rightColor},
+			{{0.5f, -0.5f, 0.5f}, rightColor},
+			{{0.5f, 0.5f, 0.5f}, rightColor},
+		};
 
-    VertexLayout vertexLayout
-    {
-        VertexLayout::Attribute{"position", VertexLayout::Attribute::Formatt::R32G32B32F, 0, {}, {}},
-        VertexLayout::Attribute{"color", VertexLayout::Attribute::Formatt::R32G32B32A32F, 0, {}, {}},
-        VertexLayout::Attribute{"rotation", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1},
-        VertexLayout::Attribute{"wpos_scale", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1},
-    };
+		auto vertexArray = RendererVertexArray::New(move(vertexArrayData));
 
-    auto pipelineState = RendererPipelineState::New(shader);
-    RendererPipelineState::BlendSettingst blend;
-    blend.isEnabled = false;
-    blend.colorCombineMode = RendererPipelineState::BlendCombineModet::Add;
-    pipelineState->BlendSettings(blend);
-    pipelineState->VertexDataLayout(vertexLayout);
-    pipelineState->EnableDepthWrite(true);
-    //pipelineState->PolygonCullMode(RendererPipelineState::PolygonCullModet::None);
-    //pipelineState->PolygonFillMode(RendererPipelineState::PolygonFillModet::Wireframe);
+		auto indexes = unique_ptr<ui8[], function<void(void *)>>(new ui8[36], [](void *p) {delete[] p; });
+		for (uiw index = 0; index < 6; ++index)
+		{
+			indexes[index * 6 + 0] = index * 4 + 0;
+			indexes[index * 6 + 1] = index * 4 + 1;
+			indexes[index * 6 + 2] = index * 4 + 3;
 
-    _material = move(material);
-    _pipelineState = move(pipelineState);
-    _indexArray = move(indexArray);
-    _vertexArray = move(vertexArray);
+			indexes[index * 6 + 3] = index * 4 + 2;
+			indexes[index * 6 + 4] = index * 4 + 0;
+			indexes[index * 6 + 5] = index * 4 + 3;
+		}
+
+		RendererArrayData<ui8> indexData(move(indexes), 36);
+
+		auto indexArray = RendererIndexArray::New(move(indexData));
+
+		VertexLayout vertexLayout
+		{
+			{"position", VertexLayout::Attribute::Formatt::R32G32B32F, 0, {}, {}},
+			{"color", VertexLayout::Attribute::Formatt::R32G32B32A32F, 0, {}, {}},
+			{"rotation", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1},
+			{"wpos_scale", VertexLayout::Attribute::Formatt::R32G32B32A32F, 1, {}, 1},
+		};
+
+		auto pipelineState = RendererPipelineState::New(shader);
+		RendererPipelineState::BlendSettingst blend;
+		blend.isEnabled = isBlendEnabled;
+		blend.colorCombineMode = RendererPipelineState::BlendCombineModet::Add;
+		pipelineState->BlendSettings(blend);
+		pipelineState->VertexDataLayout(vertexLayout);
+		pipelineState->EnableDepthWrite(true);
+		//pipelineState->PolygonCullMode(RendererPipelineState::PolygonCullModet::None);
+		//pipelineState->PolygonFillMode(RendererPipelineState::PolygonFillModet::Wireframe);
+
+		_material = move(material);
+		_pipelineState = move(pipelineState);
+		_indexArray = move(indexArray);
+		_vertexArray = move(vertexArray);
+	}
 
     RendererDataResource::AccessMode accessMode;
     accessMode.cpuMode.writeMode = RendererDataResource::CPUAccessMode::Mode::FrequentFull;
@@ -141,9 +180,18 @@ void CubesInstanced::Draw(const Camera *camera, ui32 instancesCount)
 {
 	ASSUME(instancesCount <= MaxInstances());
 
-    Application::GetRenderer().BindIndexArray(_indexArray);
-    Application::GetRenderer().BindVertexArray(_vertexArray, 0);
-    Application::GetRenderer().BindVertexArray(_vertexInstanceArray, 1);
+	if (_indexArray)
+	{
+		Application::GetRenderer().BindIndexArray(_indexArray);
+		Application::GetRenderer().BindVertexArray(_vertexArray, 0);
+		Application::GetRenderer().BindVertexArray(_vertexInstanceArray, 1);
 
-    Application::GetRenderer().DrawIndexedWithCamera(camera, nullptr, _pipelineState.get(), _material.get(), PrimitiveTopology::TriangleEnumeration, _indexArray->NumberOfElements(), instancesCount);
+		Application::GetRenderer().DrawIndexedWithCamera(camera, nullptr, _pipelineState.get(), _material.get(), PrimitiveTopology::TriangleEnumeration, _indexArray->NumberOfElements(), instancesCount);
+	}
+	else
+	{
+		Application::GetRenderer().BindVertexArray(_vertexInstanceArray, 0);
+
+		Application::GetRenderer().DrawWithCamera(camera, nullptr, _pipelineState.get(), _material.get(), PrimitiveTopology::TriangleEnumeration, 18, instancesCount);
+	}
 }

@@ -58,7 +58,7 @@ bool OpenGLRendererProxy::CheckShaderBackendData(const Shader &shader)
 			{
 				string textError(infoLen, '\0');
 				glGetShaderInfoLog(shader, infoLen, 0, textError.data());
-				SENDLOG(Error, "Failed to compile a shader, error %s\n", textError.data());
+				SENDLOG(Error, "Failed to compile a shader, error %s\n", textError.c_str());
 			}
 
 			glDeleteShader(shader);

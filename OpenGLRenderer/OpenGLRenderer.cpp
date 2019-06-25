@@ -304,6 +304,7 @@ public:
         auto clearDepthValue = camera->ClearDepthValue();
         if (clearDepthValue != nullopt)
         {
+			glDepthMask(GL_TRUE);
             glClearDepth(*clearDepthValue);
             clearFlags |= GL_DEPTH_BUFFER_BIT;
         }
@@ -601,7 +602,8 @@ public:
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferBackendData->oglBuffer);
             glEnableVertexAttribArray(glAttribLocation);
-            glVertexAttribPointer(glAttribLocation, sizeAndType.first, sizeAndType.second, GL_FALSE, vertexBuffer->Stride(), (void *)(*pipelineAttribute->VertexArrayOffset()));
+			uiw vertexArrayOffset = *pipelineAttribute->VertexArrayOffset();
+            glVertexAttribPointer(glAttribLocation, sizeAndType.first, sizeAndType.second, GL_FALSE, vertexBuffer->Stride(), reinterpret_cast<void *>(vertexArrayOffset));
 
             //glVertexAttribBinding()
 
@@ -667,80 +669,56 @@ public:
             }
         }
 
-        auto modelMatrixSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_ModelMatrix"; });
-        if (modelMatrixSystemUniform != shader->SystemUniforms().end())
-        {
-            auto index = modelMatrixSystemUniform - shader->SystemUniforms().begin();
-            const auto &oglUniform = shaderBackendData.systemOglUniforms[index];
+		auto setSystemUniform = [&shader, &systemOglUniforms = shaderBackendData.systemOglUniforms](string_view uniformName, auto uniformValue, auto uniformSetFunction)
+		{
+			auto uniformSearch = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [uniformName](const Shader::Uniform &uniform) { return uniform.name == uniformName; });
+			if (uniformSearch != shader->SystemUniforms().end())
+			{
+				auto index = uniformSearch - shader->SystemUniforms().begin();
+				const auto &oglUniform = systemOglUniforms[index];
 
-            Matrix4x3 matrix;
-            if (modelMatrix)
-            {
-                matrix = *modelMatrix;
-            }
+				std::remove_const_t<std::remove_reference_t<std::remove_pointer_t<std::remove_cv_t<decltype(uniformValue)>>>> uniform;
+				if (uniformValue)
+				{
+					uniform = *uniformValue;
+				}
 
-            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
-        }
-        
-        auto viewMatrixSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_ViewMatrix"; });
-        if (viewMatrixSystemUniform != shader->SystemUniforms().end())
-        {
-            auto index = viewMatrixSystemUniform - shader->SystemUniforms().begin();
-            const auto &oglUniform = shaderBackendData.systemOglUniforms[index];
+				uniformSetFunction(oglUniform, uniform);
+			}
+		};
 
-            Matrix4x3 matrix;
-            if (viewMatrix)
-            {
-                matrix = *viewMatrix;
-            }
+		auto setMatrix = [](const ShaderBackendData::OGLUniform &oglUniform, const auto &matrix)
+		{
+			reinterpret_cast<ShaderBackendData::SetMatrixUniformFunction>(oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
+		};
 
-            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
-        }
+		auto setFloats = [](const ShaderBackendData::OGLUniform &oglUniform, const auto &values)
+		{
+			reinterpret_cast<ShaderBackendData::SetUniformFunction>(oglUniform.setFuncAddress)(oglUniform.location, 1, values.Data().data());
+		};
 
-        auto projectionSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_ProjectionMatrix"; });
-        if (projectionSystemUniform != shader->SystemUniforms().end())
-        {
-            auto index = projectionSystemUniform - shader->SystemUniforms().begin();
-            const auto &oglUniform = shaderBackendData.systemOglUniforms[index];
+		Matrix4x4 viewProjMatrix;
+		if (viewMatrix && projMatrix)
+		{
+			viewProjMatrix = *viewMatrix * *projMatrix;
+		}
 
-            Matrix4x4 matrix;
-            if (projMatrix)
-            {
-                matrix = *projMatrix;
-            }
+		Vector3 cameraForwardVector, cameraRightVector, cameraUpVector;
+		if (viewMatrix)
+		{
+			cameraForwardVector = viewMatrix->GetColumn(2).ToVector3();
+			cameraRightVector = viewMatrix->GetColumn(0).ToVector3();
+			cameraUpVector = viewMatrix->GetColumn(1).ToVector3();
+		}
 
-            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
-        }
-
-        auto viewProjectionSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_ViewProjectionMatrix"; });
-        if (viewProjectionSystemUniform != shader->SystemUniforms().end())
-        {
-            auto index = viewProjectionSystemUniform - shader->SystemUniforms().begin();
-            const auto &oglUniform = shaderBackendData.systemOglUniforms[index];
-
-            Matrix4x4 matrix;
-            if (viewMatrix && projMatrix)
-            {
-                matrix = *viewMatrix * *projMatrix;
-            }
-
-            ((ShaderBackendData::SetMatrixUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, GL_FALSE, matrix.Data().data());
-        }
-
-        auto cameraPositionSystemUniform = std::find_if(shader->SystemUniforms().begin(), shader->SystemUniforms().end(), [](const Shader::Uniform &uniform) { return uniform.name == "_CameraPosition"; });
-        if (cameraPositionSystemUniform != shader->SystemUniforms().end())
-        {
-            auto index = cameraPositionSystemUniform - shader->SystemUniforms().begin();
-            const auto &oglUniform = shaderBackendData.systemOglUniforms[index];
-
-            Vector3 position;
-            if (cameraPos)
-            {
-                position = *cameraPos;
-            }
-
-            ((ShaderBackendData::SetUniformFunction)oglUniform.setFuncAddress)(oglUniform.location, 1, position.Data().data());
-        }
+		setSystemUniform("_ModelMatrix", modelMatrix, setMatrix);
+		setSystemUniform("_ViewMatrix", viewMatrix, setMatrix);
+		setSystemUniform("_ProjectionMatrix", projMatrix, setMatrix);
+		setSystemUniform("_ViewProjectionMatrix", viewMatrix &&projMatrix ? &viewProjMatrix : nullptr, setMatrix);
+		setSystemUniform("_CameraPosition", cameraPos, setFloats);
+		setSystemUniform("_CameraForwardVector", viewMatrix ? &cameraForwardVector : nullptr, setFloats);
+		setSystemUniform("_CameraRightVector", viewMatrix ? &cameraRightVector : nullptr, setFloats);
+		setSystemUniform("_CameraUpVector", viewMatrix ? &cameraUpVector : nullptr, setFloats);
 
         return true;
     }

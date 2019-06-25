@@ -29,7 +29,7 @@ namespace TradingApp
             f32 size;
         };
 
-        CubesInstanced(ui32 maxInstances);
+        CubesInstanced(ui32 maxInstances, bool isProceduralGeometry);
 		ui32 MaxInstances();
         InstanceData *Lock(ui32 instancesCount);
         void Unlock();
