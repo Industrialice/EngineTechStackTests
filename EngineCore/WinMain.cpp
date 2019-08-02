@@ -32,8 +32,8 @@ static optional<HWND> CreateSystemWindow(bool isFullscreen, const string &title,
 static LRESULT WINAPI MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 static void MessageLoop();
 static void ShutdownApp();
-static void LogRecipient(LogLevels::LogLevel logLevel, string_view nullTerminatedText);
-static void FileLogRecipient(File &file, LogLevels::LogLevel logLevel, string_view nullTerminatedText);
+static void LogRecipient(LogLevels::LogLevel logLevel, StringViewNullTerminated message);
+static void FileLogRecipient(File &file, LogLevels::LogLevel logLevel, StringViewNullTerminated message);
 static bool CreateApplicationSubsystems();
 
 namespace
@@ -611,7 +611,7 @@ static const char *LogLevelToTag(LogLevels::LogLevel logLevel)
 	return nullptr;
 }
 
-void LogRecipient(LogLevels::LogLevel logLevel, string_view nullTerminatedText)
+void LogRecipient(LogLevels::LogLevel logLevel, StringViewNullTerminated message)
 {
 	if (logLevel == LogLevels::Critical || logLevel == LogLevels::Debug || logLevel == LogLevels::Error) // TODO: cancel breaking
 	{
@@ -650,17 +650,17 @@ void LogRecipient(LogLevels::LogLevel logLevel, string_view nullTerminatedText)
 				return;
 		}
 
-		MessageBoxA(0, nullTerminatedText.data(), tag, 0);
+		MessageBoxA(0, message.data(), tag, 0);
 		return;
 	}
 
 	OutputDebugStringA(LogLevelToTag(logLevel));
-	OutputDebugStringA(nullTerminatedText.data());
+	OutputDebugStringA(message.data());
 }
 
-void FileLogRecipient(File &file, LogLevels::LogLevel logLevel, string_view nullTerminatedText)
+void FileLogRecipient(File &file, LogLevels::LogLevel logLevel, StringViewNullTerminated message)
 {
 	const char *tag = LogLevelToTag(logLevel);
 	file.Write(tag, (ui32)strlen(tag));
-	file.Write(nullTerminatedText.data(), (ui32)nullTerminatedText.size());
+	file.Write(message.data(), (ui32)message.size());
 }

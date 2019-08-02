@@ -117,7 +117,7 @@ CubesInstanced::CubesInstanced(ui32 maxInstances, bool isProceduralGeometry)
 		auto vertexArray = RendererVertexArray::New(move(vertexArrayData));
 
 		auto indexes = unique_ptr<ui8[], function<void(void *)>>(new ui8[36], [](void *p) {delete[] p; });
-		for (uiw index = 0; index < 6; ++index)
+		for (ui8 index = 0; index < 6; ++index)
 		{
 			indexes[index * 6 + 0] = index * 4 + 0;
 			indexes[index * 6 + 1] = index * 4 + 1;
